@@ -186,84 +186,25 @@ def ChiSq(data, model, unct=None):
     chsq = chsq_dtc + chsq_non
     return chsq
 
-def ChiSquare_LMFIT(params, sed_data, sed_model, model_func, wave_model):
-    '''
-    This function uses the given model to calculate the Chi square.
-    This function is designed for the LMFIT package.
-
-    Parameters
-    ----------
-    params : Parameter class from LMFIT package
-    data : float array
-        The observed flux.
-    unct : float array
-        The uncertainties.
-    model_func : callable
-        Objective function.
-    func_kws : dict
-        The parameters used by the model_func().
-
-    Returns
-    -------
-    chsq : float
-        The Chi square.
-
-    Notes
-    -----
-    None.
-    '''
-    Parameters_Dump(params, sed_model)
-    model = np.array( model_func(sed_data, sed_model, wave_model) )
-    data = np.array( sed_data.get_dsList('y') )
-    unct = np.array( sed_data.get_dsList('e') )
-    chsq = ChiSq(data, model, unct)
-    return chsq
-
-def SED_Model_Fit(params, sed_data, sed_model, param_dl07, wave_model):
-    """
-    This function do the SED fitting.
-
-    Parameters
-    ----------
-    params : class Parameters()
-    """
-    sed_model = copy.deepcopy(sed_model)
-    modelDict = sed_model.get_modelDict()
-    umin, umax, qpah = param_dl07
-    sed_model.updateParFit('DL07', 'umin', umin, QuietMode=True)
-    sed_model.updateParFit('DL07', 'umax', umax, QuietMode=True)
-    sed_model.updateParFit('DL07', 'qpah', qpah, QuietMode=True)
-
-    #----------------------
-    #Initial guess
-    #----------------------
-    for modelName in sed_model._modelList:
-        #print modelName
-        model = modelDict[modelName]
-        normPck = inputModelDict[modelName]['normalisation']
-        if normPck is None:
-            continue
-        band_norm, scalePar = normPck
-        #Get the flux from the photometric data
-        wave_norm = sed_data.get_dsDict()['WISE&Herschel'][band_norm][0]
-        flux_norm = sed_data.get_dsDict()['WISE&Herschel'][band_norm][1]
-        fluxModel = model.result(wave_model)
-        fluxModelPoint = interp1d(wave_model, fluxModel)(wave_norm)
-        model.parFitDict[scalePar] += np.log10(flux_norm/fluxModelPoint)
-    params = Parameters_Load(params, sed_model)
-
-    chisqKws = {
-        'sed_data': sed_data,
-        'sed_model': sed_model,
-        'model_func': Model2Data,
-        'wave_model': wave_model,
-    }
-    out = minimize(ChiSquare_LMFIT, params, kws=chisqKws, method='nelder')
-    parsFits = out.params
-    Parameters_Dump(parsFits, sed_model)
-    chisq = ChiSquare_LMFIT(parsFits, sed_data, sed_model, Model2Data, wave_model)
-    results = {
-        'ChiSQ': chisq,
-        'sed_model': sed_model
-    }
-    return results
+#The log_likelihood function: for SED fitting
+def logLFunc_SED(params, data, model):
+    parDict = model.get_modelParDict()
+    pIndex = 0
+    for modelName in model._modelList:
+        parFitDict = parDict[modelName]
+        for parName in parFitDict.keys():
+            parFitDict[parName]["value"] = params[pIndex]
+            pIndex += 1
+    x = np.array(data.get_List('x'))
+    y = np.array(data.get_List('y'))
+    e = np.array(data.get_List('e'))
+    ym = np.array(model.combineResult(x))
+    if len(params) == pIndex:
+        s = e
+    elif len(params) == (pIndex+1):
+        s = (e**2 + params[pIndex+1]**2)**0.5
+    else:
+        raise ValueError("The length of params is incorrect!")
+    #Calculate the log_likelihood
+    logL = -0.5 * (sedff.ChiSq(y, ym, s) + np.sum( np.log(2 * np.pi * s**2) ))
+    return logL

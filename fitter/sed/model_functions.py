@@ -251,6 +251,13 @@ def Power_Law(PL_alpha, PL_logsf, wave):
 m_H = 1.6726219e-24 #unit: gram
 Msun = 1.9891e33 #unit: gram
 Mpc = 3.08567758e24 #unit: cm
+uminList = [0.10, 0.15, 0.20, 0.30, 0.40, 0.50, 0.70, 0.80, 1.00, 1.20,
+        1.50, 2.00, 2.50, 3.00, 4.00, 5.00, 7.00, 8.00, 10.0, 12.0,
+        15.0, 20.0, 25.0]
+umaxList = [1e3, 1e4, 1e5, 1e6]
+qpahList = [0.47, 1.12, 1.77, 2.50, 3.19, 3.90, 4.58, 0.75, 1.49, 2.37, 0.10]
+mdust2mh = [0.01, 0.01, 0.0101, 0.0102, 0.0102, 0.0103, 0.0104, 0.00343,
+            0.00344, 0.00359, 0.00206]
 def DL07_Model_Intp(umin, umax, qpah, gamma, logMd, tmpl_dl07, wave, DL):
     '''
     This function generates the dust emission template from Draine & Li (2007).
@@ -284,13 +291,6 @@ def DL07_Model_Intp(umin, umax, qpah, gamma, logMd, tmpl_dl07, wave, DL):
     -----
     None.
     '''
-    uminList = [0.10, 0.15, 0.20, 0.30, 0.40, 0.50, 0.70, 0.80, 1.00, 1.20,
-            1.50, 2.00, 2.50, 3.00, 4.00, 5.00, 7.00, 8.00, 10.0, 12.0,
-            15.0, 20.0, 25.0]
-    umaxList = [1e3, 1e4, 1e5, 1e6]
-    qpahList = [0.47, 1.12, 1.77, 2.50, 3.19, 3.90, 4.58, 0.75, 1.49, 2.37, 0.10]
-    mdust2mh = [0.01, 0.01, 0.0101, 0.0102, 0.0102, 0.0103, 0.0104, 0.00343,
-                0.00344, 0.00359, 0.00206]
     chk_umin = umin in uminList
     chk_umax = umax in umaxList
     chk_qpah = qpah in qpahList
@@ -343,13 +343,6 @@ def DL07_Model(umin, umax, qpah, gamma, logMd, tmpl_dl07, DL, wave):
     -----
     None.
     '''
-    uminList = [0.10, 0.15, 0.20, 0.30, 0.40, 0.50, 0.70, 0.80, 1.00, 1.20,
-            1.50, 2.00, 2.50, 3.00, 4.00, 5.00, 7.00, 8.00, 10.0, 12.0,
-            15.0, 20.0, 25.0]
-    umaxList = [1e3, 1e4, 1e5, 1e6]
-    qpahList = [0.47, 1.12, 1.77, 2.50, 3.19, 3.90, 4.58, 0.75, 1.49, 2.37, 0.10]
-    mdust2mh = [0.01, 0.01, 0.0101, 0.0102, 0.0102, 0.0103, 0.0104, 0.00343,
-                0.00344, 0.00359, 0.00206]
     chk_umin = umin in uminList
     chk_umax = umax in umaxList
     chk_qpah = qpah in qpahList
@@ -425,18 +418,21 @@ inputModelDict = OrderedDict(
                 'normalisation': ('w1', 'logM'),
                 'logM': {
                     'value': -4.,
+                    'range': [-np.inf, np.inf],
+                    'type': 'c',
                     'vary': True,
-                    'range': [-np.inf, np.inf]
                 },
                 'beta': {
                     'value': 2.0,
+                    'range': [1.5, 2.5],
+                    'type': 'c',
                     'vary': False,
-                    'range': [1.5, 2.5]
                 },
                 'T': {
                     'value': 600.,
+                    'range': [500, 1300],
+                    'type': 'c',
                     'vary': True,
-                    'range': [500, 1300]
                 }
             }
         ),
@@ -445,38 +441,45 @@ inputModelDict = OrderedDict(
                 'normalisation': ('w4', 'TORUS_logsf'),
                 'TORUS_logsf': {
                     'value': 4.0,
+                    'range': [-np.inf, np.inf],
+                    'type': 'c',
                     'vary': True,
-                    'range': [-np.inf, np.inf]
                 },
                 'TORUS_i': {
                     'value': 13.847,
+                    'range': [0.0, 90.0],
+                    'type': 'c',
                     'vary': True,
-                    'range': [0.0, 90.0]
                 },
                 'TORUS_tv': {
                     'value': 51.390,
+                    'range': [10.0, 300.0],
+                    'type': 'c',
                     'vary': True,
-                    'range': [10.0, 300.0]
                 },
                 'TORUS_q': {
                     'value': 0.356,
+                    'range': [0.0, 3.0],
+                    'type': 'c',
                     'vary': True,
-                    'range': [0.0, 3.0]
                 },
                 'TORUS_N0': {
                     'value': 4.000,
+                    'range': [1.0, 15.0],
+                    'type': 'c',
                     'vary': True,
-                    'range': [1.0, 15.0]
                 },
                 'TORUS_sig': {
                     'value': 69.949,
+                    'range': [15.0, 70.0],
+                    'type': 'c',
                     'vary': True,
-                    'range': [15.0, 70.0]
                 },
                 'TORUS_Y': {
                     'value': 21.889,
+                    'range': [5.0, 100.0],
+                    'type': 'c',
                     'vary': True,
-                    'range': [5.0, 100.0]
                 }
             }
         ),
@@ -485,28 +488,33 @@ inputModelDict = OrderedDict(
                 'normalisation': ('PACS_100', 'logMd'),
                 'umin': {
                     'value': 1.,
+                    'range': uminList,
+                    'type': 'd',
                     'vary': False,
-                    'range': [None, None]
                 },
                 'umax': {
                     'value': 1e6,
+                    'range': umaxList,
+                    'type': 'd',
                     'vary': False,
-                    'range': [None, None]
                 },
                 'qpah': {
                     'value': 4.58,
+                    'range': qpahList,
+                    'type': 'd',
                     'vary': False,
-                    'range': [None, None]
                 },
                 'gamma': {
                     'value': 0.01,
+                    'range': [0.01, 0.99],
+                    'type': 'c',
                     'vary': True,
-                    'range': [0.01, 0.99]
                 },
                 'logMd': {
                     'value': 6.5,
+                    'range': [-np.inf, np.inf],
+                    'type': 'd',
                     'vary': True,
-                    'range': [-np.inf, np.inf]
                 }
             }
         ),
