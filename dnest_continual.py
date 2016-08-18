@@ -174,4 +174,4 @@ dnest4.postprocess()
 
 #Rename the posterior sample file name#
 #-------------------------------------#
-os.rename("posterior_sample.txt", "{0}_c_posterior.txt")
+os.rename("posterior_sample.txt", "{0}_c_posterior.txt".format(dataName))
