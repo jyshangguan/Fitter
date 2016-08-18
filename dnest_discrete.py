@@ -1,7 +1,7 @@
 import numpy as np
 import dnest4
 from dnest4.utils import rng
-import datafit_im.basicclass as bc
+import fitter.basicclass as bc
 from gaussian_model import MultiGaussian, GaussianModelDiscrete
 import matplotlib.pyplot as plt
 import cPickle as pickle
@@ -25,37 +25,31 @@ def logLFunc_simple(params, data, model):
         return logL
 
 
-#Generate the data#
+#Load the data#
 #-----------------#
-Ndata  = 50
-xMax   = 1000.0
-Nmodel = 1
-fAdd   = None #0.1
-pRange = [
-    [5.0, 20.0],   #The range of a
-    [20.0, 580.0], #The range of b
-    [10.0, 100.0], #The range of c
-]
+Nmodel = 5
+dataName = "gauss{0}".format(Nmodel)
+try:
+    fp = open("{0}.dict".format(dataName), "r")
+except IOError:
+    raise IOError("{0} does not exist!".format(dataName))
+model = pickle.load(fp)
+fp.close()
+xData = model["x"]
+Ndata = len(xData)
+fAdd  = model["f_add"]
+yTrue = model['y_true']
+yObsr = model['y_obsr']
+yErr  = model['y_err']
+pValue = model['parameters']
+rangeList = model['ranges']
+cmpList = model['compnents']
+
 print( "#------Start fitting------#" )
 print( "# Ndata: {0}".format(Ndata) )
 print( "# Nmodel: {0}".format(Nmodel) )
 print( "# f_add: {0}".format(fAdd) )
 print( "#-------------------------#" )
-
-xData = np.linspace(1.0, xMax, Ndata)
-model = MultiGaussian(xData, pRange, Nmodel, fAdd)
-yTrue = model['y_true']
-yObsr = model['y_obsr']
-yErr = model['y_err']
-pValue = model['parameters']
-rangeList = model['ranges']
-cmpList = model['compnents']
-model['x'] = xData
-fp = open("test_model.dict", "w")
-pickle.dump(model, fp)
-fp.close()
-print("test_model.dict is saved!")
-
 
 #Generate the gaussian model#
 #---------------------------#
@@ -68,13 +62,6 @@ pRangeDiscrete = {
     "c": list( np.arange(10.0, 100.0, 5.0) )
 }
 gaussModel = GaussianModelDiscrete(Nmodel, pRangeDiscrete, gt)
-#print gaussModel.get_modelParDict()
-
-"""
-ym = gaussModel.combineResult(xData)
-plt.plot(xData, ym)
-plt.show()
-"""
 
 #Construct the DNest4Model#
 #-------------------------#
@@ -103,62 +90,3 @@ for i, sample in enumerate(gen):
 
 # Run the postprocessing
 dnest4.postprocess()
-
-
-#-----
-#Tests
-#-----
-##Test the paramter type
-"""
-parDict = gaussModel.get_modelParDict()
-parFitDict = parDict['G1']
-parFitDict['a']['type'] = "d"
-parFitDict['a']['range'] = range(1, 5)
-print parFitDict
-"""
-#Plot the data
-if False:
-    plt.plot(xData, yTrue)
-    plt.errorbar(xData, yObsr, yerr=yErr, fmt='.k')
-    for y in cmpList:
-        plt.plot(xData, y, linestyle='--')
-    fig = plt.gcf()
-    ax  = plt.gca()
-    ylim = ax.get_ylim()
-    gaussModel.plot(xData, FigAx=(fig, ax))
-    ax.set_xscale('linear')
-    ax.set_yscale('linear')
-    ax.set_ylim(ylim)
-    #plt.show()
-#-------------------------
-#Test the perturb function
-#-------------------------
-if False:
-    print("Start test")
-    p0 = np.array([10.0, 30.0, 20.0])
-    pList = [p0.copy()]
-    l0 = np.exp( dn4m.log_likelihood(p0) )
-    print l0
-    for loop in range(100000):
-        p = p0.copy()
-        h = np.exp( dn4m.perturb(p) )
-        l = np.exp( dn4m.log_likelihood(p) )
-        alpha = min([1, h * l/l0])
-        r = rng.rand()
-        #print h, l, alpha, r
-        if r < alpha:
-            pList.append(p)
-            p0 = p
-            l0 = l
-    pList = np.array(pList)
-    print pList
-    plt.plot(pList[:, 0], pList[:, 1], marker='o', color='k')
-    plt.plot(pList[0, 0], pList[0, 1], marker='o', color='r')
-    plt.xlim([0, 30])
-    plt.ylim([0, 600])
-    plt.show()
-    af = np.median(pList[:, 0])
-    bf = np.median(pList[:, 1])
-    cf = np.median(pList[:, 2])
-    print "a: {0}, b: {1}, c: {2}".format(af, bf, cf)
-    print pValue
