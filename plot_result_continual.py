@@ -1,12 +1,14 @@
+import sys
 import numpy as np
 import matplotlib.pyplot as plt
 from gaussian_model import GaussFunc
 import cPickle as pickle
 
-fp = open("test_model.dict", "r")
+dataName = sys.argv[1]
+fp = open("{0}.dict".format(dataName), "r")
 model = pickle.load(fp)
 fp.close()
-ps = np.loadtxt("posterior_sample.txt")
+ps = np.loadtxt("{0}_c_posterior.txt".format(dataName))
 
 xd = model['x']
 yTrue = model['y_true']
@@ -52,6 +54,7 @@ for y in cmpList:
 
 xm = np.linspace(1., 1000., 1000)
 ym = np.zeros_like(xm)
+cl = ["r", "y", "b", "g", "m", "c"]
 for loop in range(nGauss):
     a50, b50, c50 = par50List[loop]
     y50 = GaussFunc(a50, b50, c50, xm)
@@ -60,10 +63,11 @@ for loop in range(nGauss):
     y84 = GaussFunc(a50+a84, b50+b84, c50+c84, xm)
     a16, b16, c16 = par16List[loop]
     y16 = GaussFunc(a50-a16, b50-b16, c50-c16, xm)
-    plt.plot(xm, y50, color="r")
-    plt.fill_between(xm, y16, y84, color="r", alpha=0.3)
-plt.plot(xm, ym, color="r")
+    plt.plot(xm, y50, color=cl[loop%len(cl)])
+    plt.fill_between(xm, y16, y84, color=cl[loop%len(cl)], alpha=0.3)
+plt.plot(xm, ym, color="grey", linewidth=1.5)
 #plt.xlim([0, 100])
 #plt.ylim([0, 800])
+plt.savefig("{0}_fit.pdf".format(dataName))
 plt.show()
 #"""
