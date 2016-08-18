@@ -1,7 +1,7 @@
 import numpy as np
 import dnest4
 from dnest4.utils import rng
-import datafit_im.basicclass as bc
+import fitter.basicclass as bc
 from gaussian_model import MultiGaussian, GaussianModelSet, GaussFunc
 import matplotlib.pyplot as plt
 import cPickle as pickle
@@ -86,22 +86,6 @@ class DNest4Model(object):
         Gaussian sampling distrubution.
         """
         logL  = self._logl(params, self.__data, self.__model)
-        """
-        parDict = self.__model.get_modelParDict()
-        pIndex = 0
-        for modelName in self.__model._modelList:
-            parFitDict = parDict[modelName]
-            for parName in parFitDict.keys():
-                parFitDict[parName]["value"] = params[pIndex]
-                pIndex += 1
-        x = np.array(self.__data.get_List('x'))
-        y = np.array(self.__data.get_List('y'))
-        e = np.array(self.__data.get_List('e'))
-        ym = np.array(self.__model.combineResult(x))
-        #Calculate the log_likelihood
-        s2 = e**2.
-        logL = -0.5 * np.sum( (y - ym)**2 / s2 + np.log(2 * np.pi * s2) )
-        """
         return logL
 
 def logLFunc_simple(params, data, model):
@@ -122,35 +106,31 @@ def logLFunc_simple(params, data, model):
     return logL
 
 
-#Generate the data#
-#-----------------#
-Ndata  = 50
-xMax   = 1000.0
+#Load the data#
+#-------------#
 Nmodel = 5
-fAdd   = None #0.1
-pRange = [
-    [5.0, 20.0],   #The range of a
-    [20.0, 580.0], #The range of b
-    [10.0, 100.0], #The range of c
-]
+dataName = "gauss{0}".format(Nmodel)
+try:
+    fp = open("{0}.dict".format(dataName), "r")
+except IOError:
+    raise IOError("{0} does not exist!".format(dataName))
+data = pickle.load(fp)
+fp.close()
+xData = data["x"]
+Ndata = len(xData)
+fAdd  = data["f_add"]
+yTrue = data['y_true']
+yObsr = data['y_obsr']
+yErr  = data['y_err']
+pValue = data['parameters']
+rangeList = data['ranges']
+cmpList = data['compnents']
+
 print( "#------Start fitting------#" )
 print( "# Ndata: {0}".format(Ndata) )
 print( "# Nmodel: {0}".format(Nmodel) )
 print( "# f_add: {0}".format(fAdd) )
 print( "#-------------------------#" )
-
-xData = np.linspace(1.0, xMax, Ndata)
-model = MultiGaussian(xData, pRange, Nmodel, fAdd)
-yTrue = model['y_true']
-yObsr = model['y_obsr']
-yErr = model['y_err']
-pValue = model['parameters']
-rangeList = model['ranges']
-cmpList = model['compnents']
-model['x'] = xData
-fp = open("test_model.dict", "w")
-pickle.dump(model, fp)
-fp.close()
 
 #Generate the gaussian model#
 #---------------------------#
@@ -158,11 +138,10 @@ gaussModel = GaussianModelSet(pValue, rangeList)
 """
 modelDict = gaussModel.get_modelParDict()
 for modelName in gaussModel._modelList:
-    parDict = modelDict[modelName]
-    counter = 0
-    for parName in parDict.keys():
-        parDict[parName]["range"] = pRange[counter%3]
-        counter += 1
+    model = modelDict[modelName]
+    for parName in model.keys():
+        parDict = model[parName]
+        print("{0}: {1} ({2[0]}, {2[1]})".format(parName, parDict["value"], parDict["range"]))
 """
 
 #Construct the DNest4Model#
