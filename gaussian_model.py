@@ -10,6 +10,11 @@ def GaussFunc(a, b, c, x):
 def MultiGaussian(x, p_range, n_model, f_add=None, QuietMode=True):
     """
     Generate a model with the combination of a number of Gaussian models.
+    a is randomly chosen in the entire range for all the components.
+    b is separated in small ranges so that the previous model is always in
+    the front of the next model. And the values are randomly chosen in the log
+    space.
+    c is randomly chosen in the log space of the range.
 
     Parameters
     ----------
@@ -52,12 +57,10 @@ def MultiGaussian(x, p_range, n_model, f_add=None, QuietMode=True):
     """
     x_max = np.max(x)
     n_data = len(x)
-    rangeList = []
-    for loop in range(3):
-        r1, r2 = p_range[loop] #The range of the parameters
-        rangeP = (r2 - r1) * np.random.rand(n_model - 1) + r1
-        rangeP = np.sort( np.append(rangeP, [r1, r2]) )
-        rangeList.append(rangeP)
+    b1, b2 = p_range[1] #The range of the parameters
+    rangeB = (b2 - b1) * np.random.rand(n_model - 1) + b1
+    rangeB = np.sort( np.append(rangeB, [b1, b2]) )
+    rangeList = [p_range[0], rangeB, p_range[2]]
     parList = [] #Record the parameters
     cmpList = [] #Record the models
     y_true = np.zeros_like(x)
@@ -67,15 +70,14 @@ def MultiGaussian(x, p_range, n_model, f_add=None, QuietMode=True):
     #Set the model parameters in the parList and save the model components
     #in the cmpList
     for loop in range(n_model):
-        ra1 = rangeList[0][loop]
-        ra2 = rangeList[0][loop + 1]
+        ra1, ra2 = rangeList[0]
         a = (ra2 - ra1) * np.random.rand() + ra1
-        rb1 = rangeList[1][loop]
-        rb2 = rangeList[1][loop + 1]
-        b = (rb2 - rb1) * np.random.rand() + rb1
-        rc1 = rangeList[2][loop]
-        rc2 = rangeList[2][loop + 1]
-        c = (rc2 - rc1) * np.random.rand() + rc1
+        rb1, rb2 = rangeList[1][loop:(loop+2)]
+        lb1, lb2 = [np.log(rb1), np.log(rb2)]
+        b = np.exp( (lb2 - lb1) * np.random.rand() + lb1 )
+        rc1, rc2 = rangeList[2]
+        lc1, lc2 = [np.log(rc1), np.log(rc2)]
+        c = np.exp( (lc2 - lc1) * np.random.rand() + lc1 )
         if not QuietMode:
             print("a_{0}: {1:.3f} in ({2}, {3})".format(loop, a, ra1, ra2))
             print("b_{0}: {1:.3f} in ({2}, {3})".format(loop, b, rb1, rb2))
