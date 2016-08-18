@@ -18,10 +18,10 @@ from collections import OrderedDict
 #From: dev_CLUMPY_intp.ipynb
 def Stellar_SED(logMs, age, zs, wave, band='h', zf_guess=1.0, spsmodel='bc03_ssp_z_0.02_chab.model'):
     '''
-    This function obtain the galaxy stellar SED given the stellar mass, age and redshift. The 
-    default model is Bruzual & Charlot (2003) with solar metallicity and Chabrier IMF. The stellar 
+    This function obtain the galaxy stellar SED given the stellar mass, age and redshift. The
+    default model is Bruzual & Charlot (2003) with solar metallicity and Chabrier IMF. The stellar
     synthesis models are organised by the module EzGal (http://www.baryons.org/ezgal/).
-    
+
     Parameters
     ----------
     logMs : float
@@ -35,16 +35,16 @@ def Stellar_SED(logMs, age, zs, wave, band='h', zf_guess=1.0, spsmodel='bc03_ssp
     band : str, default: 'h'
         The reference band used to calculate the mass-to-light ratio.
     zf_guess : float. zf_guess=1.0 by default.
-        The initial guess to solve the zf that allowing the age between 
+        The initial guess to solve the zf that allowing the age between
         zs and zf is as required.
     spsmodel : string. spsmodel='bc03_ssp_z_0.02_chab.model' by default.
         The stellar population synthesis model that is used.
-    
+
     Returns
     -------
     flux : array
         The sed flux of the bulge. In units mJy.
-    
+
     Notes
     -----
     None.
@@ -55,22 +55,22 @@ def Stellar_SED(logMs, age, zs, wave, band='h', zf_guess=1.0, spsmodel='bc03_ssp
     ls_mic = 2.99792458e14 #micron/s
     model = ezgal.model(spsmodel) #Choose a stellar population synthesis model.
     model.set_cosmology(Om=0.308, Ol=0.692, h=0.678)
-    
-    func_age = lambda zf, zs, age: age - model.get_age(zf, zs) #To solve the formation redshift given the 
+
+    func_age = lambda zf, zs, age: age - model.get_age(zf, zs) #To solve the formation redshift given the
                                                                #redshift of the source and the stellar age.
-    func_MF = lambda Msun, Mstar, m2l: Msun - 2.5*np.log10(Mstar/m2l) #Calculate the absolute magnitude of 
-                                                                      #the galaxy. Msun is the absolute mag 
-                                                                      #of the sun. Mstar is the mass of the 
+    func_MF = lambda Msun, Mstar, m2l: Msun - 2.5*np.log10(Mstar/m2l) #Calculate the absolute magnitude of
+                                                                      #the galaxy. Msun is the absolute mag
+                                                                      #of the sun. Mstar is the mass of the
                                                                       #star. m2l is the mass to light ratio.
-    func_flux = lambda f0, MF, mu: f0 * 10**(-0.4*(MF + mu)) #Calculate the flux density of the galaxy. f0 
-                                                             #is the zero point. MF is the absolute magnitude 
-                                                             #of the galaxy at certain band. mu is the distance 
+    func_flux = lambda f0, MF, mu: f0 * 10**(-0.4*(MF + mu)) #Calculate the flux density of the galaxy. f0
+                                                             #is the zero point. MF is the absolute magnitude
+                                                             #of the galaxy at certain band. mu is the distance
                                                              #module.
     Ms = 10**logMs #Calculate the stellar mass.
     age_up = model.get_age(1500., zs)
     if age > age_up:
         raise ValueError('The age is too large!')
-    zf = fsolve(func_age, zf_guess, args=(zs, age)) #Given the source redshift and the age, calculate the redshift 
+    zf = fsolve(func_age, zf_guess, args=(zs, age)) #Given the source redshift and the age, calculate the redshift
                                                     #for the star formation.
     Msun_H = model.get_solar_rest_mags(nzs=1, filters=band, ab=True) #The absolute magnitude of the Sun in given band.
     m2l = model.get_rest_ml_ratios(zf, band, zs) #Calculate the mass-to-light ratio.
@@ -87,7 +87,7 @@ def Stellar_SED(logMs, age, zs, wave, band='h', zf_guess=1.0, spsmodel='bc03_ssp
     flux_ext = np.zeros(30)
     wave_extd = np.concatenate([wave_rst, wave_ext])
     flux_extd = np.concatenate([flux_rst, flux_ext])
-    #Normalize the SED at the given band. 
+    #Normalize the SED at the given band.
     #The normalization provided by EzGal is not well understood, so I do not use it.
     f_int = interp1d(wave_extd, flux_extd)
     f_H = f_int(wave_H)
@@ -106,18 +106,18 @@ def Stellar_SED_scale(logMs, flux_star_1Msun, wave):
     '''
     This function scales the stellar SED to obtain the best-fit stellar mass.
     The input SED flux should be normalised to 1 solar mass.
-    
+
     Parameters
     ----------
     logMs : float
         The log stellar mass in unit solar mass
     flux_star_1Msun : float array
         The flux of stellar SED model. It is normalized to one solar mass.
-        
+
     Returns
     -------
     flux : float array
-    
+
     Notes
     ----
     None.
@@ -134,18 +134,18 @@ def Stellar_SED_scale(logMs, flux_star_1Msun, wave):
 #   Created by SGJY, May. 3, 2016     #
 #-------------------------------------#
 #From: dev_CLUMPY_intp.ipynb
-def CLUMPY_Torus_Model(TORUS_logsf, 
-                       TORUS_i, 
-                       TORUS_tv, 
-                       TORUS_q, 
-                       TORUS_N0, 
-                       TORUS_sig, 
-                       TORUS_Y, 
-                       wave, 
+def CLUMPY_Torus_Model(TORUS_logsf,
+                       TORUS_i,
+                       TORUS_tv,
+                       TORUS_q,
+                       TORUS_N0,
+                       TORUS_sig,
+                       TORUS_Y,
+                       wave,
                        TORUS_tmpl_ip):
     '''
     This function provide the dust torus MIR flux with CLUMPY model.
-    
+
     Parameters
     ----------
     TORUS_logsf : float
@@ -166,12 +166,12 @@ def CLUMPY_Torus_Model(TORUS_logsf,
         The wavelength at which we want to calculate the flux.
     TORUS_tmpl_ip : NdimInterpolation class
         The NdimInterpolation class obtained from Nikutta's interpolation code.
-        
+
     Returns
     -------
     flux : array of float
         The flux density (F_nu) from the model.
-    
+
     Notes
     -----
     None.
@@ -187,7 +187,7 @@ def CLUMPY_Torus_Model(TORUS_logsf,
 def Modified_BlackBody(logM, T, beta, wave, DL, kappa0=16.2, lambda0=140):
     '''
     This function is a wrapper to calculate the modified blackbody model.
-    
+
     Parameters
     ----------
     logM : float
@@ -204,16 +204,16 @@ def Modified_BlackBody(logM, T, beta, wave, DL, kappa0=16.2, lambda0=140):
         The normalisation opacity.
     lambda0 : float, default: 140
         The normalisation wavelength.
-        
+
     Returns
     -------
     flux : float array
         The flux at the given wavelengths to calculate.
-        
+
     Notes
     -----
     None.
-    
+
     '''
     ls_mic = 2.99792458e14 #micron/s
     nu = ls_mic / wave
@@ -223,7 +223,7 @@ def Modified_BlackBody(logM, T, beta, wave, DL, kappa0=16.2, lambda0=140):
 def Power_Law(PL_alpha, PL_logsf, wave):
     '''
     This function is a wrapper to calculate the power law model.
-    
+
     Parameters
     ----------
     PL_alpha : float
@@ -232,12 +232,12 @@ def Power_Law(PL_alpha, PL_logsf, wave):
         The log of the scaling factor.
     wave : float array
         The wavelength.
-    
+
     Returns
     -------
     flux : float array
         The flux at the given wavelengths to calculate.
-        
+
     Notes
     -----
     None.
@@ -255,7 +255,7 @@ def DL07_Model_Intp(umin, umax, qpah, gamma, logMd, tmpl_dl07, wave, DL):
     '''
     This function generates the dust emission template from Draine & Li (2007).
     The fluxes are interpolated at the given wavelength.
-    
+
     Parameters
     ----------
     umin : float
@@ -274,22 +274,22 @@ def DL07_Model_Intp(umin, umax, qpah, gamma, logMd, tmpl_dl07, wave, DL):
         The wavelengths of the output flux.
     DL : float
         The luminosity distance.
-        
+
     Returns
     -------
     flux_model : float array
         The flux density of the model at the given wavelength.
-        
+
     Notes
     -----
     None.
     '''
     uminList = [0.10, 0.15, 0.20, 0.30, 0.40, 0.50, 0.70, 0.80, 1.00, 1.20,
-            1.50, 2.00, 2.50, 3.00, 4.00, 5.00, 7.00, 8.00, 10.0, 12.0, 
+            1.50, 2.00, 2.50, 3.00, 4.00, 5.00, 7.00, 8.00, 10.0, 12.0,
             15.0, 20.0, 25.0]
     umaxList = [1e3, 1e4, 1e5, 1e6]
     qpahList = [0.47, 1.12, 1.77, 2.50, 3.19, 3.90, 4.58, 0.75, 1.49, 2.37, 0.10]
-    mdust2mh = [0.01, 0.01, 0.0101, 0.0102, 0.0102, 0.0103, 0.0104, 0.00343, 
+    mdust2mh = [0.01, 0.01, 0.0101, 0.0102, 0.0102, 0.0103, 0.0104, 0.00343,
                 0.00344, 0.00359, 0.00206]
     chk_umin = umin in uminList
     chk_umax = umax in umaxList
@@ -316,7 +316,7 @@ def DL07_Model_Intp(umin, umax, qpah, gamma, logMd, tmpl_dl07, wave, DL):
 def DL07_Model(umin, umax, qpah, gamma, logMd, tmpl_dl07, DL, wave):
     '''
     This function generates the dust emission template from Draine & Li (2007).
-    
+
     Parameters
     ----------
     umin : float
@@ -333,22 +333,22 @@ def DL07_Model(umin, umax, qpah, gamma, logMd, tmpl_dl07, DL, wave):
         The template of DL07 model provided by user.
     DL : float
         The luminosity distance.
-        
+
     Returns
     -------
     flux : float array
         The flux density of the model.
-        
+
     Notes
     -----
     None.
     '''
     uminList = [0.10, 0.15, 0.20, 0.30, 0.40, 0.50, 0.70, 0.80, 1.00, 1.20,
-            1.50, 2.00, 2.50, 3.00, 4.00, 5.00, 7.00, 8.00, 10.0, 12.0, 
+            1.50, 2.00, 2.50, 3.00, 4.00, 5.00, 7.00, 8.00, 10.0, 12.0,
             15.0, 20.0, 25.0]
     umaxList = [1e3, 1e4, 1e5, 1e6]
     qpahList = [0.47, 1.12, 1.77, 2.50, 3.19, 3.90, 4.58, 0.75, 1.49, 2.37, 0.10]
-    mdust2mh = [0.01, 0.01, 0.0101, 0.0102, 0.0102, 0.0103, 0.0104, 0.00343, 
+    mdust2mh = [0.01, 0.01, 0.0101, 0.0102, 0.0102, 0.0103, 0.0104, 0.00343,
                 0.00344, 0.00359, 0.00206]
     chk_umin = umin in uminList
     chk_umax = umax in umaxList
@@ -418,7 +418,7 @@ funcLib = {
 }
 
 #Input model dict
-inputModelDict = OrderedDict( 
+inputModelDict = OrderedDict(
     (
         ('Hot_Dust', {
                 'function': 'Modified_BlackBody',
@@ -447,32 +447,32 @@ inputModelDict = OrderedDict(
                     'value': 4.0,
                     'vary': True,
                     'range': [-np.inf, np.inf]
-                }, 
+                },
                 'TORUS_i': {
                     'value': 13.847,
                     'vary': True,
                     'range': [0.0, 90.0]
-                }, 
+                },
                 'TORUS_tv': {
                     'value': 51.390,
                     'vary': True,
                     'range': [10.0, 300.0]
-                }, 
+                },
                 'TORUS_q': {
                     'value': 0.356,
                     'vary': True,
                     'range': [0.0, 3.0]
-                }, 
+                },
                 'TORUS_N0': {
                     'value': 4.000,
                     'vary': True,
                     'range': [1.0, 15.0]
-                }, 
+                },
                 'TORUS_sig': {
                     'value': 69.949,
                     'vary': True,
                     'range': [15.0, 70.0]
-                }, 
+                },
                 'TORUS_Y': {
                     'value': 21.889,
                     'vary': True,
@@ -487,22 +487,22 @@ inputModelDict = OrderedDict(
                     'value': 1.,
                     'vary': False,
                     'range': [None, None]
-                }, 
+                },
                 'umax': {
                     'value': 1e6,
                     'vary': False,
                     'range': [None, None]
-                }, 
+                },
                 'qpah': {
                     'value': 4.58,
                     'vary': False,
                     'range': [None, None]
-                }, 
+                },
                 'gamma': {
                     'value': 0.01,
                     'vary': True,
                     'range': [0.01, 0.99]
-                }, 
+                },
                 'logMd': {
                     'value': 6.5,
                     'vary': True,

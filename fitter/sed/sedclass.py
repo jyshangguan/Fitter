@@ -2,7 +2,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from datafit import basicclass as bc
+from .. import basicclass as bc
 from scipy.interpolate import interp1d
 import types
 
@@ -10,10 +10,10 @@ import types
 class BandPass(object):
     """
     A class to represent one filter bandpass of a instrument.
-    
+
     It contains the bandpass information and can convert the spectra
     into the band flux density.
-    
+
     Parameters
     ----------
     wavelength : float array
@@ -137,7 +137,7 @@ class SedClass(bc.DataSet):
         from astropy.cosmology import FlatLambdaCDM
         cosmo = FlatLambdaCDM(H0=H0, Om0=Om0)
         self.dl = cosmo.luminosity_distance(redshift).value #Luminosity distance in unit Mpc.
-        
+
     def pht_plotter(self, wave, flux, sigma, flag, FigAx=None, linewidth='1.5',
                     symbolColor='k', symbolSize=6, label=None):
         wave = np.array(wave)
@@ -193,7 +193,7 @@ class SedClass(bc.DataSet):
         ax.set_yscale('log')
         ax.tick_params(labelsize=16)
         return (fig, ax)
-    
+
     def plot_pht(self, FigAx=None, linewidth='1.5', symbolColor='k', symbolSize=6):
         dataDict = self.get_dsArrays()
         for name in dataDict.keys():
@@ -202,10 +202,10 @@ class SedClass(bc.DataSet):
             sigma = dataDict[name][2]
             flag = dataDict[name][3]
             print sigma
-            FigAx = self.pht_plotter(wave, flux, sigma, flag, FigAx, linewidth, 
+            FigAx = self.pht_plotter(wave, flux, sigma, flag, FigAx, linewidth,
                                        symbolColor, symbolSize, name)
         return FigAx
-    
+
     def spc_plotter(self, wave, flux, sigma, FigAx=None, linewidth=1.,
                     color='grey', label=None):
         if(len(wave) == 0):
@@ -220,7 +220,7 @@ class SedClass(bc.DataSet):
             ax = FigAx[1]
         ax.errorbar(wave, flux, yerr=sigma, color=color, linewidth=linewidth, label=label)
         return (fig, ax)
-    
+
     def plot_spc(self, FigAx=None, linewidth=1., color='grey'):
         dataDict = self.get_csArrays()
         for name in dataDict.keys():
@@ -229,33 +229,33 @@ class SedClass(bc.DataSet):
             sigma = dataDict[name][2]
             FigAx = self.spc_plotter(wave, flux, sigma, FigAx, linewidth, color, name)
         return FigAx
-    
+
     def plot_sed(self, FigAx=None):
         FigAx = self.plot_pht(FigAx=FigAx)
         FigAx = self.plot_spc(FigAx=FigAx)
         return FigAx
-    
+
     def set_bandpass(self, bandDict):
         for bn in bandDict.keys():
             if not isinstance(bandDict[bn], BandPass):
                 raise ValueError('The bandpass {0} has incorrect type!'.format(bn))
         self.__bandDict = bandDict
-        
+
     def add_bandpass(self, bandDict):
         for bn in bandDict.keys():
             if isinstance(bandDict[bn], BandPass):
                 self.__bandDict[bn] = bandDict[bn]
             else:
                 raise ValueError('The bandpass {0} has incorrect type!'.format(bn))
-        
+
     def get_bandpass(self):
         return self.__bandDict
-    
+
     def filtering(self, bandName, wavelength, flux, **kwargs):
         """
-        Calculate the flux density of the input spectrum filtered by 
+        Calculate the flux density of the input spectrum filtered by
         the specified band. The spectrum is considered at the rest frame.
-        
+
         Parameters
         ----------
         bandName : str
@@ -264,12 +264,12 @@ class SedClass(bc.DataSet):
             The wavelength of the input spectrum.
         flux : float array
             The flux of the input spectrum.
-        
+
         Returns
         -------
         A tuple of the band central wavelength and the flux density after filtered by
         the bandpass.
-        
+
         Notes
         -----
         None.
@@ -285,13 +285,13 @@ class SedClass(bc.DataSet):
         waveRst = bandCenter / (1+z)
         fluxRst = bandFlux# * (1+z)
         return (waveRst, fluxRst)
-    
+
     def model_pht(self, wavelength, flux, bandKws={}):
         """
         Calculate the model flux density of the input spectrum at the wavelengths of
-        all the bands of the photometric data of the SED. The spectrum is considered 
+        all the bands of the photometric data of the SED. The spectrum is considered
         at the rest frame.
-        
+
         Parameters
         ----------
         wavelength : float array
@@ -300,12 +300,12 @@ class SedClass(bc.DataSet):
             The flux of the input spectrum.
         bandKws : dict, by default: {}
             All the necessary parameters of each bandpass.
-        
+
         Returns
         -------
         fluxList : list
             The model flux at all the wavelengths of the photometric SED.
-        
+
         Notes
         -----
         None.
@@ -316,12 +316,12 @@ class SedClass(bc.DataSet):
             kws = bandKws.get(bandName, {})
             fluxList.append(self.filtering(bandName, wavelength, flux, **kws)[1])
         return fluxList
-    
+
     def model_spc(self, wavelength, flux, cSetName=None):
         """
         Calculate the model flux density of the input spectrum at the wavelengths of
         all the spectra. The input spectrum is considered at the rest frame.
-        
+
         Parameters
         ----------
         wavelength : float array
@@ -330,12 +330,12 @@ class SedClass(bc.DataSet):
             The flux of the input spectrum.
         cSetName : str or None by default
             Specify the name of continual set to use.
-            
+
         Returns
         -------
         fluxList : list
             The model flux at the wavelengths of the spectral SED.
-            
+
         Notes
         -----
         None.
