@@ -135,8 +135,10 @@ def GaussianModelSet(p_value, range_list):
         #For each parameter, add the information.
         parFitDict = OrderedDict()
         for loop_pn in range(3):
-            rp1 = range_list[loop_pn][loop_m]
-            rp2 = range_list[loop_pn][loop_m + 1]
+            if len(range_list[loop_pn]) > 2:
+                rp1, rp2 = range_list[loop_pn][loop_m:(loop_m+2)]
+            else:
+                rp1, rp2 = range_list[loop_pn]
             parFitDict[parNameList[loop_pn]] = {
                 'value': p_value[loop_m][loop_pn],
                 'range': [rp1, rp2],
