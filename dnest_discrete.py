@@ -96,3 +96,8 @@ for i, sample in enumerate(gen):
 
 # Run the postprocessing
 dnest4.postprocess()
+
+
+#Rename the posterior sample file name#
+#-------------------------------------#
+os.rename("posterior_sample.txt", "{0}_d_posterior.txt")
