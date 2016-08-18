@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from collections import OrderedDict
 from scipy.interpolate import interp1d
-import datafit_im.basicclass as bc
+import fitter.basicclass as bc
 
 def GaussFunc(a, b, c, x):
     return a * np.exp( -0.5 * ( (x - b) / c )**2. )
