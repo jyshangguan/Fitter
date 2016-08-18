@@ -52,7 +52,7 @@ plt.plot(xd, yTrue, linewidth=1.5, color="k")
 for y in cmpList:
     plt.plot(xd, y, linestyle='--')
 
-xm = np.linspace(1., 1000., 1000)
+xm = np.linspace(1., 800., 1000)
 ym = np.zeros_like(xm)
 cl = ["r", "y", "b", "g", "m", "c"]
 for loop in range(nGauss):

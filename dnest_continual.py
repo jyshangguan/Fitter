@@ -159,7 +159,7 @@ sampler = dnest4.DNest4Sampler(dn4m,
                                                                   sep=" "))
 
 # Set up the sampler. The first argument is max_num_levels
-gen = sampler.sample(max_num_levels=30, num_steps=2000, new_level_interval=10000,
+gen = sampler.sample(max_num_levels=30, num_steps=1000, new_level_interval=10000,
                       num_per_step=10000, thread_steps=100,
                       num_particles=5, lam=10, beta=100, seed=1234)
 
