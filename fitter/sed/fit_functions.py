@@ -1,8 +1,8 @@
 import copy
 import numpy as np
 from scipy.interpolate import interp1d
-from datafit import basicclass as bc
-from datafit import sedclass as sc
+from .. import basicclass as bc
+import sedclass as sc
 import model_functions as sedmf
 from lmfit import minimize, Parameters, fit_report
 
@@ -10,9 +10,9 @@ inputModelDict = sedmf.inputModelDict
 
 def Model2Data(sedData, sedModel, waveModel):
     """
-    Convert the continual model to the data-like model to directly 
+    Convert the continual model to the data-like model to directly
     compare with the data.
-    
+
     Parameters
     ----------
     sedData : SEDClass object
@@ -21,12 +21,12 @@ def Model2Data(sedData, sedModel, waveModel):
         The combined model.
     waveModel : float array
         The model wavelength array.
-        
+
     Returns
     -------
     fluxModelPht : list
         The model flux list of photometric data.
-        
+
     Notes
     -----
     None.
@@ -42,19 +42,19 @@ def Model2Data(sedData, sedModel, waveModel):
 def Parameters_Init(model_dict_init, func_lib):
     '''
     This function create the Parameters() for model fitting using LMFIT.
-    
+
     Parameters
     ----------
     model_dict_init : dict
         The dict of model components.
     func_lib : dict
         The dict of all the supporting functions.
-        
+
     Returns
     -------
     params : class Parameters
         The Parameters object used in the LMFIT.
-    
+
     Notes
     -----
     None.
@@ -81,23 +81,23 @@ def Parameters_Init(model_dict_init, func_lib):
 
 def Parameters_Dump(params, sed_model):
     '''
-    This function load the model parameters into the Parameters() 
+    This function load the model parameters into the Parameters()
     used by the LMFIT.
-    
+
     Parameters
     ----------
     params : class Parameters
         The Parameters object used in the LMFIT.
     sed_model : class ModelCombiner
         The model.
-        
+
     Returns
     -------
     None
-    
+
     Notes
     -----
-    Since it is not easy to duplicate a new model_dict, we just change 
+    Since it is not easy to duplicate a new model_dict, we just change
     the original one.
     '''
     if not isinstance(sed_model, bc.ModelCombiner):
@@ -112,21 +112,21 @@ def Parameters_Dump(params, sed_model):
 
 def Parameters_Load(params, sed_model):
     '''
-    This function load the model parameters into the Parameters() 
+    This function load the model parameters into the Parameters()
     used by the LMFIT.
-    
+
     Parameters
     ----------
     params : class Parameters
         The Parameters object used in the LMFIT.
     sed_model : class ModelCombiner
         The model.
-        
+
     Returns
     -------
     params : class Parameters
         The Parameters object used in the LMFIT.
-    
+
     Notes
     -----
     None.
@@ -145,10 +145,10 @@ def Parameters_Load(params, sed_model):
 
 def ChiSq(data, model, unct=None):
     '''
-    This function calculate the Chi square of the observed data and 
-    the model. The upper limits are properly deal with using the method 
+    This function calculate the Chi square of the observed data and
+    the model. The upper limits are properly deal with using the method
     mentioned by Sawicki (2012).
-    
+
     Parameters
     ----------
     data : float array
@@ -157,12 +157,12 @@ def ChiSq(data, model, unct=None):
         The model.
     unct : float array
         The uncertainties.
-    
+
     Returns
     -------
     chsq : float
         The Chi square
-        
+
     Notes
     -----
     None.
@@ -190,7 +190,7 @@ def ChiSquare_LMFIT(params, sed_data, sed_model, model_func, wave_model):
     '''
     This function uses the given model to calculate the Chi square.
     This function is designed for the LMFIT package.
-    
+
     Parameters
     ----------
     params : Parameter class from LMFIT package
@@ -202,12 +202,12 @@ def ChiSquare_LMFIT(params, sed_data, sed_model, model_func, wave_model):
         Objective function.
     func_kws : dict
         The parameters used by the model_func().
-        
+
     Returns
     -------
     chsq : float
         The Chi square.
-        
+
     Notes
     -----
     None.
@@ -222,7 +222,7 @@ def ChiSquare_LMFIT(params, sed_data, sed_model, model_func, wave_model):
 def SED_Model_Fit(params, sed_data, sed_model, param_dl07, wave_model):
     """
     This function do the SED fitting.
-    
+
     Parameters
     ----------
     params : class Parameters()
@@ -253,9 +253,9 @@ def SED_Model_Fit(params, sed_data, sed_model, param_dl07, wave_model):
     params = Parameters_Load(params, sed_model)
 
     chisqKws = {
-        'sed_data': sed_data, 
-        'sed_model': sed_model, 
-        'model_func': Model2Data, 
+        'sed_data': sed_data,
+        'sed_model': sed_model,
+        'model_func': Model2Data,
         'wave_model': wave_model,
     }
     out = minimize(ChiSquare_LMFIT, params, kws=chisqKws, method='nelder')
