@@ -26,7 +26,7 @@ def logLFunc_simple(params, data, model):
 
 
 #Load the data#
-#-----------------#
+#-------------#
 Nmodel = 5
 dataName = "gauss{0}".format(Nmodel)
 try:
@@ -62,6 +62,12 @@ pRangeDiscrete = {
     "c": list( np.arange(10.0, 100.0, 5.0) )
 }
 gaussModel = GaussianModelDiscrete(Nmodel, pRangeDiscrete, gt)
+modelDict = gaussModel.get_modelParDict()
+for modelName in gaussModel._modelList:
+    model = modelDict[modelName]
+    for parName in model.keys():
+        parDict = model[parName]
+        print("{0}: {1} ({2})".format(parName, parDict["value"], parDict["range"]))
 
 #Construct the DNest4Model#
 #-------------------------#
