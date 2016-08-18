@@ -8,21 +8,21 @@ import cPickle as pickle
 import types
 
 def logLFunc_simple(params, data, model):
-        parDict = model.get_modelParDict()
-        pIndex = 0
-        for modelName in model._modelList:
-            parFitDict = parDict[modelName]
-            for parName in parFitDict.keys():
-                parFitDict[parName]["value"] = params[pIndex]
-                pIndex += 1
-        x = np.array(data.get_List('x'))
-        y = np.array(data.get_List('y'))
-        e = np.array(data.get_List('e'))
-        ym = np.array(model.combineResult(x))
-        #Calculate the log_likelihood
-        s2 = e**2.
-        logL = -0.5 * np.sum( (y - ym)**2 / s2 + np.log(2 * np.pi * s2) )
-        return logL
+    parDict = model.get_modelParDict()
+    pIndex = 0
+    for modelName in model._modelList:
+        parFitDict = parDict[modelName]
+        for parName in parFitDict.keys():
+            parFitDict[parName]["value"] = params[pIndex]
+            pIndex += 1
+    x = np.array(data.get_List('x'))
+    y = np.array(data.get_List('y'))
+    e = np.array(data.get_List('e'))
+    ym = np.array(model.combineResult(x))
+    #Calculate the log_likelihood
+    s2 = e**2.
+    logL = -0.5 * np.sum( (y - ym)**2 / s2 + np.log(2 * np.pi * s2) )
+    return logL
 
 
 #Load the data#
