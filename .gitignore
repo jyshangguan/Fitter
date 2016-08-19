@@ -6,3 +6,6 @@
 
 #Python auxillary files
 *.pyc
+
+#SED data
+*.sed
