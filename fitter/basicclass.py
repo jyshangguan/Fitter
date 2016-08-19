@@ -514,13 +514,27 @@ class DNest4Model(object):
     """
     Specify the model
     """
-    def __init__(self, data, model, logl):
+    def __init__(self, data, model, logl, ModelUnct=False):
         if isinstance(data, DataSet):
             self.__data = data
+        else:
+            raise TypeError("The data type should be DataSet!")
         if isinstance(model, ModelCombiner):
             self.__model = model
+        else:
+            raise TypeError("The model type should be ModelCombiner!")
         if isinstance(logl, types.FunctionType):
             self._logl = logl
+        else:
+            raise TypeError("The model type should be a function!")
+        if isinstance(ModelUnct, types.BooleanType):
+            self.__modelunct = ModelUnct
+            if ModelUnct:
+                print "[DNest4Model]: ModelUnct is on!"
+            else:
+                print "[DNest4Model]: ModelUnct is off!"
+        else:
+            raise TypeError("The ModelUnct type should be Boolean!")\
 
     def from_prior(self):
         """
@@ -543,6 +557,10 @@ class DNest4Model(object):
                 else:
                     raise TypeError("The parameter type '{0}' is not recognised!".format(parType))
                 parList.append(p)
+        #If the model uncertainty is concerned.
+        if self.__modelunct:
+            lnf =  20.0 * rng.rand() - 10.0
+            parList.append(lnf)
         parList = np.array(parList)
         return parList
 
@@ -579,6 +597,10 @@ class DNest4Model(object):
                     raise TypeError("The parameter type '{0}' is not recognised!".format(parType))
                 parFitDict[parName]["value"] = params[pIndex]
                 pIndex += 1
+        if len(params) == (pIndex+1):
+            params[pIndex] += 20.0 * rng.randh()
+            if (params[pIndex] < -10.0) or (params[pIndex] > 10.0):
+                logH -= np.inf
         return logH
 
     def log_likelihood(self, params):
