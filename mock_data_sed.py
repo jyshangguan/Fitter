@@ -15,7 +15,7 @@ targname = 'mock'
 redshift = 0.2
 bandList = ['w1', 'w2', 'w3', 'w4', 'PACS_70', 'PACS_100', 'PACS_160', 'SPIRE_250', 'SPIRE_350', 'SPIRE_500']
 nBands = len(bandList)
-sedwave = np.array([3.353, 4.603, 11.561, 22.088, 70.0, 100.0, 160.0, 250.0, 350.0, 500.0])
+sedwave = np.array([3.353, 4.603, 11.561, 22.088, 70.0, 100.0, 160.0, 250.0, 350.0, 500.0])/(1+redshift)
 fakedata = np.ones(nBands)
 phtData = {'WISE&Herschel': bc.DiscreteSet(bandList, sedwave, fakedata, fakedata, fakedata)}
 sedData = sedsc.SedClass(targname, redshift, phtDict=phtData)
@@ -56,7 +56,7 @@ sedData.add_bandpass(herschelBandDict)
 ## Generate the mock data
 
 fAdd   = None #0.1
-logMList = [1.2, 4.0, 9.4]
+logMList = [1.7, 4.5, 8.8]
 TList = [641.8, 147.4, 26.1]
 betaList = [1.7, 2.3, 2.0]
 print( "#------Start fitting------#" )
@@ -69,7 +69,7 @@ print( "# f_add: {0}".format(fAdd) )
 print( "#-------------------------#" )
 
 Ndata  = 500
-xMax   = 500.0
+xMax   = 600.0
 x = 10**np.linspace(0.0, np.log10(xMax), Ndata)
 yTrue = np.zeros(Ndata)
 cmpList = []
@@ -115,7 +115,7 @@ for y in cmpList:
     plt.plot(x, y, linestyle='--')
 plt.plot(x, yTrue, color="k")
 ymax = np.max(yTrue)
-plt.xlim([1.0, 6e2])
+plt.xlim([1.0, 7e2])
 plt.ylim([1e1, ymax*2.0])
 plt.xscale("log")
 plt.yscale("log")

@@ -25,9 +25,9 @@ Model2Data = sedff.Model2Data
 #-------------#
 # Create the sedData
 ## Read in the data
-targname = 'PG1612+261' #'PG0050+124'
-sedFile  = '/Users/jinyi/Work/PG_QSO/sobt/SEDs/{0}_cbr.sed'.format(targname)
-redshift = 0.061
+targname = 'mock' #'PG1612+261' #'PG0050+124'
+sedFile  = 'mock.sed' #'/Users/jinyi/Work/PG_QSO/sobt/SEDs/{0}_cbr.sed'.format(targname)
+redshift = 0.2 #0.061
 sedRng   = [3, 13]
 spcRng   = [13, None]
 spcRebin = 1.
