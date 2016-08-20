@@ -57,8 +57,8 @@ sedData.add_bandpass(herschelBandDict)
 
 fAdd   = None #0.1
 logMList = [1.7, 4.5, 8.8]
-TList = [641.8, 147.4, 26.1]
 betaList = [1.7, 2.3, 2.0]
+TList = [641.8, 147.4, 26.1]
 print( "#------Start fitting------#" )
 parList = []
 for loop in range(3):
@@ -93,7 +93,10 @@ model['x_obsr']     = sedwave
 model['y_obsr']     = yObsr
 model['y_err']      = yErr
 model['parameters'] = parList
-model['compnents']  = cmpList
+model['components']  = cmpList
+
+logL = -0.5 * np.sum( ((yObsr - yTrueBand)/yErr)**2. + np.log(2 * np.pi * yErr**2.) )
+print("logL: {0:.3f}".format(logL))
 
 fileName = "mbb_mock.dict"
 fp = open(fileName, "w")

@@ -199,7 +199,7 @@ def logLFunc_SED(params, data, model):
     y = np.array(data.get_List('y'))
     e = np.array(data.get_List('e'))
     #ym = np.array(model.combineResult(x))
-    ym = Model2Data(data, model, x)
+    ym = np.array(Model2Data(data, model, x))
     if len(params) == pIndex:
         s = e
     elif len(params) == (pIndex+1):
@@ -208,5 +208,5 @@ def logLFunc_SED(params, data, model):
     else:
         raise ValueError("The length of params is incorrect!")
     #Calculate the log_likelihood
-    logL = -0.5 * (sedff.ChiSq(y, ym, s) + np.sum( np.log(2 * np.pi * s**2) ))
+    logL = -0.5 * (ChiSq(y, ym, s) + np.sum( np.log(2 * np.pi * s**2) ))
     return logL

@@ -1,5 +1,7 @@
+import os
 import h5py
 import copy
+import dnest4
 import numpy as np
 import matplotlib.pyplot as plt
 from collections import OrderedDict
@@ -28,8 +30,10 @@ Model2Data = sedff.Model2Data
 targname = 'mock' #'PG1612+261' #'PG0050+124'
 sedFile  = 'mock.sed' #'/Users/jinyi/Work/PG_QSO/sobt/SEDs/{0}_cbr.sed'.format(targname)
 redshift = 0.2 #0.061
-sedRng   = [3, 13]
-spcRng   = [13, None]
+sedRng   = [0, 10]
+spcRng   = [10, None]
+#sedRng   = [3, 13]
+#spcRng   = [13, None]
 spcRebin = 1.
 sedPck = sedt.Load_SED(sedFile, sedRng, spcRng, spcRebin)
 sed = sedPck['sed_cb']
@@ -55,44 +59,9 @@ spcData = {'IRS': bc.ContinueSet(spcwave, spcflux, spcsigma, spcflag, spcDataTyp
 #spcData = {}
 sedData = sedsc.SedClass(targname, redshift, phtDict=phtData, spcDict=spcData)
 DL = sedData.dl
-## Add the fake photometric data from the Spitzer spectrum
-spitzerBandInfo = {
-    's1': [6.0, 6.7],
-    's2': [7.0, 9.0],
-    's3': [10.0, 14.0],
-    's4': [16.0, 20.0],
-    's5': [24.0, 28.0]
-}
-spitzerBandDict = OrderedDict()
-spitzerBandList = ['s1', 's2', 's3','s4', 's5']
-for n in range(len(spitzerBandList)):
-    bandName = spitzerBandList[n]
-    waveMin = spitzerBandInfo[bandName][0]
-    waveMax = spitzerBandInfo[bandName][1]
-    fltr = (spcwave<waveMax) & (spcwave>waveMin)
-    if np.sum(fltr) == 0:
-        raise ValueError('The band range is incorrect!')
-    bandWave = spcwave[fltr]
-    bandRsr = np.ones_like(bandWave)
-    spitzerBandDict[bandName] = sedsc.BandPass(bandWave, bandRsr, bandName=bandName)
-sedData.set_bandpass(spitzerBandDict)
-#print sedData.get_bandpass()
-bandWaveList = []
-bandFluxList = []
-for bandName in spitzerBandList:
-    bandWave, bandFlux = sedData.filtering(bandName, spcwave, spcflux)
-    bandWaveList.append(bandWave)
-    bandFluxList.append(bandFlux)
-bandWaveList = np.array(bandWaveList)
-bandFluxList = np.array(bandFluxList)
-bandSigmaList = bandFluxList * 0.05
-bandFlagList = np.ones_like(bandWaveList)
-spitzerPhtData = {'Spitzer': bc.DiscreteSet(spitzerBandList, bandWaveList,
-                                            bandFluxList, bandSigmaList,
-                                            bandFlagList, sedDataType)}
-sedData.add_DiscreteSet(spitzerPhtData)
 ## Plot the data
 #fig, ax = sedData.plot_sed()
+#ymin, ymax = ax.get_ylim()
 #ax.legend()
 #plt.show()
 
@@ -124,7 +93,7 @@ for bandName in herschelBandList:
     bandRsr = herschelBands[bandName]['bandpass'][1][::-1]
     bandCenter = herschelBands[bandName]['wave0']
     herschelBandDict[bandName] = sedsc.BandPass(bandWave, bandRsr, bandCenter,
-                                             bandFunc=bf.BandFunc_intp,
+                                             bandFunc=bf.BandFunc_Herschel,
                                              bandName=bandName)
 sedData.add_bandpass(herschelBandDict)
 
@@ -173,8 +142,11 @@ for modelName in modelNameList:
         parAddDict[parName] = parAddDict_all[parName]
     modelDict[modelName] = bc.ModelFunction(funcInfo['function'], xName, parFitDict, parAddDict)
 sedModel = bc.ModelCombiner(modelDict)
+parAllList = sedModel.get_parList()
+parNumber  = len(parAllList)
 #Plot the
-#fig, ax = sedModel.plot(waveModel)
+#fig, ax = sedModel.plot(waveModel, FigAx=(fig, ax))
+#ax.set_ylim([ymin/100., ymax])
 #plt.show()
 
 #Fit with DNest4#
@@ -182,3 +154,70 @@ sedModel = bc.ModelCombiner(modelDict)
 
 ## Create the DNest4Model
 dn4m = bc.DNest4Model(sedData, sedModel, logLFunc)
+print dn4m.log_likelihood(parAllList)
+
+
+"""
+
+## Create a model object and a sampler
+sampler = dnest4.DNest4Sampler(dn4m,
+                               backend=dnest4.backends.CSVBackend(".",
+                                                                  sep=" "))
+
+## Set up the sampler. The first argument is max_num_levels
+gen = sampler.sample(max_num_levels=30, num_steps=1000, new_level_interval=10000,
+                      num_per_step=10000, thread_steps=100,
+                      num_particles=5, lam=10, beta=100, seed=1234)
+
+## Do the sampling (one iteration here = one particle save)
+for i, sample in enumerate(gen):
+    print("# Saved {k} particles.".format(k=(i+1)))
+
+## Run the postprocessing
+dnest4.postprocess()
+
+
+#Process the posterior distributions of the parameters#
+#-----------------------------------------------------#
+##Fitting results
+ps = np.loadtxt("posterior_sample.txt")
+try:
+    assert ps.shape[1] == (1000, parNumber)
+except:
+    raise AssertionError("The posterior sample is problematic!")
+##Calculate the optimized paramter values
+parRangeList = map( lambda v: (v[1], v[2]-v[1], v[1]-v[0]),
+                   zip(*np.percentile(ps, [16, 50, 84], axis=0)) )
+parBfList = parRangeList[0] #The best fit parameters
+uncUlList = parRangeList[1] #The upperlimits of the parameter uncertainties
+uncLlList = parRangeList[2] #The lowerlimits of the parameter uncertainties
+parUlList = parBfList + uncUlList #The upperlimits of the parameters
+parLlList = parBfList - uncLlList #The lowerlimits of the parameters
+
+### Plot the Data
+fp = open("mbb_mock.dict")
+mockDict = pickle.load(fp)
+fp.close()
+#print mockDict.keys()
+cmpList = mockDict['compnents']
+parList = mockDict['parameters']
+xModel  = mockDict['x']
+
+plt.errorbar(wave, flux, yerr=sigma, fmt='.k')
+yModel = np.zeros_like(xModel)
+cList = ['r', 'g', 'b', 'm', 'y', 'c']
+counter = 0
+for y in cmpList:
+    plt.plot(xModel, y, color=cList[counter], linestyle='--')
+    yModel += y
+    counter += 1
+plt.plot(xModel, yModel, color='k', linewidth=1.5)
+plt.ylim([1e-1, 1e3])
+plt.xscale('log')
+plt.yscale('log')
+plt.show()
+
+## Rename the posterior sample file name#
+#os.rename("posterior_sample.txt", "{0}_posterior.txt".format(targname))
+
+"""

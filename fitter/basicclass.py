@@ -4,6 +4,7 @@ import types
 import numpy as np
 from collections import OrderedDict
 import matplotlib.pyplot as plt
+import dnest4
 from dnest4.utils import rng
 
 
@@ -452,6 +453,18 @@ class ModelCombiner(object):
             model = self.__modelDict[modelName]
             modelParDict[modelName] = model.parFitDict
         return modelParDict
+
+    def get_parList(self):
+        """
+        Return the total numcer of the fit parameters.
+        """
+        parList = []
+        for modelName in self._modelList:
+            model = self.__modelDict[modelName]
+            modelParDict = model.parFitDict
+            for parName in modelParDict.keys():
+                parList.append(modelParDict[parName]["value"])
+        return parList
 
     def updateParFit(self, modelName, parName, parValue, QuietMode=True):
         model = self.__modelDict[modelName]

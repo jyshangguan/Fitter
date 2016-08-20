@@ -415,10 +415,81 @@ inputModelDict = OrderedDict(
     (
         ('Hot_Dust', {
                 'function': 'Modified_BlackBody',
+                'logM': {
+                    'value': 1.7,
+                    'range': [-10., 5.0],
+                    'type': 'c',
+                    'vary': True,
+                },
+                'beta': {
+                    'value': 1.7,
+                    'range': [1.5, 2.5],
+                    'type': 'c',
+                    'vary': True,
+                },
+                'T': {
+                    'value': 641.8,
+                    'range': [500, 1300],
+                    'type': 'c',
+                    'vary': True,
+                }
+            }
+        ),
+        ('Warm_Dust', {
+                'function': 'Modified_BlackBody',
+                'logM': {
+                    'value': 4.5,
+                    'range': [-5., 10.0],
+                    'type': 'c',
+                    'vary': True,
+                },
+                'beta': {
+                    'value': 2.3,
+                    'range': [1.5, 2.5],
+                    'type': 'c',
+                    'vary': True,
+                },
+                'T': {
+                    'value': 147.4,
+                    'range': [50, 300],
+                    'type': 'c',
+                    'vary': True,
+                }
+            }
+        ),
+        ('Cold_Dust', {
+                'function': 'Modified_BlackBody',
+                'logM': {
+                    'value': 8.8,
+                    'range': [0., 15.0],
+                    'type': 'c',
+                    'vary': True,
+                },
+                'beta': {
+                    'value': 2.0,
+                    'range': [1.5, 2.5],
+                    'type': 'c',
+                    'vary': True,
+                },
+                'T': {
+                    'value': 26.1,
+                    'range': [5, 50],
+                    'type': 'c',
+                    'vary': True,
+                }
+            }
+        ),
+    )
+)
+"""
+inputModelDict = OrderedDict(
+    (
+        ('Hot_Dust', {
+                'function': 'Modified_BlackBody',
                 'normalisation': ('w1', 'logM'),
                 'logM': {
                     'value': -4.,
-                    'range': [-np.inf, np.inf],
+                    'range': [-10., 3.0],
                     'type': 'c',
                     'vary': True,
                 },
@@ -441,7 +512,7 @@ inputModelDict = OrderedDict(
                 'normalisation': ('w4', 'TORUS_logsf'),
                 'TORUS_logsf': {
                     'value': 4.0,
-                    'range': [-np.inf, np.inf],
+                    'range': [-5.0, 15.0],
                     'type': 'c',
                     'vary': True,
                 },
@@ -512,7 +583,7 @@ inputModelDict = OrderedDict(
                 },
                 'logMd': {
                     'value': 6.5,
-                    'range': [-np.inf, np.inf],
+                    'range': [0.0, 15.0],
                     'type': 'd',
                     'vary': True,
                 }
@@ -520,3 +591,4 @@ inputModelDict = OrderedDict(
         ),
     )
 )
+"""

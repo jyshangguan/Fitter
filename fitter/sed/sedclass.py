@@ -139,7 +139,7 @@ class SedClass(bc.DataSet):
         self.dl = cosmo.luminosity_distance(redshift).value #Luminosity distance in unit Mpc.
 
     def pht_plotter(self, wave, flux, sigma, flag, FigAx=None, linewidth='1.5',
-                    symbolColor='k', symbolSize=6, label=None):
+                    symbolColor='k', symbolSize=6, label=None, Quiet=True):
         wave = np.array(wave)
         flux = np.array(flux)
         sigma = np.array(sigma)
@@ -194,7 +194,7 @@ class SedClass(bc.DataSet):
         ax.tick_params(labelsize=16)
         return (fig, ax)
 
-    def plot_pht(self, FigAx=None, linewidth='1.5', symbolColor='k', symbolSize=6):
+    def plot_pht(self, FigAx=None, linewidth='1.5', symbolColor='k', symbolSize=6, **kwargs):
         dataDict = self.get_dsArrays()
         for name in dataDict.keys():
             wave = dataDict[name][0]
@@ -207,7 +207,7 @@ class SedClass(bc.DataSet):
         return FigAx
 
     def spc_plotter(self, wave, flux, sigma, FigAx=None, linewidth=1.,
-                    color='grey', label=None):
+                    color='grey', label=None, Quiet=True):
         if(len(wave) == 0):
             if Quiet is False:
                 print 'There is no data in the SED!'
@@ -221,7 +221,7 @@ class SedClass(bc.DataSet):
         ax.errorbar(wave, flux, yerr=sigma, color=color, linewidth=linewidth, label=label)
         return (fig, ax)
 
-    def plot_spc(self, FigAx=None, linewidth=1., color='grey'):
+    def plot_spc(self, FigAx=None, linewidth=1., color='grey', **kwargs):
         dataDict = self.get_csArrays()
         for name in dataDict.keys():
             wave = dataDict[name][0]
@@ -230,9 +230,9 @@ class SedClass(bc.DataSet):
             FigAx = self.spc_plotter(wave, flux, sigma, FigAx, linewidth, color, name)
         return FigAx
 
-    def plot_sed(self, FigAx=None):
-        FigAx = self.plot_pht(FigAx=FigAx)
-        FigAx = self.plot_spc(FigAx=FigAx)
+    def plot_sed(self, FigAx=None, **kwargs):
+        FigAx = self.plot_pht(FigAx=FigAx, **kwargs)
+        FigAx = self.plot_spc(FigAx=FigAx, **kwargs)
         return FigAx
 
     def set_bandpass(self, bandDict):
