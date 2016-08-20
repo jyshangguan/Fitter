@@ -108,11 +108,6 @@ ip = ndip.NdimInterpolation(data,theta)
 fp = open('dl07_intp.dict', 'r')
 tmpl_dl07_inpt = pickle.load(fp)
 fp.close()
-uminList = [0.10, 0.15, 0.20, 0.30, 0.40, 0.50, 0.70, 0.80, 1.00, 1.20,
-            1.50, 2.00, 2.50, 3.00, 4.00, 5.00, 7.00, 8.00, 10.0, 12.0,
-            15.0, 20.0, 25.0]
-umaxList = [1e6]
-qpahList = [0.47, 1.12, 1.77, 2.50, 3.19, 3.90, 4.58, 0.75, 1.49, 2.37, 0.10]
 
 ### Build the model
 parAddDict_all = {

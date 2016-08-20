@@ -356,8 +356,8 @@ def DL07_Model(umin, umax, qpah, gamma, logMd, tmpl_dl07, DL, wave):
     fltr_umin = tmpl_dl07['umin'] == umin
     fltr_min = fltr_qpah & fltr_umin & (tmpl_dl07['umax'] == umin)
     fltr_pl  = fltr_qpah & fltr_umin & (tmpl_dl07['umax'] == umax)
-    jnu_min  = tmpl_dl07[fltr_min]['fluxsim'][0]
-    jnu_pl  = tmpl_dl07[fltr_pl]['fluxsim'][0]
+    jnu_min  = tmpl_dl07[fltr_min][0]['fluxsim']
+    jnu_pl  = tmpl_dl07[fltr_pl][0]['fluxsim']
     jnu = (1 - gamma) * jnu_min + gamma * jnu_pl
     flux = 10**logMd * Msun/m_H * jnu/(DL * Mpc)**2 / mdust2mh[qpahList.index(qpah)] * 1e3 #unit: mJy
     if len(wave) != len(flux):
@@ -492,19 +492,19 @@ inputModelDict = OrderedDict(
                 'normalisation': ('w1', 'logM'),
                 'logM': {
                     'value': 0.32,
-                    'range': [-10., 3.0],
+                    'range': [0.3, 0.4], #[-10., 3.0],
                     'type': 'c',
                     'vary': True,
                 },
                 'beta': {
                     'value': 2.0,
-                    'range': [1.5, 2.5],
+                    'range': [1.9, 2.1], #[1.5, 2.5],
                     'type': 'c',
                     'vary': True,
                 },
                 'T': {
                     'value': 846.77,
-                    'range': [500, 1300],
+                    'range': [846., 847], #[500, 1300],
                     'type': 'c',
                     'vary': True,
                 }
@@ -515,43 +515,43 @@ inputModelDict = OrderedDict(
                 'normalisation': ('w4', 'TORUS_logsf'),
                 'TORUS_logsf': {
                     'value': 6.33,
-                    'range': [-5.0, 8.0],
+                    'range': [6.3, 6.4],
                     'type': 'c',
                     'vary': True,
                 },
                 'TORUS_i': {
                     'value': 47.60,
-                    'range': [0.0, 90.0],
+                    'range': [47.0, 48.0], #[0.0, 90.0],
                     'type': 'c',
                     'vary': True,
                 },
                 'TORUS_tv': {
                     'value': 17.53,
-                    'range': [10.0, 300.0],
+                    'range': [17, 18], #[10.0, 300.0],
                     'type': 'c',
                     'vary': True,
                 },
                 'TORUS_q': {
                     'value': 0.7,
-                    'range': [0.0, 3.0],
+                    'range': [0.6, 0.8], #[0.0, 3.0],
                     'type': 'c',
                     'vary': True,
                 },
                 'TORUS_N0': {
                     'value': 6.43,
-                    'range': [1.0, 15.0],
+                    'range': [6.42, 6.44], #[1.0, 15.0],
                     'type': 'c',
                     'vary': True,
                 },
                 'TORUS_sig': {
                     'value': 58.14,
-                    'range': [15.0, 70.0],
+                    'range': [58.0, 59.0], #[15.0, 70.0],
                     'type': 'c',
                     'vary': True,
                 },
                 'TORUS_Y': {
                     'value': 30.0,
-                    'range': [5.0, 100.0],
+                    'range': [29., 31.], #[5.0, 100.0],
                     'type': 'c',
                     'vary': True,
                 }
@@ -580,13 +580,13 @@ inputModelDict = OrderedDict(
                 },
                 'gamma': {
                     'value': 0.02,
-                    'range': [0.01, 0.99],
+                    'range': [0.01, 0.03],
                     'type': 'c',
                     'vary': True,
                 },
                 'logMd': {
                     'value': 9.12,
-                    'range': [0.0, 12.0],
+                    'range': [9.0, 10.0],
                     'type': 'd',
                     'vary': True,
                 }
