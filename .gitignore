@@ -7,6 +7,7 @@
 #Python auxillary files
 *.pyc
 test_*.py
+sv_*.py
 
 #SED data
 *.sed
