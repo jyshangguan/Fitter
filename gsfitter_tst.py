@@ -27,8 +27,8 @@ Model2Data = sedff.Model2Data
 #-------------#
 # Create the sedData
 ## Read in the data
-targname = 'mock' #'PG1612+261' #'PG0050+124'
-sedFile  = 'mock.sed' #'/Users/jinyi/Work/PG_QSO/sobt/SEDs/{0}_cbr.sed'.format(targname)
+targname = 'mock_dl07' #'PG1612+261' #'PG0050+124'
+sedFile  = "mock_dl07.sed" #'mock_mbb.sed' #'/Users/jinyi/Work/PG_QSO/sobt/SEDs/{0}_cbr.sed'.format(targname)
 redshift = 0.2 #0.061
 sedRng   = [0, 10]
 spcRng   = [10, None]
@@ -59,11 +59,6 @@ spcData = {'IRS': bc.ContinueSet(spcwave, spcflux, spcsigma, spcflag, spcDataTyp
 #spcData = {}
 sedData = sedsc.SedClass(targname, redshift, phtDict=phtData, spcDict=spcData)
 DL = sedData.dl
-## Plot the data
-#fig, ax = sedData.plot_sed()
-#ymin, ymax = ax.get_ylim()
-#ax.legend()
-#plt.show()
 
 # Load the bandpass
 ## Load WISE bandpass
@@ -172,7 +167,6 @@ parNumber  = len(parAllList)
 ##ax.set_ylim([ymin/100., ymax])
 ##plt.show()
 
-
 #Fit with DNest4#
 #---------------#
 
@@ -193,7 +187,7 @@ sampler = dnest4.DNest4Sampler(dn4m,
                                                                   sep=" "))
 
 ## Set up the sampler. The first argument is max_num_levels
-gen = sampler.sample(max_num_levels=30, num_steps=1000, new_level_interval=10000,
+gen = sampler.sample(max_num_levels=100, num_steps=1000, new_level_interval=10000,
                       num_per_step=10000, thread_steps=100,
                       num_particles=5, lam=10, beta=100, seed=1234)
 
@@ -203,24 +197,32 @@ for i, sample in enumerate(gen):
 
 ## Run the postprocessing
 dnest4.postprocess()
+#"""
 
-
+"""
 #Process the posterior distributions of the parameters#
 #-----------------------------------------------------#
 ##Fitting results
 ps = np.loadtxt("posterior_sample.txt")
 try:
-    assert ps.shape[1] == (1000, parNumber)
+    assert ps.shape[1] == parNumber
 except:
     raise AssertionError("The posterior sample is problematic!")
 ##Calculate the optimized paramter values
 parRangeList = map( lambda v: (v[1], v[2]-v[1], v[1]-v[0]),
                    zip(*np.percentile(ps, [16, 50, 84], axis=0)) )
-parBfList = parRangeList[0] #The best fit parameters
-uncUlList = parRangeList[1] #The upperlimits of the parameter uncertainties
-uncLlList = parRangeList[2] #The lowerlimits of the parameter uncertainties
+parRangeList = np.array(parRangeList)
+parBfList = parRangeList[:, 0] #The best fit parameters
+uncUlList = parRangeList[:, 1] #The upperlimits of the parameter uncertainties
+uncLlList = parRangeList[:, 2] #The lowerlimits of the parameter uncertainties
 parUlList = parBfList + uncUlList #The upperlimits of the parameters
 parLlList = parBfList - uncLlList #The lowerlimits of the parameters
+sedModel.updatParList(parBfList)
+yFitBf = sedModel.combineResult()
+sedModel.updatParList(parUlList)
+yFitUl = sedModel.combineResult()
+sedModel.updatParList(parLlList)
+yFitLl = sedModel.combineResult()
 
 ### Plot the Data
 fp = open("mbb_mock.dict")
@@ -229,8 +231,12 @@ fp.close()
 #print mockDict.keys()
 cmpList = mockDict['components']
 parList = mockDict['parameters']
-xModel  = mockDict['x']
+xModel  = mockDict['x_model']
 
+plt.close()
+plt.figure()
+plt.plot(waveModel, yFitBf, color="r")
+plt.fill_between(waveModel, yFitLl, yFitUl, color="r", alpha=0.1)
 plt.errorbar(wave, flux, yerr=sigma, fmt='.k')
 yModel = np.zeros_like(xModel)
 cList = ['r', 'g', 'b', 'm', 'y', 'c']
@@ -240,11 +246,13 @@ for y in cmpList:
     yModel += y
     counter += 1
 plt.plot(xModel, yModel, color='k', linewidth=1.5)
-plt.ylim([1e-1, 1e3])
+plt.ylim([1e0, 1e3])
 plt.xscale('log')
 plt.yscale('log')
-plt.show()
+plt.savefig("{0}_result.pdf".format(targname))
+plt.close()
 
 ## Rename the posterior sample file name#
-#os.rename("posterior_sample.txt", "{0}_posterior.txt".format(targname))
-#"""
+os.rename("")
+os.rename("posterior_sample.txt", "{0}_posterior.txt".format(targname))
+"""

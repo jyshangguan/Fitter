@@ -439,16 +439,29 @@ class ModelCombiner(object):
         return self.__waveModel
 
     def combineResult(self, x=None):
-        resultList = []
+        """
+        Return the model result combining all the components.
+        """
+        if x is None:
+            x = self.__waveModel
+        result = np.zeros_like(x)
+        for modelName in self.__modelDict.keys():
+            mf = self.__modelDict[modelName]
+            result += mf.result(x)
+        return result
+
+    def componentResult(self, x=None):
+        """
+        Return the model results of all the components separately.
+        """
+        result = OrderedDict()
         if x is None:
             x = self.__waveModel
         for modelName in self.__modelDict.keys():
             mf = self.__modelDict[modelName]
-            resultList.append(mf.result(x))
-        result = np.zeros_like(resultList[0])
-        for loop in range(len(resultList)):
-            result += resultList[loop]
-        return result
+            result[modelName] = mf.result(x)
+        return result    
+
 
     def get_modelDict(self):
         return self.__modelDict
@@ -478,6 +491,18 @@ class ModelCombiner(object):
             orgValue = model.parFitDict[parName]
             print '[{0}][{1}] {2}->{3}'.format(modelName, parName, orgValue, parValue)
         model.parFitDict[parName] = parValue
+
+    def updatParList(self, parList):
+        """
+        Updata the fit parameters from a list.
+        """
+        counter = 0
+        for modelName in self._modelList:
+            model = self.__modelDict[modelName]
+            modelParDict = model.parFitDict
+            for parName in modelParDict.keys():
+                modelParDict[parName]["value"] = parList[counter]
+                counter += 1
 
     def updateParAdd(self, modelName, parName, parValue, QuietMode=True):
         model = self.__modelDict[modelName]

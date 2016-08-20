@@ -411,6 +411,8 @@ funcLib = {
 }
 
 #Input model dict
+#"""
+"""
 inputModelDict = OrderedDict(
     (
         ('Hot_Dust', {
@@ -481,14 +483,15 @@ inputModelDict = OrderedDict(
         ),
     )
 )
-"""
+#"""
+#"""
 inputModelDict = OrderedDict(
     (
         ('Hot_Dust', {
                 'function': 'Modified_BlackBody',
                 'normalisation': ('w1', 'logM'),
                 'logM': {
-                    'value': -4.,
+                    'value': 0.32,
                     'range': [-10., 3.0],
                     'type': 'c',
                     'vary': True,
@@ -497,10 +500,10 @@ inputModelDict = OrderedDict(
                     'value': 2.0,
                     'range': [1.5, 2.5],
                     'type': 'c',
-                    'vary': False,
+                    'vary': True,
                 },
                 'T': {
-                    'value': 600.,
+                    'value': 846.77,
                     'range': [500, 1300],
                     'type': 'c',
                     'vary': True,
@@ -511,43 +514,43 @@ inputModelDict = OrderedDict(
                 'function': 'CLUMPY_Torus_Model',
                 'normalisation': ('w4', 'TORUS_logsf'),
                 'TORUS_logsf': {
-                    'value': 4.0,
-                    'range': [-5.0, 15.0],
+                    'value': 6.33,
+                    'range': [-5.0, 8.0],
                     'type': 'c',
                     'vary': True,
                 },
                 'TORUS_i': {
-                    'value': 13.847,
+                    'value': 47.60,
                     'range': [0.0, 90.0],
                     'type': 'c',
                     'vary': True,
                 },
                 'TORUS_tv': {
-                    'value': 51.390,
+                    'value': 17.53,
                     'range': [10.0, 300.0],
                     'type': 'c',
                     'vary': True,
                 },
                 'TORUS_q': {
-                    'value': 0.356,
+                    'value': 0.7,
                     'range': [0.0, 3.0],
                     'type': 'c',
                     'vary': True,
                 },
                 'TORUS_N0': {
-                    'value': 4.000,
+                    'value': 6.43,
                     'range': [1.0, 15.0],
                     'type': 'c',
                     'vary': True,
                 },
                 'TORUS_sig': {
-                    'value': 69.949,
+                    'value': 58.14,
                     'range': [15.0, 70.0],
                     'type': 'c',
                     'vary': True,
                 },
                 'TORUS_Y': {
-                    'value': 21.889,
+                    'value': 30.0,
                     'range': [5.0, 100.0],
                     'type': 'c',
                     'vary': True,
@@ -558,32 +561,32 @@ inputModelDict = OrderedDict(
                 'function': 'DL07_Model',
                 'normalisation': ('PACS_100', 'logMd'),
                 'umin': {
-                    'value': 1.,
+                    'value': 10.0,
                     'range': uminList,
                     'type': 'd',
-                    'vary': False,
+                    'vary': True,
                 },
                 'umax': {
                     'value': 1e6,
                     'range': umaxList,
                     'type': 'd',
-                    'vary': False,
+                    'vary': True,
                 },
                 'qpah': {
-                    'value': 4.58,
+                    'value': 3.19,
                     'range': qpahList,
                     'type': 'd',
-                    'vary': False,
+                    'vary': True,
                 },
                 'gamma': {
-                    'value': 0.01,
+                    'value': 0.02,
                     'range': [0.01, 0.99],
                     'type': 'c',
                     'vary': True,
                 },
                 'logMd': {
-                    'value': 6.5,
-                    'range': [0.0, 15.0],
+                    'value': 9.12,
+                    'range': [0.0, 12.0],
                     'type': 'd',
                     'vary': True,
                 }
@@ -591,4 +594,4 @@ inputModelDict = OrderedDict(
         ),
     )
 )
-"""
+#"""
