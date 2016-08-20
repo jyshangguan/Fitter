@@ -8,7 +8,7 @@ from lmfit import minimize, Parameters, fit_report
 
 inputModelDict = sedmf.inputModelDict
 
-def Model2Data(sedData, sedModel, waveModel):
+def Model2Data(sedData, sedModel):
     """
     Convert the continual model to the data-like model to directly
     compare with the data.
@@ -19,8 +19,6 @@ def Model2Data(sedData, sedModel, waveModel):
         The data set of SED.
     sedModel : ModelCombiner object
         The combined model.
-    waveModel : float array
-        The model wavelength array.
 
     Returns
     -------
@@ -35,113 +33,10 @@ def Model2Data(sedData, sedModel, waveModel):
         raise TypeError("The sedData type is incorrect!")
     elif not isinstance(sedModel, bc.ModelCombiner):
         raise TypeError("The sedModel type is incorrect!")
-    fluxModel = sedModel.combineResult(waveModel)
+    waveModel = sedModel.get_waveModel()
+    fluxModel = sedModel.combineResult()
     fluxModelPht = sedData.model_pht(waveModel, fluxModel)
     return fluxModelPht
-
-def Parameters_Init(model_dict_init, func_lib):
-    '''
-    This function create the Parameters() for model fitting using LMFIT.
-
-    Parameters
-    ----------
-    model_dict_init : dict
-        The dict of model components.
-    func_lib : dict
-        The dict of all the supporting functions.
-
-    Returns
-    -------
-    params : class Parameters
-        The Parameters object used in the LMFIT.
-
-    Notes
-    -----
-    None.
-    '''
-    params = Parameters()
-    modelList = model_dict_init.keys()
-    for modelName in modelList:
-        funcName = model_dict_init[modelName]['function']
-        func = func_lib[funcName]
-        paramFitList = func['param_fit']
-        paramsInfo = model_dict_init[modelName]
-        #Load the parameters
-        for parName in paramFitList:
-            parInfo = paramsInfo.get(parName, None)
-            if parInfo is None:
-                raise KeyError('The fitting parameter: {0} is not found!'.format(parName))
-            else:
-                name = '{0}_{1}'.format(modelName, parName)
-                value = parInfo['value']
-                vary  = parInfo['vary']
-                vmin, vmax = parInfo['range']
-                params.add(name, value=value, vary=vary, min=vmin, max=vmax)
-    return params
-
-def Parameters_Dump(params, sed_model):
-    '''
-    This function load the model parameters into the Parameters()
-    used by the LMFIT.
-
-    Parameters
-    ----------
-    params : class Parameters
-        The Parameters object used in the LMFIT.
-    sed_model : class ModelCombiner
-        The model.
-
-    Returns
-    -------
-    None
-
-    Notes
-    -----
-    Since it is not easy to duplicate a new model_dict, we just change
-    the original one.
-    '''
-    if not isinstance(sed_model, bc.ModelCombiner):
-        raise ValueError("The sed_model should be ModelCombiner()!")
-    model_dict = sed_model.get_modelDict()
-    modelList = model_dict.keys()
-    for modelName in model_dict.keys():
-        parFitDict = model_dict[modelName].parFitDict
-        for parName in parFitDict.keys():
-            parFitDict[parName] = params['{0}_{1}'.format(modelName, parName)].value
-    return None
-
-def Parameters_Load(params, sed_model):
-    '''
-    This function load the model parameters into the Parameters()
-    used by the LMFIT.
-
-    Parameters
-    ----------
-    params : class Parameters
-        The Parameters object used in the LMFIT.
-    sed_model : class ModelCombiner
-        The model.
-
-    Returns
-    -------
-    params : class Parameters
-        The Parameters object used in the LMFIT.
-
-    Notes
-    -----
-    None.
-    '''
-    if not isinstance(sed_model, bc.ModelCombiner):
-        raise ValueError("The sed_model should be ModelCombiner()!")
-    model_dict = sed_model.get_modelDict()
-    modelList = model_dict.keys()
-    for modelName in model_dict.keys():
-        #print '[Parameters_Load]: {0}'.format(modelName)
-        parFitDict = model_dict[modelName].parFitDict
-        for parName in parFitDict.keys():
-            #print '[Parameters_Load]: {0}: {1}'.format(parName, parFitDict[parName])
-            params['{0}_{1}'.format(modelName, parName)].value = parFitDict[parName]
-    return params
 
 def ChiSq(data, model, unct=None):
     '''
@@ -193,13 +88,13 @@ def logLFunc_SED(params, data, model):
     for modelName in model._modelList:
         parFitDict = parDict[modelName]
         for parName in parFitDict.keys():
+            #print parName, params[pIndex]
             parFitDict[parName]["value"] = params[pIndex]
             pIndex += 1
-    x = np.array(data.get_List('x'))
     y = np.array(data.get_List('y'))
     e = np.array(data.get_List('e'))
     #ym = np.array(model.combineResult(x))
-    ym = np.array(Model2Data(data, model, x))
+    ym = np.array(Model2Data(data, model))
     if len(params) == pIndex:
         s = e
     elif len(params) == (pIndex+1):

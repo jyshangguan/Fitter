@@ -417,7 +417,7 @@ inputModelDict = OrderedDict(
                 'function': 'Modified_BlackBody',
                 'logM': {
                     'value': 1.7,
-                    'range': [-10., 5.0],
+                    'range': [-5.0, 5.0],
                     'type': 'c',
                     'vary': True,
                 },
@@ -429,7 +429,7 @@ inputModelDict = OrderedDict(
                 },
                 'T': {
                     'value': 641.8,
-                    'range': [500, 1300],
+                    'range': [400.0, 1200.0],
                     'type': 'c',
                     'vary': True,
                 }
@@ -439,7 +439,7 @@ inputModelDict = OrderedDict(
                 'function': 'Modified_BlackBody',
                 'logM': {
                     'value': 4.5,
-                    'range': [-5., 10.0],
+                    'range': [0.0, 6.0],
                     'type': 'c',
                     'vary': True,
                 },
@@ -451,7 +451,7 @@ inputModelDict = OrderedDict(
                 },
                 'T': {
                     'value': 147.4,
-                    'range': [50, 300],
+                    'range': [60.0, 400.0],
                     'type': 'c',
                     'vary': True,
                 }
@@ -461,7 +461,7 @@ inputModelDict = OrderedDict(
                 'function': 'Modified_BlackBody',
                 'logM': {
                     'value': 8.8,
-                    'range': [0., 15.0],
+                    'range': [5.0, 12.0],
                     'type': 'c',
                     'vary': True,
                 },
@@ -473,7 +473,7 @@ inputModelDict = OrderedDict(
                 },
                 'T': {
                     'value': 26.1,
-                    'range': [5, 50],
+                    'range': [5.0, 60.0],
                     'type': 'c',
                     'vary': True,
                 }

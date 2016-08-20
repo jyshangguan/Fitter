@@ -430,12 +430,18 @@ class ModelFunction(object):
 
 #The combination of a number of models
 class ModelCombiner(object):
-    def __init__(self, modelDict):
+    def __init__(self, modelDict, waveModel):
         self.__modelDict = modelDict
         self._modelList = modelDict.keys()
+        self.__waveModel = waveModel
 
-    def combineResult(self, x):
+    def get_waveModel(self):
+        return self.__waveModel
+
+    def combineResult(self, x=None):
         resultList = []
+        if x is None:
+            x = self.__waveModel
         for modelName in self.__modelDict.keys():
             mf = self.__modelDict[modelName]
             resultList.append(mf.result(x))

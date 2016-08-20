@@ -5,6 +5,7 @@ from collections import OrderedDict
 from fitter import bandfunc as bf
 from fitter import basicclass as bc
 from fitter.sed import sedclass as sedsc
+from fitter.sed import fit_functions as sedff
 from fitter.sed.model_functions import Modified_BlackBody
 ls_mic = 2.99792458e14 #micron/s
 
@@ -92,11 +93,16 @@ model['x']          = x
 model['x_obsr']     = sedwave
 model['y_obsr']     = yObsr
 model['y_err']      = yErr
+model['y_true']     = yTrueBand
 model['parameters'] = parList
 model['components']  = cmpList
 
-logL = -0.5 * np.sum( ((yObsr - yTrueBand)/yErr)**2. + np.log(2 * np.pi * yErr**2.) )
-print("logL: {0:.3f}".format(logL))
+logL_dir = -0.5 * np.sum( ((yObsr - yTrueBand)/yErr)**2. + np.log(2 * np.pi * yErr**2.) )
+print("logL_dir: {0:.3f}".format(logL_dir))
+chisq = sedff.ChiSq(yObsr, yTrueBand, yErr)
+print chisq
+logL_sed = -0.5 * ( chisq + np.sum( np.log(2 * np.pi * yErr**2.) ) )
+print("logL_sed: {0:.3f}".format(logL_sed))
 
 fileName = "mbb_mock.dict"
 fp = open(fileName, "w")
