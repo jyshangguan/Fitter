@@ -133,6 +133,7 @@ model['x_obsr']     = sedwave
 model['y_obsr']     = yObsr
 model['y_err']      = yErr
 model['y_true']     = yTrueBand
+model['f_add']      = fAdd
 model['parameters'] = parList
 model['components']  = cmpList
 

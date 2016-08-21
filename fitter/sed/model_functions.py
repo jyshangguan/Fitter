@@ -261,8 +261,8 @@ mdust2mh = [0.01, 0.01, 0.0101, 0.0102, 0.0102, 0.0103, 0.0104, 0.00343,
 qpahList = np.array(qpahList)
 mdust2mh = np.array(mdust2mh)
 srtIndex = np.argsort(qpahList)
-qpahList = qpahList[srtIndex]
-mdust2mh = mdust2mh[srtIndex]
+qpahList = list(qpahList[srtIndex])
+mdust2mh = list(mdust2mh[srtIndex])
 
 def DL07_Model_Intp(umin, umax, qpah, gamma, logMd, tmpl_dl07, wave, DL):
     '''
@@ -428,7 +428,7 @@ funcLib = {
 aList = list( np.arange(-5.0, 5.0, 0.5) )
 bList = list( np.arange(0.0, 1000.0, 5.0) )
 #Input model dict
-#"""
+"""
 inputModelDict = {
     'linear_c': {
         'function': 'Linear',
@@ -466,7 +466,7 @@ inputModelDict = {
     }
 }
 #"""
-"""
+#"""
 inputModelDict = OrderedDict(
     (
         ('Hot_Dust', {

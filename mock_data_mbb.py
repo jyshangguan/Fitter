@@ -5,14 +5,17 @@ from collections import OrderedDict
 from fitter import bandfunc as bf
 from fitter import basicclass as bc
 from fitter.sed import sedclass as sedsc
+from fitter.sed import model_functions as sedmf
 from fitter.sed import fit_functions as sedff
 from fitter.sed.model_functions import Modified_BlackBody
 ls_mic = 2.99792458e14 #micron/s
+inputModelDict = sedmf.inputModelDict
+funcLib = sedmf.funcLib
 
 #Generate the mock data#
 #-----------------#
 ## Creat an SedClass object
-targname = 'mock'
+targname = 'mock_mbb'
 redshift = 0.2
 bandList = ['w1', 'w2', 'w3', 'w4', 'PACS_70', 'PACS_100', 'PACS_160', 'SPIRE_250', 'SPIRE_350', 'SPIRE_500']
 nBands = len(bandList)
@@ -56,44 +59,41 @@ sedData.add_bandpass(herschelBandDict)
 
 ## Generate the mock data
 
-fAdd   = None #0.1
-logMList = [1.7, 4.5, 8.8]
-betaList = [1.7, 2.3, 2.0]
-TList = [641.8, 147.4, 26.1]
-print( "#------Start fitting------#" )
-parList = []
-for loop in range(3):
-    pTuple = (logMList[loop], TList[loop], betaList[loop])
-    parList.append(pTuple)
-    print("MBB{0}:logM ({1[0]}),  T ({1[1]}), beta ({1[2]})".format(loop, pTuple))
-print( "# f_add: {0}".format(fAdd) )
-print( "#-------------------------#" )
-
+### Build the model
+parAddDict_all = {
+    'DL': DL,
+    #'tmpl_dl07': tmpl_dl07_inpt,
+    #'TORUS_tmpl_ip': ip
+}
+fAdd   = None #0.02 #
 Ndata  = 500
 xMax   = 600.0
-x = 10**np.linspace(0.0, np.log10(xMax), Ndata)
-yTrue = np.zeros(Ndata)
+waveModel = 10**np.linspace(0.0, np.log10(xMax), Ndata)
+sedModel = bc.Model_Generator(inputModelDict, funcLib, waveModel, parAddDict_all)
+parList = sedModel.get_parList()
+#print inputModelDict
+parNumber  = len(parList)
+
+yTrue = sedModel.combineResult()
+yDict = sedModel.componentResult()
 cmpList = []
-for loop in range(3):
-    logM, T, beta = parList[loop]
-    yCmp = Modified_BlackBody(logM, T, beta, x, DL)
-    yTrue += np.array(yCmp)
-    cmpList.append(yCmp)
-yTrueBand = sedData.model_pht(x, yTrue)
+for modelName in yDict.keys():
+    cmpList.append(yDict[modelName])
+yTrueBand = sedData.model_pht(waveModel, yTrue)
 yTrueBand = np.array(yTrueBand)
-#yErr = 5.0 + 30.0 * np.random.rand(nBands)
-yErr = np.concatenate([1.0 * np.ones(4), 10.0*np.ones(3), 20.0*np.ones(3)])
+yErr = np.concatenate([1.0 * np.ones(4), 7.0*np.ones(3), 10.0*np.ones(3)])
 yObsr = yTrueBand.copy()
 if not fAdd is None:
     print("The model uncertainty is considered!")
-    yObsr += np.abs(fAdd * yObsr) * np.random.rand(nBands)
+    yObsr += np.abs(fAdd * yObsr) * np.random.randn(nBands)
 yObsr += yErr * np.random.randn(nBands)
 model = {}
-model['x']          = x
+model['x_model']    = waveModel
 model['x_obsr']     = sedwave
 model['y_obsr']     = yObsr
 model['y_err']      = yErr
 model['y_true']     = yTrueBand
+model['f_add']       = fAdd
 model['parameters'] = parList
 model['components']  = cmpList
 
@@ -104,14 +104,14 @@ print chisq
 logL_sed = -0.5 * ( chisq + np.sum( np.log(2 * np.pi * yErr**2.) ) )
 print("logL_sed: {0:.3f}".format(logL_sed))
 
-fileName = "mbb_mock.dict"
+fileName = "{0}.dict".format(targname)
 fp = open(fileName, "w")
 pickle.dump(model, fp)
 fp.close()
 print("{0} is saved!".format(fileName))
 sedArray = np.array([sedwave, yObsr, yErr, np.ones(nBands)])
 sedArray = np.transpose(sedArray)
-sedFileName = "mock.sed"
+sedFileName = "{0}.sed".format(targname)
 fp = open(sedFileName, "w")
 fp.write("wavelength\tflux\tsigma\n")
 np.savetxt(fp, sedArray, fmt='%.3f', delimiter='\t')
@@ -121,12 +121,13 @@ fig = plt.figure()
 plt.errorbar(sedwave, yObsr, yerr=yErr, fmt=".r")
 plt.scatter(sedwave, yTrueBand, linewidth=1.5, color="k")
 for y in cmpList:
-    plt.plot(x, y, linestyle='--')
-plt.plot(x, yTrue, color="k")
-ymax = np.max(yTrue)
+    plt.plot(waveModel, y, linestyle='--')
+plt.plot(waveModel, yTrue, color="k")
+ymin = np.min(yTrueBand)
+ymax = np.max(yTrueBand)
 plt.xlim([1.0, 7e2])
-plt.ylim([1e1, ymax*2.0])
+plt.ylim([ymin/2.0, ymax*2.0])
 plt.xscale("log")
 plt.yscale("log")
-plt.savefig("mbb_mock.pdf")
-plt.close()
+plt.savefig("{0}.pdf".format(targname))
+plt.show()
