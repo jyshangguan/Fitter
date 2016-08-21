@@ -428,12 +428,12 @@ funcLib = {
 aList = list( np.arange(-5.0, 5.0, 0.5) )
 bList = list( np.arange(0.0, 1000.0, 5.0) )
 #Input model dict
-#"""
+"""
 inputModelDict = {
     'linear_c': {
         'function': 'Linear',
         'a': {
-            'value': 0.06,
+            'value': 3.26,
             'range': [-5.0, 5.0], #[-10., 3.0],
             'type': 'c',
             'vary': True,
@@ -446,7 +446,7 @@ inputModelDict = {
         }
     }
 }
-"""
+#"""
 inputModelDict = {
     'linear_d': {
         'function': 'Linear',

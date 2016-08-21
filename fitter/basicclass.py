@@ -600,7 +600,7 @@ class DNest4Model(object):
             else:
                 print "[DNest4Model]: ModelUnct is off!"
         else:
-            raise TypeError("The ModelUnct type should be Boolean!")\
+            raise TypeError("The ModelUnct type should be Boolean!")
 
     def from_prior(self):
         """
@@ -654,7 +654,8 @@ class DNest4Model(object):
                     #print "[DN4M]: discrete"
                     rangeLen = len(parRange)
                     iBng = parRange.index(params[pIndex])
-                    iPar = int( dnest4.wrap( iBng + rangeLen * dnest4.randh(), 0, rangeLen ) )
+                    iPro = int( iBng + rangeLen * dnest4.randh() )
+                    iPar = dnest4.wrap(iPro, 0, rangeLen)
                     params[pIndex] = parRange[iPar]
                     if not params[pIndex] in parRange:
                         #print "[DNest4Model]: perturb out boundary!"
