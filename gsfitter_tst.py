@@ -115,23 +115,6 @@ parAddDict_all = {
     'tmpl_dl07': tmpl_dl07_inpt,
     'TORUS_tmpl_ip': ip
 }
-"""
-modelDict = OrderedDict()
-modelNameList = inputModelDict.keys()
-for modelName in modelNameList:
-    funcName = inputModelDict[modelName]['function']
-    funcInfo = funcLib[funcName]
-    xName = funcInfo['x_name']
-    parFitList = funcInfo['param_fit']
-    parAddList = funcInfo['param_add']
-    parFitDict = OrderedDict()
-    parAddDict = {}
-    for parName in parFitList:
-        parFitDict[parName] = inputModelDict[modelName][parName]
-    for parName in parAddList:
-        parAddDict[parName] = parAddDict_all[parName]
-    modelDict[modelName] = bc.ModelFunction(funcInfo['function'], xName, parFitDict, parAddDict)
-"""
 #waveModel = 10**np.linspace(0, 3, 500)
 waveModel = 10**np.linspace(0.0, np.log10(600.0), 500)
 #sedModel = bc.ModelCombiner(modelDict, waveModel)
@@ -193,6 +176,7 @@ gen = sampler.sample(max_num_levels=30, num_steps=1000, new_level_interval=10000
 for i, sample in enumerate(gen):
     print("# Saved {k} particles.".format(k=(i+1)))
 
+
 ## Run the postprocessing
 dnest4.postprocess()
 #"""
@@ -221,6 +205,11 @@ sedModel.updatParList(parUlList)
 yFitUl = sedModel.combineResult()
 sedModel.updatParList(parLlList)
 yFitLl = sedModel.combineResult()
+
+print parBfList
+print parUlList
+print parLlList
+print parAllList
 
 ### Plot the Data
 fp = open("{0}.dict".format(targname))
