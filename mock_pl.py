@@ -59,7 +59,7 @@ for bandName in herschelBandList:
 sedData.add_bandpass(herschelBandDict)
 
 ### Build the model
-fAdd   = None #0.1
+fAdd   = 0.05 #None
 Ndata  = 500
 xMax   = 600.0
 waveModel = 10**np.linspace(0.0, np.log10(xMax), Ndata)
@@ -79,7 +79,7 @@ yErr = np.concatenate([1.0 * np.ones(4), 7.0*np.ones(3), 10.0*np.ones(3)])
 yObsr = yTrueBand.copy()
 if not fAdd is None:
     print("The model uncertainty is considered!")
-    yObsr += np.abs(fAdd * yObsr) * np.random.rand(nBands)
+    yObsr += np.abs(fAdd * yObsr) * np.random.randn(nBands)
 yObsr += yErr * np.random.randn(nBands)
 model = {}
 model['x_model']    = waveModel
@@ -87,6 +87,7 @@ model['x_obsr']     = sedwave
 model['y_obsr']     = yObsr
 model['y_err']      = yErr
 model['y_true']     = yTrueBand
+model['f_add']       = fAdd
 model['parameters'] = parList
 model['components']  = cmpList
 

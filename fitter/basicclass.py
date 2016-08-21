@@ -646,9 +646,10 @@ class DNest4Model(object):
                 if parType == "c":
                     #print "[DN4M]: continual"
                     r1, r2 = parRange
-                    params[pIndex] += (r2 - r1) * dnest4.randh() #Uniform distribution
+                    p0 = params[pIndex]
+                    p0 += (r2 - r1) * dnest4.randh() #Uniform distribution
+                    params[pIndex] = dnest4.wrap(p0, r1, r2)
                     if (params[pIndex] < r1) or (params[pIndex] > r2):
-                        #print "[DNest4Model]: perturb out boundary!"
                         logH -= np.inf
                 elif parType == "d":
                     #print "[DN4M]: discrete"
@@ -658,14 +659,15 @@ class DNest4Model(object):
                     iPar = dnest4.wrap(iPro, 0, rangeLen)
                     params[pIndex] = parRange[iPar]
                     if not params[pIndex] in parRange:
-                        #print "[DNest4Model]: perturb out boundary!"
                         logH -= np.inf
                 else:
                     raise TypeError("The parameter type '{0}' is not recognised!".format(parType))
                 parFitDict[parName]["value"] = params[pIndex]
                 pIndex += 1
         if len(params) == (pIndex+1):
-            params[pIndex] += 20.0 * rng.randh()
+            p0 = params[pIndex]
+            p0 += 20.0 * dnest4.randh()
+            params[pIndex] = dnest4.wrap(p0, -10.0, 10.0)
             if (params[pIndex] < -10.0) or (params[pIndex] > 10.0):
                 logH -= np.inf
         return logH
