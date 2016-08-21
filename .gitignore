@@ -3,6 +3,7 @@
 *.dict
 *.pdf
 *.png
+results/*
 
 #Python auxillary files
 *.pyc
