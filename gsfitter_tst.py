@@ -27,8 +27,8 @@ Model2Data = sedff.Model2Data
 #-------------#
 # Create the sedData
 ## Read in the data
-targname = 'mock_dl07' #'PG1612+261' #'PG0050+124'
-sedFile  = "mock_dl07.sed" #'mock_mbb.sed' #'/Users/jinyi/Work/PG_QSO/sobt/SEDs/{0}_cbr.sed'.format(targname)
+targname = "mock_line"#'mock_dl07' #'PG1612+261' #'PG0050+124'
+sedFile  = "mock_line.sed"#"mock_dl07.sed" #'mock_mbb.sed' #'/Users/jinyi/Work/PG_QSO/sobt/SEDs/{0}_cbr.sed'.format(targname)
 redshift = 0.2 #0.061
 sedRng   = [0, 10]
 spcRng   = [10, None]
@@ -115,6 +115,7 @@ parAddDict_all = {
     'tmpl_dl07': tmpl_dl07_inpt,
     'TORUS_tmpl_ip': ip
 }
+"""
 modelDict = OrderedDict()
 modelNameList = inputModelDict.keys()
 for modelName in modelNameList:
@@ -130,9 +131,11 @@ for modelName in modelNameList:
     for parName in parAddList:
         parAddDict[parName] = parAddDict_all[parName]
     modelDict[modelName] = bc.ModelFunction(funcInfo['function'], xName, parFitDict, parAddDict)
+"""
 #waveModel = 10**np.linspace(0, 3, 500)
 waveModel = 10**np.linspace(0.0, np.log10(600.0), 500)
-sedModel = bc.ModelCombiner(modelDict, waveModel)
+#sedModel = bc.ModelCombiner(modelDict, waveModel)
+sedModel = bc.Model_Generator(inputModelDict, funcLib, waveModel, parAddDict_all)
 parAllList = sedModel.get_parList()
 #print inputModelDict
 parNumber  = len(parAllList)
@@ -182,7 +185,7 @@ sampler = dnest4.DNest4Sampler(dn4m,
                                                                   sep=" "))
 
 ## Set up the sampler. The first argument is max_num_levels
-gen = sampler.sample(max_num_levels=100, num_steps=1000, new_level_interval=10000,
+gen = sampler.sample(max_num_levels=30, num_steps=1000, new_level_interval=10000,
                       num_per_step=10000, thread_steps=100,
                       num_particles=5, lam=10, beta=100, seed=1234)
 
@@ -220,7 +223,7 @@ sedModel.updatParList(parLlList)
 yFitLl = sedModel.combineResult()
 
 ### Plot the Data
-fp = open("mbb_mock.dict")
+fp = open("{0}.dict".format(targname))
 mockDict = pickle.load(fp)
 fp.close()
 #print mockDict.keys()
@@ -241,13 +244,14 @@ for y in cmpList:
     yModel += y
     counter += 1
 plt.plot(xModel, yModel, color='k', linewidth=1.5)
-plt.ylim([1e0, 1e3])
+ymax = np.max(yModel)
+plt.ylim([1e0, ymax*2.0])
 plt.xscale('log')
 plt.yscale('log')
 plt.savefig("{0}_result.pdf".format(targname))
 plt.close()
 
 ## Rename the posterior sample file name#
-os.rename("")
+#os.rename("")
 os.rename("posterior_sample.txt", "{0}_posterior.txt".format(targname))
-"""
+#"""

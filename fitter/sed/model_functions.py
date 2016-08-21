@@ -364,8 +364,17 @@ def DL07_Model(umin, umax, qpah, gamma, logMd, tmpl_dl07, DL, wave):
         raise ValueError('The input wavelength is incorrect!')
     return flux
 
+def Linear(a, b, x):
+    return a * x + b
+
 #Dict of the supporting functions
 funcLib = {
+    'Linear':{
+        'function': Linear,
+        'x_name': 'x',
+        'param_fit': ['a', 'b'],
+        'param_add': []
+    },
     'Stellar_SED':{
         'function': Stellar_SED,
         'x_name': 'wave',
@@ -411,6 +420,23 @@ funcLib = {
 }
 
 #Input model dict
+inputModelDict = {
+    'linear': {
+        'function': 'Linear',
+        'a': {
+            'value': 0.06,
+            'range': [-5.0, 5.0], #[-10., 3.0],
+            'type': 'c',
+            'vary': True,
+        },
+        'b': {
+            'value': 328.0,
+            'range': [0.0, 1000.0], #[1.5, 2.5],
+            'type': 'c',
+            'vary': True,
+        }
+    }
+}
 #"""
 """
 inputModelDict = OrderedDict(
@@ -484,7 +510,7 @@ inputModelDict = OrderedDict(
     )
 )
 #"""
-#"""
+"""
 inputModelDict = OrderedDict(
     (
         ('Hot_Dust', {
