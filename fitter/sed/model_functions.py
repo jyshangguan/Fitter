@@ -258,6 +258,12 @@ umaxList = [1e3, 1e4, 1e5, 1e6]
 qpahList = [0.47, 1.12, 1.77, 2.50, 3.19, 3.90, 4.58, 0.75, 1.49, 2.37, 0.10]
 mdust2mh = [0.01, 0.01, 0.0101, 0.0102, 0.0102, 0.0103, 0.0104, 0.00343,
             0.00344, 0.00359, 0.00206]
+qpahList = np.array(qpahList)
+mdust2mh = np.array(mdust2mh)
+srtIndex = np.argsort(qpahList)
+qpahList = qpahList[srtIndex]
+mdust2mh = mdust2mh[srtIndex]
+
 def DL07_Model_Intp(umin, umax, qpah, gamma, logMd, tmpl_dl07, wave, DL):
     '''
     This function generates the dust emission template from Draine & Li (2007).
@@ -419,9 +425,12 @@ funcLib = {
     }
 }
 
+aList = list( np.arange(-5.0, 5.0, 0.5) )
+bList = list( np.arange(0.0, 1000.0, 5.0) )
 #Input model dict
+#"""
 inputModelDict = {
-    'linear': {
+    'linear_c': {
         'function': 'Linear',
         'a': {
             'value': 0.06,
@@ -433,6 +442,24 @@ inputModelDict = {
             'value': 328.0,
             'range': [0.0, 1000.0], #[1.5, 2.5],
             'type': 'c',
+            'vary': True,
+        }
+    }
+}
+"""
+inputModelDict = {
+    'linear_d': {
+        'function': 'Linear',
+        'a': {
+            'value': 3.26,
+            'range': aList, #[-5.0, 5.0], #[-10., 3.0],
+            'type': 'd',
+            'vary': True,
+        },
+        'b': {
+            'value': 328.0,
+            'range': bList, #[0.0, 1000.0], #[1.5, 2.5],
+            'type': 'd',
             'vary': True,
         }
     }

@@ -33,7 +33,7 @@ def Model2Data(sedData, sedModel):
         raise TypeError("The sedData type is incorrect!")
     elif not isinstance(sedModel, bc.ModelCombiner):
         raise TypeError("The sedModel type is incorrect!")
-    waveModel = sedModel.get_waveModel()
+    waveModel = sedModel.get_xList()
     fluxModel = sedModel.combineResult()
     fluxModelPht = sedData.model_pht(waveModel, fluxModel)
     return fluxModelPht

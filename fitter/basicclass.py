@@ -569,7 +569,7 @@ def Model_Generator(input_model_dict, func_lib, x_list, par_add_dict_all={}):
             parAddDict[parName] = par_add_dict_all[parName]
         modelDict[modelName] = ModelFunction(funcInfo['function'], xName, parFitDict, parAddDict)
         sed_model = ModelCombiner(modelDict, x_list)
-        return sed_model
+    return sed_model
 
 #DNest4 model#
 #------------#
@@ -653,8 +653,8 @@ class DNest4Model(object):
                 elif parType == "d":
                     #print "[DN4M]: discrete"
                     rangeLen = len(parRange)
-                    iBng = -1 * parRange.index(params[pIndex])
-                    iPar = iBng + rng.randint(rangeLen)
+                    iBng = parRange.index(params[pIndex])
+                    iPar = int( dnest4.wrap( iBng + rangeLen * dnest4.randh(), 0, rangeLen ) )
                     params[pIndex] = parRange[iPar]
                     if not params[pIndex] in parRange:
                         #print "[DNest4Model]: perturb out boundary!"
