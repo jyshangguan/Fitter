@@ -460,7 +460,7 @@ class ModelCombiner(object):
         for modelName in self.__modelDict.keys():
             mf = self.__modelDict[modelName]
             result[modelName] = mf.result(x)
-        return result    
+        return result
 
 
     def get_modelDict(self):
@@ -548,6 +548,28 @@ class ModelCombiner(object):
                     transform=ax.transAxes, fontsize=14)
         return FigAx
 
+#The function generate the ModelCombiner from input model dict
+def Model_Generator(input_model_dict, func_lib, x_list, par_add_dict_all={}):
+    """
+    Generate the ModelCombiner object from the input model dict.
+    """
+    modelDict = OrderedDict()
+    modelNameList = input_model_dict.keys()
+    for modelName in modelNameList:
+        funcName = input_model_dict[modelName]['function']
+        funcInfo = func_lib[funcName]
+        xName = funcInfo['x_name']
+        parFitList = funcInfo['param_fit']
+        parAddList = funcInfo['param_add']
+        parFitDict = OrderedDict()
+        parAddDict = {}
+        for parName in parFitList:
+            parFitDict[parName] = input_model_dict[modelName][parName]
+        for parName in parAddList:
+            parAddDict[parName] = par_add_dict_all[parName]
+        modelDict[modelName] = ModelFunction(funcInfo['function'], xName, parFitDict, parAddDict)
+        sed_model = ModelCombiner(modelDict, x_list)
+        return sed_model
 
 #DNest4 model#
 #------------#
