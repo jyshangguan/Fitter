@@ -430,20 +430,20 @@ class ModelFunction(object):
 
 #The combination of a number of models
 class ModelCombiner(object):
-    def __init__(self, modelDict, waveModel):
+    def __init__(self, modelDict, xList):
         self.__modelDict = modelDict
         self._modelList = modelDict.keys()
-        self.__waveModel = waveModel
+        self.__x = xList
 
-    def get_waveModel(self):
-        return self.__waveModel
+    def get_xList(self):
+        return self.__x
 
     def combineResult(self, x=None):
         """
         Return the model result combining all the components.
         """
         if x is None:
-            x = self.__waveModel
+            x = self.__x
         result = np.zeros_like(x)
         for modelName in self.__modelDict.keys():
             mf = self.__modelDict[modelName]
@@ -456,7 +456,7 @@ class ModelCombiner(object):
         """
         result = OrderedDict()
         if x is None:
-            x = self.__waveModel
+            x = self.__x
         for modelName in self.__modelDict.keys():
             mf = self.__modelDict[modelName]
             result[modelName] = mf.result(x)
