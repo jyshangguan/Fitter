@@ -99,7 +99,7 @@ def logLFunc_SED(params, data, model):
         s = e
     elif len(params) == (pIndex+1):
         f = np.exp(params[pIndex])
-        s = (e**2 + (y * f)**2)**0.5
+        s = (e**2 + (ym * f)**2)**0.5
     else:
         raise ValueError("The length of params is incorrect!")
     #Calculate the log_likelihood
