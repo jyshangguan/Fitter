@@ -76,11 +76,7 @@ ip = ndip.NdimInterpolation(data,theta)
 fp = open('dl07_intp.dict', 'r')
 tmpl_dl07_inpt = pickle.load(fp)
 fp.close()
-uminList = [0.10, 0.15, 0.20, 0.30, 0.40, 0.50, 0.70, 0.80, 1.00, 1.20,
-            1.50, 2.00, 2.50, 3.00, 4.00, 5.00, 7.00, 8.00, 10.0, 12.0,
-            15.0, 20.0, 25.0]
-umaxList = [1e6]
-qpahList = [0.47, 1.12, 1.77, 2.50, 3.19, 3.90, 4.58, 0.75, 1.49, 2.37, 0.10]
+waveModel = tmpl_dl07_inpt[0]['wavesim']
 
 ### Build the model
 parAddDict_all = {
@@ -104,10 +100,9 @@ for modelName in modelNameList:
         parAddDict[parName] = parAddDict_all[parName]
     modelDict[modelName] = bc.ModelFunction(funcInfo['function'], xName, parFitDict, parAddDict)
 
-fAdd   = None #0.1
-Ndata  = 500
-xMax   = 600.0
-waveModel = 10**np.linspace(0.0, np.log10(xMax), Ndata)
+fAdd   = 0.02 #None #
+Ndata  = len(waveModel)
+xMax   = np.max(waveModel)
 sedModel = bc.ModelCombiner(modelDict, waveModel)
 parList = sedModel.get_parList()
 #print inputModelDict
@@ -127,6 +122,13 @@ if not fAdd is None:
     print("The model uncertainty is considered!")
     yObsr += np.abs(fAdd * yObsr) * np.random.rand(nBands)
 yObsr += yErr * np.random.randn(nBands)
+
+logL_dir = -0.5 * np.sum( ((yObsr - yTrueBand)/yErr)**2. + np.log(2 * np.pi * yErr**2.) )
+print("logL_dir: {0:.3f}".format(logL_dir))
+chisq = sedff.ChiSq(yObsr, yTrueBand, yErr)
+logL_sed = -0.5 * ( chisq + np.sum( np.log(2 * np.pi * yErr**2.) ) )
+print("logL_sed: {0:.3f}".format(logL_sed))
+
 model = {}
 model['x_model']    = waveModel
 model['x_obsr']     = sedwave
@@ -135,14 +137,8 @@ model['y_err']      = yErr
 model['y_true']     = yTrueBand
 model['f_add']      = fAdd
 model['parameters'] = parList
-model['components']  = cmpList
-
-logL_dir = -0.5 * np.sum( ((yObsr - yTrueBand)/yErr)**2. + np.log(2 * np.pi * yErr**2.) )
-print("logL_dir: {0:.3f}".format(logL_dir))
-chisq = sedff.ChiSq(yObsr, yTrueBand, yErr)
-print chisq
-logL_sed = -0.5 * ( chisq + np.sum( np.log(2 * np.pi * yErr**2.) ) )
-print("logL_sed: {0:.3f}".format(logL_sed))
+model['components'] = cmpList
+model['logl_true']  = logL_dir
 
 fileName = "{0}.dict".format(targname)
 fp = open(fileName, "w")
@@ -169,4 +165,4 @@ plt.ylim([1e-3, ymax*2.0])
 plt.xscale("log")
 plt.yscale("log")
 plt.savefig("{0}.pdf".format(targname))
-plt.close()
+plt.show()

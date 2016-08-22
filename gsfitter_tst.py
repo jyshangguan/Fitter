@@ -27,8 +27,8 @@ Model2Data = sedff.Model2Data
 #-------------#
 # Create the sedData
 ## Read in the data
-targname = "mock_line"#'mock_dl07' #'PG1612+261' #'PG0050+124'
-sedFile  = "mock_line.sed"#"mock_dl07.sed" #'mock_mbb.sed' #'/Users/jinyi/Work/PG_QSO/sobt/SEDs/{0}_cbr.sed'.format(targname)
+targname = 'mock_dl07' #"mock_line"#'PG1612+261' #'PG0050+124'
+sedFile  = "mock_dl07.sed" #"mock_line.sed"#'mock_mbb.sed' #'/Users/jinyi/Work/PG_QSO/sobt/SEDs/{0}_cbr.sed'.format(targname)
 redshift = 0.2 #0.061
 sedRng   = [0, 10]
 spcRng   = [10, None]
@@ -108,6 +108,7 @@ ip = ndip.NdimInterpolation(data,theta)
 fp = open('dl07_intp.dict', 'r')
 tmpl_dl07_inpt = pickle.load(fp)
 fp.close()
+waveModel = tmpl_dl07_inpt[0]['wavesim']
 
 ### Build the model
 parAddDict_all = {
@@ -115,51 +116,30 @@ parAddDict_all = {
     'tmpl_dl07': tmpl_dl07_inpt,
     'TORUS_tmpl_ip': ip
 }
-#waveModel = 10**np.linspace(0, 3, 500)
-waveModel = 10**np.linspace(0.0, np.log10(600.0), 500)
-#sedModel = bc.ModelCombiner(modelDict, waveModel)
 sedModel = bc.Model_Generator(inputModelDict, funcLib, waveModel, parAddDict_all)
 parAllList = sedModel.get_parList()
 #print inputModelDict
 parNumber  = len(parAllList)
+print("The model we are using:")
+for modelName in inputModelDict.keys():
+    print("{0}".format(modelName))
+print("#---------------------#")
 
-
-##Debugging#
-##---------#
-#fp = open("mbb_mock.dict")
-#mockDict = pickle.load(fp)
-#fp.close()
-##print mockDict.keys()
-#cmpList = mockDict['components']
-#parList = mockDict['parameters']
-#xModel  = mockDict['x']
-#yTrue = mockDict['y_true']
-#yObsr = mockDict['y_obsr']
-#yErr  = mockDict['y_err']
-#yModel = np.array(sedff.Model2Data(sedData, sedModel))
-#chisq = sedff.ChiSq(yObsr, yModel, yErr)
-#logL_sed = -0.5 * ( chisq + np.sum( np.log(2 * np.pi * yErr**2.) ) )
-#print("logL_sed: {0:.3f}".format(logL_sed))
-#print("#--------------------#")
-#logL_logl = logLFunc(parAllList, sedData, sedModel)
-#print("logL_logl: {0:.3f}".format(logL_logl))
-##Plot
-##fig, ax = sedModel.plot(waveModel, FigAx=(fig, ax))
-##ax.set_ylim([ymin/100., ymax])
-##plt.show()
 
 #Fit with DNest4#
 #---------------#
 
 ## Create the DNest4Model
-dn4m = bc.DNest4Model(sedData, sedModel, logLFunc)
-#parPriorList = dn4m.from_prior()
-#print parPriorList
-#print dn4m.log_likelihood(parPriorList)
-##Plot
-#fig, ax = sedModel.plot(waveModel, FigAx=(fig, ax))
-#ax.set_ylim([ymin/100., ymax])
-#plt.show()
+fp = open("{0}.dict".format(targname))
+mockDict = pickle.load(fp)
+fp.close()
+fTrue = mockDict.get('f_add', None)
+if fTrue is None:
+    modelUnct = False
+else:
+    modelUnct = True #Whether to consider the model uncertainty in the fitting
+    parNumber += 1
+dn4m = bc.DNest4Model(sedData, sedModel, logLFunc, modelUnct)
 
 #"""
 ## Create a model object and a sampler
@@ -206,19 +186,20 @@ yFitUl = sedModel.combineResult()
 sedModel.updatParList(parLlList)
 yFitLl = sedModel.combineResult()
 
-print parBfList
-print parUlList
-print parLlList
-print parAllList
-
 ### Plot the Data
-fp = open("{0}.dict".format(targname))
-mockDict = pickle.load(fp)
-fp.close()
-#print mockDict.keys()
 cmpList = mockDict['components']
 parList = mockDict['parameters']
 xModel  = mockDict['x_model']
+loglTrue = mockDict['logl_true']
+
+if modelUnct:
+    parList.append( np.log(fTrue) )
+for loop in range(len(parBfList)):
+    p = parBfList[loop]
+    u = uncUlList[loop]
+    l = uncLlList[loop]
+    t = parList[loop]
+    print("{0}+{1}-{2}, {3}".format(p, u, l, t))
 
 plt.close()
 plt.figure()
@@ -242,5 +223,5 @@ plt.close()
 
 ## Rename the posterior sample file name#
 #os.rename("")
-os.rename("posterior_sample.txt", "{0}_posterior.txt".format(targname))
+#os.rename("posterior_sample.txt", "{0}_posterior.txt".format(targname))
 #"""

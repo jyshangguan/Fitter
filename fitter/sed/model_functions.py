@@ -448,7 +448,7 @@ inputModelDict = {
     }
 }
 #"""
-#"""
+"""
 inputModelDict = {
     'linear_d': {
         'function': 'Linear',
@@ -539,27 +539,26 @@ inputModelDict = OrderedDict(
     )
 )
 #"""
-"""
+#"""
 inputModelDict = OrderedDict(
     (
         ('Hot_Dust', {
                 'function': 'Modified_BlackBody',
-                'normalisation': ('w1', 'logM'),
                 'logM': {
                     'value': 0.32,
-                    'range': [0.3, 0.4], #[-10., 3.0],
+                    'range': [-10., 3.0], #[0.3, 0.4], #
                     'type': 'c',
                     'vary': True,
                 },
                 'beta': {
                     'value': 2.0,
-                    'range': [1.9, 2.1], #[1.5, 2.5],
+                    'range': [1.5, 2.5], #[1.9, 2.1], #
                     'type': 'c',
                     'vary': True,
                 },
                 'T': {
                     'value': 846.77,
-                    'range': [846., 847], #[500, 1300],
+                    'range': [500, 1300], #[846., 847], #
                     'type': 'c',
                     'vary': True,
                 }
@@ -567,46 +566,45 @@ inputModelDict = OrderedDict(
         ),
         ('CLUMPY', {
                 'function': 'CLUMPY_Torus_Model',
-                'normalisation': ('w4', 'TORUS_logsf'),
                 'TORUS_logsf': {
                     'value': 6.33,
-                    'range': [6.3, 6.4],
+                    'range': [0.0, 8.0], #[6.3, 6.4],
                     'type': 'c',
                     'vary': True,
                 },
                 'TORUS_i': {
                     'value': 47.60,
-                    'range': [47.0, 48.0], #[0.0, 90.0],
+                    'range': [0.0, 90.0], #[47.0, 48.0], #
                     'type': 'c',
                     'vary': True,
                 },
                 'TORUS_tv': {
                     'value': 17.53,
-                    'range': [17, 18], #[10.0, 300.0],
+                    'range': [10.0, 300.0], #[17, 18], #
                     'type': 'c',
                     'vary': True,
                 },
                 'TORUS_q': {
                     'value': 0.7,
-                    'range': [0.6, 0.8], #[0.0, 3.0],
+                    'range': [0.0, 3.0], #[0.6, 0.8], #
                     'type': 'c',
                     'vary': True,
                 },
                 'TORUS_N0': {
                     'value': 6.43,
-                    'range': [6.42, 6.44], #[1.0, 15.0],
+                    'range': [1.0, 15.0], #[6.42, 6.44], #
                     'type': 'c',
                     'vary': True,
                 },
                 'TORUS_sig': {
                     'value': 58.14,
-                    'range': [58.0, 59.0], #[15.0, 70.0],
+                    'range': [15.0, 70.0], #[58.0, 59.0], #
                     'type': 'c',
                     'vary': True,
                 },
                 'TORUS_Y': {
                     'value': 30.0,
-                    'range': [29., 31.], #[5.0, 100.0],
+                    'range': [5.0, 100.0], #[29., 31.], #
                     'type': 'c',
                     'vary': True,
                 }
@@ -614,7 +612,6 @@ inputModelDict = OrderedDict(
         ),
         ('DL07', {
                 'function': 'DL07_Model',
-                'normalisation': ('PACS_100', 'logMd'),
                 'umin': {
                     'value': 10.0,
                     'range': uminList,
@@ -635,13 +632,13 @@ inputModelDict = OrderedDict(
                 },
                 'gamma': {
                     'value': 0.02,
-                    'range': [0.01, 0.03],
+                    'range': [0.01, 0.99], #[0.01, 0.03],
                     'type': 'c',
                     'vary': True,
                 },
                 'logMd': {
                     'value': 9.12,
-                    'range': [9.0, 10.0],
+                    'range': [5.0, 11.0], #[9.0, 10.0],
                     'type': 'd',
                     'vary': True,
                 }
