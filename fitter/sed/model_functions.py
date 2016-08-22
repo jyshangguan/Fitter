@@ -639,7 +639,7 @@ inputModelDict = OrderedDict(
                 'logMd': {
                     'value': 9.12,
                     'range': [5.0, 11.0], #[9.0, 10.0],
-                    'type': 'd',
+                    'type': 'c',
                     'vary': True,
                 }
             }
