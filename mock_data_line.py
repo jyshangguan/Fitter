@@ -12,6 +12,7 @@ from fitter.sed import fit_functions as sedff
 ls_mic = 2.99792458e14 #micron/s
 inputModelDict = sedmf.inputModelDict
 funcLib = sedmf.funcLib
+Model2Data = sedff.Model2Data
 
 #Generate the mock data#
 #-----------------#
@@ -81,23 +82,27 @@ if not fAdd is None:
     print("The model uncertainty is considered!")
     yObsr += np.abs(fAdd * yObsr) * np.random.randn(nBands)
 yObsr += yErr * np.random.randn(nBands)
+
+if not fAdd is None:
+    s2 = yErr**2. + (yTrueBand * fAdd)**2.
+else:
+    s2 = yErr**2.
+logL_dir = -0.5 * np.sum( (yObsr - yTrueBand)**2. / s2 + np.log(2 * np.pi * s2) )
+print("logL_dir: {0:.3f}".format(logL_dir))
+chisq = sedff.ChiSq(yObsr, yTrueBand, s2**0.5)
+logL_sed = -0.5 * ( chisq + np.sum( np.log(2 * np.pi * s2) ) )
+print("logL_sed: {0:.3f}".format(logL_sed))
+
 model = {}
 model['x_model']    = waveModel
 model['x_obsr']     = sedwave
 model['y_obsr']     = yObsr
 model['y_err']      = yErr
 model['y_true']     = yTrueBand
-model['f_add']       = fAdd
+model['f_add']      = fAdd
 model['parameters'] = parList
-model['components']  = cmpList
-
-logL_dir = -0.5 * np.sum( ((yObsr - yTrueBand)/yErr)**2. + np.log(2 * np.pi * yErr**2.) )
-print("logL_dir: {0:.3f}".format(logL_dir))
-chisq = sedff.ChiSq(yObsr, yTrueBand, yErr)
-print chisq
-logL_sed = -0.5 * ( chisq + np.sum( np.log(2 * np.pi * yErr**2.) ) )
-print("logL_sed: {0:.3f}".format(logL_sed))
-
+model['components'] = cmpList
+model['logl_true']  = logL_dir
 fileName = "{0}.dict".format(targname)
 fp = open(fileName, "w")
 pickle.dump(model, fp)

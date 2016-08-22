@@ -87,7 +87,14 @@ if not fAdd is None:
     print("The model uncertainty is considered!")
     yObsr += np.abs(fAdd * yObsr) * np.random.randn(nBands)
 yObsr += yErr * np.random.randn(nBands)
-model = {}
+
+logL_dir = -0.5 * np.sum( ((yObsr - yTrueBand)/yErr)**2. + np.log(2 * np.pi * yErr**2.) )
+print("logL_dir: {0:.3f}".format(logL_dir))
+chisq = sedff.ChiSq(yObsr, yTrueBand, yErr)
+print chisq
+logL_sed = -0.5 * ( chisq + np.sum( np.log(2 * np.pi * yErr**2.) ) )
+
+pmodel = {}
 model['x_model']    = waveModel
 model['x_obsr']     = sedwave
 model['y_obsr']     = yObsr
@@ -95,15 +102,8 @@ model['y_err']      = yErr
 model['y_true']     = yTrueBand
 model['f_add']       = fAdd
 model['parameters'] = parList
-model['components']  = cmpList
-
-logL_dir = -0.5 * np.sum( ((yObsr - yTrueBand)/yErr)**2. + np.log(2 * np.pi * yErr**2.) )
-print("logL_dir: {0:.3f}".format(logL_dir))
-chisq = sedff.ChiSq(yObsr, yTrueBand, yErr)
-print chisq
-logL_sed = -0.5 * ( chisq + np.sum( np.log(2 * np.pi * yErr**2.) ) )
-print("logL_sed: {0:.3f}".format(logL_sed))
-
+model['components']  = cmpListrint("logL_sed: {0:.3f}".format(logL_sed))
+model['logl_true']  = logL_dir
 fileName = "{0}.dict".format(targname)
 fp = open(fileName, "w")
 pickle.dump(model, fp)
