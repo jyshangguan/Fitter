@@ -438,6 +438,9 @@ class ModelCombiner(object):
     def get_xList(self):
         return self.__x
 
+    def set_xList(self, xList):
+        self.__x = xList
+
     def combineResult(self, x=None):
         """
         Return the model result combining all the components.
@@ -475,7 +478,7 @@ class ModelCombiner(object):
 
     def get_parList(self):
         """
-        Return the total numcer of the fit parameters.
+        Return the total number of the fit parameters.
         """
         parList = []
         for modelName in self._modelList:
@@ -485,14 +488,32 @@ class ModelCombiner(object):
                 parList.append(modelParDict[parName]["value"])
         return parList
 
+    def get_parVaryList(self):
+        """
+        Return the total number of the fit parameters that can vary.
+        """
+        parList = []
+        for modelName in self._modelList:
+            model = self.__modelDict[modelName]
+            modelParDict = model.parFitDict
+            for parName in modelParDict.keys():
+                if modelParDict[parName]["vary"]:
+                    parList.append(modelParDict[parName]["value"])
+                else:
+                    pass
+        return parList
+
     def updateParFit(self, modelName, parName, parValue, QuietMode=True):
         model = self.__modelDict[modelName]
         if not QuietMode:
             orgValue = model.parFitDict[parName]
             print '[{0}][{1}] {2}->{3}'.format(modelName, parName, orgValue, parValue)
-        model.parFitDict[parName] = parValue
+        if model.parFitDict[parName]["vary"]:
+            model.parFitDict[parName]["value"] = parValue
+        else:
+            raise RuntimeError("[ModelCombiner]: {0}-{1} is fixed!".format(modelName, parName))
 
-    def updatParList(self, parList):
+    def updateParList(self, parList):
         """
         Updata the fit parameters from a list.
         """
@@ -501,8 +522,11 @@ class ModelCombiner(object):
             model = self.__modelDict[modelName]
             modelParDict = model.parFitDict
             for parName in modelParDict.keys():
-                modelParDict[parName]["value"] = parList[counter]
-                counter += 1
+                if modelParDict[parName]["vary"]:
+                    modelParDict[parName]["value"] = parList[counter]
+                    counter += 1
+                else:
+                    pass
 
     def updateParAdd(self, modelName, parName, parValue, QuietMode=True):
         model = self.__modelDict[modelName]
@@ -615,18 +639,21 @@ class DNest4Model(object):
         for modelName in self.__model._modelList:
             parFitDict = parDict[modelName]
             for parName in parFitDict.keys():
-                parRange = parFitDict[parName]["range"]
-                parType  = parFitDict[parName]["type"]
-                if parType == "c":
-                    #print "[DN4M]: continual"
-                    r1, r2 = parRange
-                    p = (r2 - r1) * rng.rand() + r1 #Uniform distribution
-                elif parType == "d":
-                    #print "[DN4M]: discrete"
-                    p = np.random.choice(parRange, 1)[0]
+                if parFitDict[parName]["vary"]:
+                    parRange = parFitDict[parName]["range"]
+                    parType  = parFitDict[parName]["type"]
+                    if parType == "c":
+                        #print "[DN4M]: continual"
+                        r1, r2 = parRange
+                        p = (r2 - r1) * rng.rand() + r1 #Uniform distribution
+                    elif parType == "d":
+                        #print "[DN4M]: discrete"
+                        p = np.random.choice(parRange, 1)[0]
+                    else:
+                        raise TypeError("The parameter type '{0}' is not recognised!".format(parType))
+                    parList.append(p)
                 else:
-                    raise TypeError("The parameter type '{0}' is not recognised!".format(parType))
-                parList.append(p)
+                    pass
         #If the model uncertainty is concerned.
         if self.__modelunct:
             lnf =  20.0 * rng.rand() - 10.0
@@ -645,29 +672,32 @@ class DNest4Model(object):
         for modelName in self.__model._modelList:
             parFitDict = parDict[modelName]
             for parName in parFitDict.keys():
-                parRange = parFitDict[parName]["range"]
-                parType  = parFitDict[parName]["type"]
-                if parType == "c":
-                    #print "[DN4M]: continual"
-                    r1, r2 = parRange
-                    p0 = params[pIndex]
-                    p0 += (r2 - r1) * dnest4.randh() #Uniform distribution
-                    params[pIndex] = dnest4.wrap(p0, r1, r2)
-                    if (params[pIndex] < r1) or (params[pIndex] > r2):
-                        logH -= np.inf
-                elif parType == "d":
-                    #print "[DN4M]: discrete"
-                    rangeLen = len(parRange)
-                    iBng = parRange.index(params[pIndex])
-                    iPro = int( iBng + rangeLen * dnest4.randh() )
-                    iPar = dnest4.wrap(iPro, 0, rangeLen)
-                    params[pIndex] = parRange[iPar]
-                    if not params[pIndex] in parRange:
-                        logH -= np.inf
+                if parFitDict[parName]["vary"]:
+                    parRange = parFitDict[parName]["range"]
+                    parType  = parFitDict[parName]["type"]
+                    if parType == "c":
+                        #print "[DN4M]: continual"
+                        r1, r2 = parRange
+                        p0 = params[pIndex]
+                        p0 += (r2 - r1) * dnest4.randh() #Uniform distribution
+                        params[pIndex] = dnest4.wrap(p0, r1, r2)
+                        if (params[pIndex] < r1) or (params[pIndex] > r2):
+                            logH -= np.inf
+                    elif parType == "d":
+                        #print "[DN4M]: discrete"
+                        rangeLen = len(parRange)
+                        iBng = parRange.index(params[pIndex])
+                        iPro = int( iBng + rangeLen * dnest4.randh() )
+                        iPar = dnest4.wrap(iPro, 0, rangeLen)
+                        params[pIndex] = parRange[iPar]
+                        if not params[pIndex] in parRange:
+                            logH -= np.inf
+                    else:
+                        raise TypeError("The parameter type '{0}' is not recognised!".format(parType))
+                    parFitDict[parName]["value"] = params[pIndex]
+                    pIndex += 1
                 else:
-                    raise TypeError("The parameter type '{0}' is not recognised!".format(parType))
-                parFitDict[parName]["value"] = params[pIndex]
-                pIndex += 1
+                    pass
         if len(params) == (pIndex+1):
             p0 = params[pIndex]
             p0 += 20.0 * dnest4.randh()
@@ -685,13 +715,10 @@ class DNest4Model(object):
 
 #The log_likelihood function: simple one
 def logLFunc_simple(params, data, model):
-    parDict = model.get_modelParDict()
-    pIndex = 0
-    for modelName in model._modelList:
-        parFitDict = parDict[modelName]
-        for parName in parFitDict.keys():
-            parFitDict[parName]["value"] = params[pIndex]
-            pIndex += 1
+    """
+    This is the simplest log likelihood function.
+    """
+    model.updateParList(params)
     x = np.array(data.get_List('x'))
     y = np.array(data.get_List('y'))
     e = np.array(data.get_List('e'))

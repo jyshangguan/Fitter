@@ -579,7 +579,7 @@ inputModelDict = OrderedDict(
                     'value': 2.0,
                     'range': [1.5, 2.5], #[1.9, 2.1], #
                     'type': 'c',
-                    'vary': True,
+                    'vary': False, #True, #
                 },
                 'T': {
                     'value': 846.77,
@@ -647,7 +647,7 @@ inputModelDict = OrderedDict(
                     'value': 1e6,
                     'range': umaxList,
                     'type': 'd',
-                    'vary': True,
+                    'vary': False, #True, #
                 },
                 'qpah': {
                     'value': 3.19,

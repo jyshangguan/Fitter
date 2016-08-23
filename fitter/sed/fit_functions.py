@@ -83,14 +83,19 @@ def ChiSq(data, model, unct=None):
 
 #The log_likelihood function: for SED fitting
 def logLFunc_SED(params, data, model):
+    """
     parDict = model.get_modelParDict()
     pIndex = 0
     for modelName in model._modelList:
         parFitDict = parDict[modelName]
         for parName in parFitDict.keys():
-            #print parName, params[pIndex]
-            parFitDict[parName]["value"] = params[pIndex]
-            pIndex += 1
+            if parFitDict[parName]["vary"]:
+                parFitDict[parName]["value"] = params[pIndex]
+                pIndex += 1
+            else:
+                pass
+    """
+    model.updateParList(params)
     y = np.array(data.get_List('y'))
     e = np.array(data.get_List('e'))
     #ym = np.array(model.combineResult(x))

@@ -98,6 +98,7 @@ sedData.add_bandpass(herschelBandDict)
 parAddDict_all = {
     'DL': DL,
 }
+waveModel = sedmf.waveModel
 sedModel = bc.Model_Generator(inputModelDict, funcLib, waveModel, parAddDict_all)
 parAllList = sedModel.get_parList()
 #print inputModelDict
@@ -161,13 +162,13 @@ uncUlList = parRangeList[:, 1] #The upperlimits of the parameter uncertainties
 uncLlList = parRangeList[:, 2] #The lowerlimits of the parameter uncertainties
 parUlList = parBfList + uncUlList #The upperlimits of the parameters
 parLlList = parBfList - uncLlList #The lowerlimits of the parameters
-sedModel.updatParList(parBfList)
+sedModel.updateParList(parBfList)
 yFitBf = sedModel.combineResult()
 yFitBF_cmp = sedModel.componentResult()
-sedModel.updatParList(parUlList)
+sedModel.updateParList(parUlList)
 yFitUl = sedModel.combineResult()
 yFitUl_cmp = sedModel.componentResult()
-sedModel.updatParList(parLlList)
+sedModel.updateParList(parLlList)
 yFitLl = sedModel.combineResult()
 yFitLl_cmp = sedModel.componentResult()
 
