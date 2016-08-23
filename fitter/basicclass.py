@@ -566,7 +566,11 @@ def Model_Generator(input_model_dict, func_lib, x_list, par_add_dict_all={}):
         for parName in parFitList:
             parFitDict[parName] = input_model_dict[modelName][parName]
         for parName in parAddList:
-            parAddDict[parName] = par_add_dict_all[parName]
+            par_add_iterm = par_add_dict_all.get(parName, "No this parameter")
+            if par_add_iterm == "No this parameter":
+                pass
+            else:
+                parAddDict[parName] = par_add_iterm
         modelDict[modelName] = ModelFunction(funcInfo['function'], xName, parFitDict, parAddDict)
         sed_model = ModelCombiner(modelDict, x_list)
     return sed_model

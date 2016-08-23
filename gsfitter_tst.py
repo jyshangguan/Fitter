@@ -94,27 +94,9 @@ sedData.add_bandpass(herschelBandDict)
 
 #Build up the model#
 #------------------#
-## Load the templates
 
-### CLUMPY template
-clumpyFile = '/Users/jinyi/Work/PG_QSO/templates/clumpy_models_201410_tvavg.hdf5'
-h = h5py.File(clumpyFile,'r')
-theta = [np.unique(h[par][:]) for par in ('i','tv','q','N0','sig','Y','wave')]
-data = h['flux_tor'].value
-wave_tmpl = h['wave'].value
-ip = ndip.NdimInterpolation(data,theta)
-
-### DL07 template
-fp = open('dl07_intp.dict', 'r')
-tmpl_dl07_inpt = pickle.load(fp)
-fp.close()
-waveModel = tmpl_dl07_inpt[0]['wavesim']
-
-### Build the model
 parAddDict_all = {
     'DL': DL,
-    'tmpl_dl07': tmpl_dl07_inpt,
-    'TORUS_tmpl_ip': ip
 }
 sedModel = bc.Model_Generator(inputModelDict, funcLib, waveModel, parAddDict_all)
 parAllList = sedModel.get_parList()
@@ -207,7 +189,7 @@ for loop in range(len(parBfList)):
 plt.close()
 plt.figure()
 cList = ['r', 'g', 'b', 'm', 'y', 'c']
-plt.plot(waveModel, yFitBf, color="grey", linewidth=1.5)
+plt.plot(waveModel, yFitBf, color="grey", linewidth=3.0)
 plt.fill_between(waveModel, yFitLl, yFitUl, color="grey", alpha=0.1)
 counter = 0
 for modelName in sedModel._modelList:
