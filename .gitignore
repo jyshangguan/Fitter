@@ -12,3 +12,6 @@ sv_*.py
 
 #SED data
 *.sed
+
+#Backup files
+bak/*
