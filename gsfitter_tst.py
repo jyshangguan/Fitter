@@ -141,7 +141,7 @@ else:
     parNumber += 1
 dn4m = bc.DNest4Model(sedData, sedModel, logLFunc, modelUnct)
 
-#"""
+"""
 ## Create a model object and a sampler
 sampler = dnest4.DNest4Sampler(dn4m,
                                backend=dnest4.backends.CSVBackend(".",
@@ -161,7 +161,7 @@ for i, sample in enumerate(gen):
 dnest4.postprocess()
 #"""
 
-"""
+#"""
 #Process the posterior distributions of the parameters#
 #-----------------------------------------------------#
 ##Fitting results
@@ -172,7 +172,7 @@ except:
     raise AssertionError("The posterior sample is problematic!")
 ##Calculate the optimized paramter values
 parRangeList = map( lambda v: (v[1], v[2]-v[1], v[1]-v[0]),
-                   zip(*np.percentile(ps, [16, 50, 84], axis=0)) )
+                   zip(*np.percentile(ps, [16, 50, 84], axis=0, interpolation='nearest')) )
 parRangeList = np.array(parRangeList)
 parBfList = parRangeList[:, 0] #The best fit parameters
 uncUlList = parRangeList[:, 1] #The upperlimits of the parameter uncertainties
@@ -181,10 +181,13 @@ parUlList = parBfList + uncUlList #The upperlimits of the parameters
 parLlList = parBfList - uncLlList #The lowerlimits of the parameters
 sedModel.updatParList(parBfList)
 yFitBf = sedModel.combineResult()
+yFitBF_cmp = sedModel.componentResult()
 sedModel.updatParList(parUlList)
 yFitUl = sedModel.combineResult()
+yFitUl_cmp = sedModel.componentResult()
 sedModel.updatParList(parLlList)
 yFitLl = sedModel.combineResult()
+yFitLl_cmp = sedModel.componentResult()
 
 ### Plot the Data
 cmpList = mockDict['components']
@@ -203,11 +206,17 @@ for loop in range(len(parBfList)):
 
 plt.close()
 plt.figure()
-plt.plot(waveModel, yFitBf, color="r")
-plt.fill_between(waveModel, yFitLl, yFitUl, color="r", alpha=0.1)
-plt.errorbar(wave, flux, yerr=sigma, fmt='.k')
-yModel = np.zeros_like(xModel)
 cList = ['r', 'g', 'b', 'm', 'y', 'c']
+plt.plot(waveModel, yFitBf, color="grey", linewidth=1.5)
+plt.fill_between(waveModel, yFitLl, yFitUl, color="grey", alpha=0.1)
+counter = 0
+for modelName in sedModel._modelList:
+    plt.plot(waveModel, yFitBF_cmp[modelName], color=cList[counter])
+    plt.fill_between(waveModel, yFitLl_cmp[modelName], yFitUl_cmp[modelName],
+                     color=cList[counter], alpha=0.1)
+    counter += 1
+plt.errorbar(wave, flux, yerr=sigma, fmt='.k', markersize=10, elinewidth=2, capsize=2)
+yModel = np.zeros_like(xModel)
 counter = 0
 for y in cmpList:
     plt.plot(xModel, y, color=cList[counter], linestyle='--')
@@ -215,10 +224,10 @@ for y in cmpList:
     counter += 1
 plt.plot(xModel, yModel, color='k', linewidth=1.5)
 ymax = np.max(yModel)
-plt.ylim([1e0, ymax*2.0])
+plt.ylim([1e-2, ymax*2.0])
 plt.xscale('log')
 plt.yscale('log')
-plt.savefig("{0}_result.pdf".format(targname))
+plt.savefig("{0}_result.png".format(targname))
 plt.close()
 
 ## Rename the posterior sample file name#
