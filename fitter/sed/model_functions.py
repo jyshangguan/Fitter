@@ -287,10 +287,39 @@ srtIndex = np.argsort(qpahList)
 qpahList = list(qpahList[srtIndex])
 mdust2mh = list(mdust2mh[srtIndex])
 
-def DL07_Model_Intp(umin, umax, qpah, gamma, logMd, DL, wave, tmpl_dl07=tmpl_dl07):
+fp = open(template_dir+'DL07spec/dl07.tmplt', 'r')
+tmpl_dl07 = pickle.load(fp)
+fp.close()
+waveModel = tmpl_dl07[0]['wavesim']
+nTemplate = len(tmpl_dl07)
+tmpl_dl07_intp = np.empty(nTemplate, dtype=[('modelname', np.str_, 29), ('umin', np.float64),
+                                            ('umax', np.float64), ('qpah', np.float64),
+                                            ('index', int)])
+counter = 0
+dl07IntpList = []
+for umin in uminList:
+    umaxList_exp = [umin] + umaxList
+    for umax in umaxList_exp:
+        for qpah in qpahList:
+            fltr_umin = tmpl_dl07['umin'] == umin
+            fltr_umax = tmpl_dl07['umax'] == umax
+            fltr_qpah = tmpl_dl07['qpah'] == qpah
+            fltr = fltr_umin & fltr_umax & fltr_qpah
+            wavesim = tmpl_dl07[fltr]['wavesim'][0]
+            fluxsim = tmpl_dl07[fltr]['fluxsim'][0]
+            fluxInpt = interp1d(wavesim, fluxsim)(waveModel)
+            tmpl_dl07_intp[counter]['modelname'] = tmpl_dl07[fltr]['modelname'][0]
+            tmpl_dl07_intp[counter]['umin'] = umin
+            tmpl_dl07_intp[counter]['umax'] = umax
+            tmpl_dl07_intp[counter]['qpah'] = qpah
+            tmpl_dl07_intp[counter]['index'] = counter
+            dl07IntpList.append(fluxInpt)
+            counter += 1
+print 'Finish DL07 model interpolation!'
+
+def DL07_Model_Intp(umin, umax, qpah, gamma, logMd, DL, wave):
     '''
     This function generates the dust emission template from Draine & Li (2007).
-    The fluxes are interpolated at the given wavelength.
 
     Parameters
     ----------
@@ -308,13 +337,11 @@ def DL07_Model_Intp(umin, umax, qpah, gamma, logMd, DL, wave, tmpl_dl07=tmpl_dl0
         The luminosity distance.
     wave : float array
         The wavelengths of the output flux.
-    tmpl_dl07 : numpy.ndarray
-        The template of DL07 model.
 
     Returns
     -------
-    flux_model : float array
-        The flux density of the model at the given wavelength.
+    flux : float array
+        The flux density of the model.
 
     Notes
     -----
@@ -329,18 +356,17 @@ def DL07_Model_Intp(umin, umax, qpah, gamma, logMd, DL, wave, tmpl_dl07=tmpl_dl0
         raise ValueError('The umax={0} is invalid!'.format(umax))
     if not chk_qpah:
         raise ValueError('The qpah={0} is invalid!'.format(qpah))
-    fltr_qpah = tmpl_dl07['qpah'] == qpah
-    fltr_umin = tmpl_dl07['umin'] == umin
-    fltr_min = fltr_qpah & fltr_umin & (tmpl_dl07['umax'] == umin)
-    fltr_pl  = fltr_qpah & fltr_umin & (tmpl_dl07['umax'] == umax)
-    wave_min = tmpl_dl07[fltr_min]['wavesim'][0]
-    jnu_min  = tmpl_dl07[fltr_min]['fluxsim'][0]
-    wave_pl = tmpl_dl07[fltr_pl]['wavesim'][0]
-    jnu_pl  = tmpl_dl07[fltr_pl]['fluxsim'][0]
+    fltr_qpah = tmpl_dl07_intp['qpah'] == qpah
+    fltr_umin = tmpl_dl07_intp['umin'] == umin
+    fltr_min = fltr_qpah & fltr_umin & (tmpl_dl07_intp['umax'] == umin)
+    fltr_pl  = fltr_qpah & fltr_umin & (tmpl_dl07_intp['umax'] == umax)
+    index_jnu_min  = tmpl_dl07_intp[fltr_min][0]['index']
+    index_jnu_pl  = tmpl_dl07_intp[fltr_pl][0]['index']
+    jnu_min = dl07IntpList[index_jnu_min](wave)
+    jnu_pl  = dl07IntpList[index_jnu_pl](wave)
     jnu = (1 - gamma) * jnu_min + gamma * jnu_pl
     flux = 10**logMd * Msun/m_H * jnu/(DL * Mpc)**2 / mdust2mh[qpahList.index(qpah)] * 1e3 #unit: mJy
-    flux_model = interp1d(wave_pl, flux)(wave)
-    return flux_model
+    return flux
 
 def DL07_Model(umin, umax, qpah, gamma, logMd, DL, wave, tmpl_dl07=tmpl_dl07):
     '''
@@ -672,3 +698,59 @@ inputModelDict = OrderedDict(
     )
 )
 #"""
+
+if __name__ == "__main__":
+    wave = waveModel
+    qpahPlotList  = [4.58, 1.77]
+    uminPlotList  = [1, 10]
+    gammaPlotList = [0, 0.005, 0.01, 0.02, 0.04]
+    umax = 1e6
+
+    ls_mic = 2.99792458e14 #micron/s
+    xTickRange = np.array([1e1, 1e2, 1e3])
+    yTickRange = np.array([1e-25, 1e-26, 1e-27])
+    colorList = ['k', 'r', 'g', 'b', 'm']
+    fig, axarr = plt.subplots(2, 2, sharex=True, sharey=True)
+    fig.set_size_inches(12, 10)
+    fig.subplots_adjust(hspace=0, wspace=0)
+    for loop_umin in range(len(uminPlotList)):
+        umin = uminPlotList[loop_umin]
+        for loop_qpah in range(len(qpahPlotList)):
+            qpah = qpahPlotList[loop_qpah]
+            if umin == 10:
+                nGamma = 5
+            else:
+                nGamma = 4
+            #print 'Umin: {0}, qPAH: {1}'.format(umin, qpah)
+            #print loop_umin, loop_qpah
+            for loop_gamma in range(nGamma):
+                gamma = gammaPlotList[loop_gamma]
+                fltr_qpah = tmpl_dl07_intp['qpah'] == qpah
+                fltr_umin = tmpl_dl07_intp['umin'] == umin
+                fltr_min = fltr_qpah & fltr_umin & (tmpl_dl07_intp['umax'] == umin)
+                fltr_pl  = fltr_qpah & fltr_umin & (tmpl_dl07_intp['umax'] == umax)
+                index_jnu_min  = tmpl_dl07_intp[fltr_min][0]['index']
+                index_jnu_pl  = tmpl_dl07_intp[fltr_pl][0]['index']
+                jnu_min = dl07IntpList[index_jnu_min](wave)
+                jnu_pl  = dl07IntpList[index_jnu_pl](wave)
+                jnu = (1 - gamma) * jnu_min + gamma * jnu_pl
+                freq = ls_mic / wave
+                jnu = (1 - gamma) * jnu_min + gamma * jnu_pl
+                lamjlam = freq * jnu * 1e-23
+                umean = (1 - gamma) * umin + gamma * umin * np.log(umax/umin) / (1 - umin/umax)
+                #print jnu
+                axarr[loop_qpah, loop_umin].plot(wave, lamjlam/umean, color=colorList[loop_gamma],
+                                                 linewidth=1.5, label=r'$\gamma={0}$'.format(gamma))
+            axarr[loop_qpah, loop_umin].set_xscale('log')
+            axarr[loop_qpah, loop_umin].set_yscale('log')
+            axarr[loop_qpah, loop_umin].set_xlim([2, 1e3])
+            axarr[loop_qpah, loop_umin].set_ylim([1e-27, 4e-25])
+            axarr[loop_qpah, loop_umin].tick_params(axis='both', labelsize=18)
+            axarr[loop_qpah, loop_umin].text(0.05, 0.9, r'$\mathrm{{q_{{PAH}}}}={0:.2f}\%$'.format(qpah),
+                                             horizontalalignment='left', verticalalignment='bottom',
+                                             transform=axarr[loop_qpah, loop_umin].transAxes, fontsize=18)
+            axarr[loop_qpah, loop_umin].text(0.7, 0.9, r'$\mathrm{{U_{{min}}}}={0:d}$'.format(umin),
+                                             horizontalalignment='left', verticalalignment='bottom',
+                                             transform=axarr[loop_qpah, loop_umin].transAxes, fontsize=18)
+            axarr[loop_qpah, loop_umin].legend(loc='lower center', fontsize=14, labelspacing=0.1)
+    plt.show()
