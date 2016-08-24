@@ -317,7 +317,7 @@ class SedClass(bc.DataSet):
             fluxList.append(self.filtering(bandName, wavelength, flux, **kws)[1])
         return fluxList
 
-    def model_spc(self, wavelength, flux, cSetName=None):
+    def model_spc(self, fluxFunc, cSetName=None):
         """
         Calculate the model flux density of the input spectrum at the wavelengths of
         all the spectra. The input spectrum is considered at the rest frame.
@@ -326,8 +326,8 @@ class SedClass(bc.DataSet):
         ----------
         wavelength : float array
             The wavelength of the input spectrum.
-        flux : float array
-            The flux of the input spectrum.
+        fluxFunc : function
+            The the function to return the model fluxes.
         cSetName : str or None by default
             Specify the name of continual set to use.
 
@@ -347,5 +347,5 @@ class SedClass(bc.DataSet):
             if cSet is None:
                 raise KeyError("The set name '{0}' is not found!".format(cSetName))
             cWaveList = cSet.get_List('x')
-        fluxList = list( interp1d(wavelength, flux)(cWaveList) )
+        fluxList = list( fluxFunc( np.array(cWaveList) ) )
         return fluxList

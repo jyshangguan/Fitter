@@ -315,7 +315,7 @@ for umin in uminList:
             tmpl_dl07_intp[counter]['index'] = counter
             dl07IntpList.append(fluxInpt)
             counter += 1
-print 'Finish DL07 model interpolation!'
+print '[model_functions]: Finish DL07 model interpolation!'
 
 def DL07_Model_Intp(umin, umax, qpah, gamma, logMd, DL, wave):
     '''
@@ -663,7 +663,7 @@ inputModelDict = OrderedDict(
             }
         ),
         ('DL07', {
-                'function': 'DL07_Model',
+                'function': 'DL07_Model_Intp',
                 'umin': {
                     'value': 10.0,
                     'range': uminList,

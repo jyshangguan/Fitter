@@ -20,11 +20,14 @@ Model2Data = sedff.Model2Data
 targname = 'mock_line'
 redshift = 0.2
 bandList = ['w1', 'w2', 'w3', 'w4', 'PACS_70', 'PACS_100', 'PACS_160', 'SPIRE_250', 'SPIRE_350', 'SPIRE_500']
-nBands = len(bandList)
 sedwave = np.array([3.353, 4.603, 11.561, 22.088, 70.0, 100.0, 160.0, 250.0, 350.0, 500.0])/(1+redshift)
-fakedata = np.ones(nBands)
+fakedata = np.ones_like(sedwave)
+spcwave = np.linspace(5.5, 38.0, 250)/(1+redshift)
+spcfake = np.ones_like(spcwave)
 phtData = {'WISE&Herschel': bc.DiscreteSet(bandList, sedwave, fakedata, fakedata, fakedata)}
-sedData = sedsc.SedClass(targname, redshift, phtDict=phtData)
+spcData = {"Spitzer": bc.ContinueSet(spcwave, spcfake, spcfake, spcfake)}
+sedData = sedsc.SedClass(targname, redshift, phtDict=phtData, spcDict=spcData)
+wave = np.array(sedData.get_List("x"))
 DL = sedData.dl
 
 ## Load the bandpass
