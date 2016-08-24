@@ -8,6 +8,7 @@ import rel_SED_Toolkit as sedt
 import rel_Radiation_Model_Toolkit as rmt
 import ndiminterpolation as ndip
 from scipy.interpolate import interp1d
+from scipy.interpolate import splrep, splev
 from lmfit import minimize, Parameters, fit_report
 from collections import OrderedDict
 
@@ -18,8 +19,8 @@ template_dir = "/Users/jinyi/Work/PG_QSO/templates/"
 #   Created by SGJY, May. 3, 2016     #
 #-------------------------------------#
 #From: dev_CLUMPY_intp.ipynb
-def Stellar_SED(logMs, age, zs, wave, band='h', zf_guess=1.0, spsmodel='bc03_ssp_z_0.02_chab.model'):
-    '''
+def Stellar_SED(logMs, age, zs, wave, band="h", zf_guess=1.0, spsmodel="bc03_ssp_z_0.02_chab.model"):
+    """
     This function obtain the galaxy stellar SED given the stellar mass, age and redshift. The
     default model is Bruzual & Charlot (2003) with solar metallicity and Chabrier IMF. The stellar
     synthesis models are organised by the module EzGal (http://www.baryons.org/ezgal/).
@@ -34,12 +35,12 @@ def Stellar_SED(logMs, age, zs, wave, band='h', zf_guess=1.0, spsmodel='bc03_ssp
         The redshift of the source.
     wave : array
         The sed wavelength corresponding to the sedflux. In units micron.
-    band : str, default: 'h'
+    band : str, default: "h"
         The reference band used to calculate the mass-to-light ratio.
     zf_guess : float. zf_guess=1.0 by default.
         The initial guess to solve the zf that allowing the age between
         zs and zf is as required.
-    spsmodel : string. spsmodel='bc03_ssp_z_0.02_chab.model' by default.
+    spsmodel : string. spsmodel="bc03_ssp_z_0.02_chab.model" by default.
         The stellar population synthesis model that is used.
 
     Returns
@@ -50,7 +51,7 @@ def Stellar_SED(logMs, age, zs, wave, band='h', zf_guess=1.0, spsmodel='bc03_ssp
     Notes
     -----
     None.
-    '''
+    """
     import ezgal #Import the package for stellar synthesis.
     from scipy.optimize import fsolve
     from scipy.interpolate import interp1d
@@ -71,7 +72,7 @@ def Stellar_SED(logMs, age, zs, wave, band='h', zf_guess=1.0, spsmodel='bc03_ssp
     Ms = 10**logMs #Calculate the stellar mass.
     age_up = model.get_age(1500., zs)
     if age > age_up:
-        raise ValueError('The age is too large!')
+        raise ValueError("The age is too large!")
     zf = fsolve(func_age, zf_guess, args=(zs, age)) #Given the source redshift and the age, calculate the redshift
                                                     #for the star formation.
     Msun_H = model.get_solar_rest_mags(nzs=1, filters=band, ab=True) #The absolute magnitude of the Sun in given band.
@@ -84,7 +85,7 @@ def Stellar_SED(logMs, age, zs, wave, band='h', zf_guess=1.0, spsmodel='bc03_ssp
     wave_H = 1.6448 #Pivot wavelength of given band, in unit of micron.
     #Obtain the SED
     wave_rst = model.ls / 1e4 #In unit micron.
-    flux_rst = model.get_sed(age, age_units='gyrs', units='Fv') * 1e26 #In unit mJy.
+    flux_rst = model.get_sed(age, age_units="gyrs", units="Fv") * 1e26 #In unit mJy.
     wave_ext = np.linspace(200, 1000, 30)
     flux_ext = np.zeros(30)
     wave_extd = np.concatenate([wave_rst, wave_ext])
@@ -105,7 +106,7 @@ def Stellar_SED(logMs, age, zs, wave, band='h', zf_guess=1.0, spsmodel='bc03_ssp
 #-------------------------------------#
 #From: dev_CLUMPY_intp.ipynb
 def Stellar_SED_scale(logMs, flux_star_1Msun, wave):
-    '''
+    """
     This function scales the stellar SED to obtain the best-fit stellar mass.
     The input SED flux should be normalised to 1 solar mass.
 
@@ -123,11 +124,11 @@ def Stellar_SED_scale(logMs, flux_star_1Msun, wave):
     Notes
     ----
     None.
-    '''
+    """
     Ms = 10**logMs
     flux = Ms*flux_star_1Msun
     if len(wave) != len(flux):
-        raise ValueError('The input wavelength is incorrect!')
+        raise ValueError("The input wavelength is incorrect!")
     return flux
 #Func_end
 
@@ -138,11 +139,11 @@ def Stellar_SED_scale(logMs, flux_star_1Msun, wave):
 #From: dev_CLUMPY_intp.ipynb
 ### CLUMPY template
 try:
-    clumpyFile = template_dir+'clumpy_models_201410_tvavg.hdf5'
-    h = h5py.File(clumpyFile,'r')
-    theta = [np.unique(h[par][:]) for par in ('i','tv','q','N0','sig','Y','wave')]
-    data = h['flux_tor'].value
-    wave_tmpl = h['wave'].value
+    clumpyFile = template_dir+"clumpy_models_201410_tvavg.hdf5"
+    h = h5py.File(clumpyFile,"r")
+    theta = [np.unique(h[par][:]) for par in ("i","tv","q","N0","sig","Y","wave")]
+    data = h["flux_tor"].value
+    wave_tmpl = h["wave"].value
     ip = ndip.NdimInterpolation(data,theta)
 except:
     print("[model_functions]: Fail to import the CLUMPY template from the default directory!")
@@ -156,7 +157,7 @@ def CLUMPY_Torus_Model(TORUS_logsf,
                        TORUS_Y,
                        wave,
                        TORUS_tmpl_ip=ip):
-    '''
+    """
     This function provide the dust torus MIR flux with CLUMPY model.
 
     Parameters
@@ -178,7 +179,7 @@ def CLUMPY_Torus_Model(TORUS_logsf,
     wave : float array
         The wavelength at which we want to calculate the flux.
     TORUS_tmpl_ip : NdimInterpolation class
-        The NdimInterpolation class obtained from Nikutta's interpolation code.
+        The NdimInterpolation class obtained from Nikutta"s interpolation code.
 
     Returns
     -------
@@ -188,7 +189,7 @@ def CLUMPY_Torus_Model(TORUS_logsf,
     Notes
     -----
     None.
-    '''
+    """
     ls_mic = 2.99792458e14 #micron/s
     nu = ls_mic / wave
     vector = np.array([TORUS_i, TORUS_tv, TORUS_q, TORUS_N0, TORUS_sig, TORUS_Y])
@@ -198,7 +199,7 @@ def CLUMPY_Torus_Model(TORUS_logsf,
 #Func_end
 
 def Modified_BlackBody(logM, T, beta, wave, DL, kappa0=16.2, lambda0=140):
-    '''
+    """
     This function is a wrapper to calculate the modified blackbody model.
 
     Parameters
@@ -227,14 +228,14 @@ def Modified_BlackBody(logM, T, beta, wave, DL, kappa0=16.2, lambda0=140):
     -----
     None.
 
-    '''
+    """
     ls_mic = 2.99792458e14 #micron/s
     nu = ls_mic / wave
     flux = rmt.Dust_Modified_BlackBody(nu, logM, DL, beta, T, kappa0, lambda0)
     return flux
 
 def Power_Law(PL_alpha, PL_logsf, wave):
-    '''
+    """
     This function is a wrapper to calculate the power law model.
 
     Parameters
@@ -254,7 +255,7 @@ def Power_Law(PL_alpha, PL_logsf, wave):
     Notes
     -----
     None.
-    '''
+    """
     ls_mic = 2.99792458e14 #micron/s
     nu = ls_mic / wave
     flux = rmt.Power_Law(nu, PL_alpha, 10**PL_logsf)
@@ -263,10 +264,10 @@ def Power_Law(PL_alpha, PL_logsf, wave):
 #DL07 model#
 #----------#
 try:
-    fp = open(template_dir+'DL07spec/dl07_intp.tmplt', 'r')
+    fp = open(template_dir+"DL07spec/dl07.tmplt", "r")
     tmpl_dl07 = pickle.load(fp)
     fp.close()
-    waveModel = tmpl_dl07[0]['wavesim']
+    waveModel = tmpl_dl07[0]["wavesim"]
 except:
     print("[model_functions]: Fail to import the DL07 template from the default directory!")
     tmpl_dl07 = None
@@ -287,40 +288,13 @@ srtIndex = np.argsort(qpahList)
 qpahList = list(qpahList[srtIndex])
 mdust2mh = list(mdust2mh[srtIndex])
 
-fp = open(template_dir+'DL07spec/dl07.tmplt', 'r')
-tmpl_dl07 = pickle.load(fp)
+fp = open(template_dir+"DL07spec/dl07_spl.tmplt", "r")
+tmpl_dl07_spl = pickle.load(fp)
 fp.close()
-waveModel = tmpl_dl07[0]['wavesim']
-nTemplate = len(tmpl_dl07)
-tmpl_dl07_intp = np.empty(nTemplate, dtype=[('modelname', np.str_, 29), ('umin', np.float64),
-                                            ('umax', np.float64), ('qpah', np.float64),
-                                            ('index', int)])
-counter = 0
-dl07IntpList = []
-for umin in uminList:
-    umaxList_exp = [umin] + umaxList
-    for umax in umaxList_exp:
-        for qpah in qpahList:
-            fltr_umin = tmpl_dl07['umin'] == umin
-            fltr_umax = tmpl_dl07['umax'] == umax
-            fltr_qpah = tmpl_dl07['qpah'] == qpah
-            fltr = fltr_umin & fltr_umax & fltr_qpah
-            wavesim = tmpl_dl07[fltr]['wavesim'][0]
-            fluxsim = tmpl_dl07[fltr]['fluxsim'][0]
-            fluxInpt = interp1d(wavesim, fluxsim)
-            tmpl_dl07_intp[counter]['modelname'] = tmpl_dl07[fltr]['modelname'][0]
-            tmpl_dl07_intp[counter]['umin'] = umin
-            tmpl_dl07_intp[counter]['umax'] = umax
-            tmpl_dl07_intp[counter]['qpah'] = qpah
-            tmpl_dl07_intp[counter]['index'] = counter
-            dl07IntpList.append(fluxInpt)
-            counter += 1
-print '[model_functions]: Finish DL07 model interpolation!'
 
-def DL07_Model_Intp(umin, umax, qpah, gamma, logMd, DL, wave):
-    '''
-    This function generates the dust emission from Draine & Li (2007) template.
-    The returned SED is interpolated to the input wavelengths.
+def DL07_Model_spl(umin, umax, qpah, gamma, logMd, DL, wave, tmpl_dl07=tmpl_dl07_spl):
+    """
+    This function generates the dust emission from the Draine & Li (2007) templates.
 
     Parameters
     ----------
@@ -338,6 +312,8 @@ def DL07_Model_Intp(umin, umax, qpah, gamma, logMd, DL, wave):
         The luminosity distance.
     wave : float array
         The wavelengths of the output flux.
+    tmpl_dl07 : numpy.ndarray
+        The template of DL07 model provided by user.
 
     Returns
     -------
@@ -346,31 +322,30 @@ def DL07_Model_Intp(umin, umax, qpah, gamma, logMd, DL, wave):
 
     Notes
     -----
-    None.
-    '''
-    chk_umin = umin in uminList
-    chk_umax = umax in umaxList
-    chk_qpah = qpah in qpahList
-    if not chk_umin:
-        raise ValueError('The umin={0} is invalid!'.format(umin))
-    if not chk_umax:
-        raise ValueError('The umax={0} is invalid!'.format(umax))
-    if not chk_qpah:
-        raise ValueError('The qpah={0} is invalid!'.format(qpah))
-    fltr_qpah = tmpl_dl07_intp['qpah'] == qpah
-    fltr_umin = tmpl_dl07_intp['umin'] == umin
-    fltr_min = fltr_qpah & fltr_umin & (tmpl_dl07_intp['umax'] == umin)
-    fltr_pl  = fltr_qpah & fltr_umin & (tmpl_dl07_intp['umax'] == umax)
-    index_jnu_min  = tmpl_dl07_intp[fltr_min][0]['index']
-    index_jnu_pl  = tmpl_dl07_intp[fltr_pl][0]['index']
-    jnu_min = dl07IntpList[index_jnu_min](wave)
-    jnu_pl  = dl07IntpList[index_jnu_pl](wave)
+    The function is tested with the DL07_Model function.
+    """
+    assert umin in uminList
+    assert umax in umaxList
+    assert qpah in qpahList
+    index    = tmpl_dl07["index"]
+    tckList  = tmpl_dl07["tck_list"]
+    fltr_qpah = index["qpah"] == qpah
+    fltr_umin = index["umin"] == umin
+    fltr_min = fltr_qpah & fltr_umin & (index["umax"] == umin)
+    fltr_pl  = fltr_qpah & fltr_umin & (index["umax"] == umax)
+    mdmh = index[fltr_min][0]["mdmh"]
+    index_min = index[fltr_min][0]["index"]
+    index_pl  = index[fltr_pl][0]["index"]
+    tck_min = tckList[index_min]
+    tck_pl  = tckList[index_pl]
+    jnu_min = splev(wave, tck_min)
+    jnu_pl  = splev(wave, tck_pl)
     jnu = (1 - gamma) * jnu_min + gamma * jnu_pl
-    flux = 10**logMd * Msun/m_H * jnu/(DL * Mpc)**2 / mdust2mh[qpahList.index(qpah)] * 1e3 #unit: mJy
+    flux = 10**logMd * Msun/m_H * jnu/(DL * Mpc)**2 / mdmh * 1e3 #unit: mJy
     return flux
 
 def DL07_Model(umin, umax, qpah, gamma, logMd, DL, wave, tmpl_dl07=tmpl_dl07):
-    '''
+    """
     This function generates the dust emission template from Draine & Li (2007).
 
     Parameters
@@ -400,26 +375,26 @@ def DL07_Model(umin, umax, qpah, gamma, logMd, DL, wave, tmpl_dl07=tmpl_dl07):
     Notes
     -----
     None.
-    '''
+    """
     chk_umin = umin in uminList
     chk_umax = umax in umaxList
     chk_qpah = qpah in qpahList
     if not chk_umin:
-        raise ValueError('The umin={0} is invalid!'.format(umin))
+        raise ValueError("The umin={0} is invalid!".format(umin))
     if not chk_umax:
-        raise ValueError('The umax={0} is invalid!'.format(umax))
+        raise ValueError("The umax={0} is invalid!".format(umax))
     if not chk_qpah:
-        raise ValueError('The qpah={0} is invalid!'.format(qpah))
-    fltr_qpah = tmpl_dl07['qpah'] == qpah
-    fltr_umin = tmpl_dl07['umin'] == umin
-    fltr_min = fltr_qpah & fltr_umin & (tmpl_dl07['umax'] == umin)
-    fltr_pl  = fltr_qpah & fltr_umin & (tmpl_dl07['umax'] == umax)
-    jnu_min  = tmpl_dl07[fltr_min][0]['fluxsim']
-    jnu_pl  = tmpl_dl07[fltr_pl][0]['fluxsim']
+        raise ValueError("The qpah={0} is invalid!".format(qpah))
+    fltr_qpah = tmpl_dl07["qpah"] == qpah
+    fltr_umin = tmpl_dl07["umin"] == umin
+    fltr_min = fltr_qpah & fltr_umin & (tmpl_dl07["umax"] == umin)
+    fltr_pl  = fltr_qpah & fltr_umin & (tmpl_dl07["umax"] == umax)
+    jnu_min  = tmpl_dl07[fltr_min][0]["fluxsim"]
+    jnu_pl  = tmpl_dl07[fltr_pl][0]["fluxsim"]
     jnu = (1 - gamma) * jnu_min + gamma * jnu_pl
     flux = 10**logMd * Msun/m_H * jnu/(DL * Mpc)**2 / mdust2mh[qpahList.index(qpah)] * 1e3 #unit: mJy
     if np.max( abs(wave - waveModel) ) != 0:
-        raise ValueError('The input wavelength is incorrect!')
+        raise ValueError("The input wavelength is incorrect!")
     return flux
 
 def Linear(a, b, x):
@@ -427,53 +402,53 @@ def Linear(a, b, x):
 
 #Dict of the supporting functions
 funcLib = {
-    'Linear':{
-        'function': Linear,
-        'x_name': 'x',
-        'param_fit': ['a', 'b'],
-        'param_add': []
+    "Linear":{
+        "function": Linear,
+        "x_name": "x",
+        "param_fit": ["a", "b"],
+        "param_add": []
     },
-    'Stellar_SED':{
-        'function': Stellar_SED,
-        'x_name': 'wave',
-        'param_fit': ['logMs', 'age'],
-        'param_add': ['zs']
+    "Stellar_SED":{
+        "function": Stellar_SED,
+        "x_name": "wave",
+        "param_fit": ["logMs", "age"],
+        "param_add": ["zs"]
     },
-    'Stellar_SED_scale': {
-        'function': Stellar_SED_scale,
-        'x_name': 'wave',
-        'param_fit': ['logMs'],
-        'param_add': ['flux_star_1Msun']
+    "Stellar_SED_scale": {
+        "function": Stellar_SED_scale,
+        "x_name": "wave",
+        "param_fit": ["logMs"],
+        "param_add": ["flux_star_1Msun"]
     },
-    'CLUMPY_Torus_Model': {
-        'function': CLUMPY_Torus_Model,
-        'x_name': 'wave',
-        'param_fit': ['TORUS_logsf', 'TORUS_i', 'TORUS_tv', 'TORUS_q', 'TORUS_N0', 'TORUS_sig', 'TORUS_Y'],
-        'param_add': ['TORUS_tmpl_ip']
+    "CLUMPY_Torus_Model": {
+        "function": CLUMPY_Torus_Model,
+        "x_name": "wave",
+        "param_fit": ["TORUS_logsf", "TORUS_i", "TORUS_tv", "TORUS_q", "TORUS_N0", "TORUS_sig", "TORUS_Y"],
+        "param_add": ["TORUS_tmpl_ip"]
     },
-    'DL07_Model': {
-        'function': DL07_Model,
-        'x_name': 'wave',
-        'param_fit': ['umin', 'umax', 'qpah', 'gamma', 'logMd'],
-        'param_add': ['tmpl_dl07', 'DL']
+    "DL07_Model": {
+        "function": DL07_Model,
+        "x_name": "wave",
+        "param_fit": ["umin", "umax", "qpah", "gamma", "logMd"],
+        "param_add": ["tmpl_dl07", "DL"]
     },
-    'DL07_Model_Intp': {
-        'function': DL07_Model_Intp,
-        'x_name': 'wave',
-        'param_fit': ['umin', 'umax', 'qpah', 'gamma', 'logMd'],
-        'param_add': ['tmpl_dl07', 'DL']
+    "DL07_Model_spl": {
+        "function": DL07_Model_spl,
+        "x_name": "wave",
+        "param_fit": ["umin", "umax", "qpah", "gamma", "logMd"],
+        "param_add": ["tmpl_dl07", "DL"]
     },
-    'Modified_BlackBody': {
-        'function': Modified_BlackBody,
-        'x_name': 'wave',
-        'param_fit': ['logM', 'beta', 'T'],
-        'param_add': ['DL']
+    "Modified_BlackBody": {
+        "function": Modified_BlackBody,
+        "x_name": "wave",
+        "param_fit": ["logM", "beta", "T"],
+        "param_add": ["DL"]
     },
-    'Power_Law': {
-        'function': Power_Law,
-        'x_name': 'wave',
-        'param_fit': ['PL_alpha', 'PL_logsf'],
-        'param_add': []
+    "Power_Law": {
+        "function": Power_Law,
+        "x_name": "wave",
+        "param_fit": ["PL_alpha", "PL_logsf"],
+        "param_add": []
     }
 }
 
@@ -483,38 +458,38 @@ bList = list( np.arange(0.0, 1000.0, 5.0) )
 #"""
 """
 inputModelDict = {
-    'linear_c': {
-        'function': 'Linear',
-        'a': {
-            'value': 3.26,
-            'range': [-5.0, 5.0], #[-10., 3.0],
-            'type': 'c',
-            'vary': True,
+    "linear_c": {
+        "function": "Linear",
+        "a": {
+            "value": 3.26,
+            "range": [-5.0, 5.0], #[-10., 3.0],
+            "type": "c",
+            "vary": True,
         },
-        'b': {
-            'value': 328.0,
-            'range': [0.0, 1000.0], #[1.5, 2.5],
-            'type': 'c',
-            'vary': True,
+        "b": {
+            "value": 328.0,
+            "range": [0.0, 1000.0], #[1.5, 2.5],
+            "type": "c",
+            "vary": True,
         }
     }
 }
 #"""
 """
 inputModelDict = {
-    'linear_d': {
-        'function': 'Linear',
-        'a': {
-            'value': 3.26,
-            'range': aList, #[-5.0, 5.0], #[-10., 3.0],
-            'type': 'd',
-            'vary': True,
+    "linear_d": {
+        "function": "Linear",
+        "a": {
+            "value": 3.26,
+            "range": aList, #[-5.0, 5.0], #[-10., 3.0],
+            "type": "d",
+            "vary": True,
         },
-        'b': {
-            'value': 328.0,
-            'range': bList, #[0.0, 1000.0], #[1.5, 2.5],
-            'type': 'd',
-            'vary': True,
+        "b": {
+            "value": 328.0,
+            "range": bList, #[0.0, 1000.0], #[1.5, 2.5],
+            "type": "d",
+            "vary": True,
         }
     }
 }
@@ -522,69 +497,69 @@ inputModelDict = {
 """
 inputModelDict = OrderedDict(
     (
-        ('Hot_Dust', {
-                'function': 'Modified_BlackBody',
-                'logM': {
-                    'value': 1.7,
-                    'range': [-5.0, 5.0],
-                    'type': 'c',
-                    'vary': True,
+        ("Hot_Dust", {
+                "function": "Modified_BlackBody",
+                "logM": {
+                    "value": 1.7,
+                    "range": [-5.0, 5.0],
+                    "type": "c",
+                    "vary": True,
                 },
-                'beta': {
-                    'value': 1.7,
-                    'range': [1.5, 2.5],
-                    'type': 'c',
-                    'vary': True,
+                "beta": {
+                    "value": 1.7,
+                    "range": [1.5, 2.5],
+                    "type": "c",
+                    "vary": True,
                 },
-                'T': {
-                    'value': 641.8,
-                    'range': [400.0, 1200.0],
-                    'type': 'c',
-                    'vary': True,
+                "T": {
+                    "value": 641.8,
+                    "range": [400.0, 1200.0],
+                    "type": "c",
+                    "vary": True,
                 }
             }
         ),
-        ('Warm_Dust', {
-                'function': 'Modified_BlackBody',
-                'logM': {
-                    'value': 4.5,
-                    'range': [0.0, 6.0],
-                    'type': 'c',
-                    'vary': True,
+        ("Warm_Dust", {
+                "function": "Modified_BlackBody",
+                "logM": {
+                    "value": 4.5,
+                    "range": [0.0, 6.0],
+                    "type": "c",
+                    "vary": True,
                 },
-                'beta': {
-                    'value': 2.3,
-                    'range': [1.5, 2.5],
-                    'type': 'c',
-                    'vary': True,
+                "beta": {
+                    "value": 2.3,
+                    "range": [1.5, 2.5],
+                    "type": "c",
+                    "vary": True,
                 },
-                'T': {
-                    'value': 147.4,
-                    'range': [60.0, 400.0],
-                    'type': 'c',
-                    'vary': True,
+                "T": {
+                    "value": 147.4,
+                    "range": [60.0, 400.0],
+                    "type": "c",
+                    "vary": True,
                 }
             }
         ),
-        ('Cold_Dust', {
-                'function': 'Modified_BlackBody',
-                'logM': {
-                    'value': 8.8,
-                    'range': [5.0, 12.0],
-                    'type': 'c',
-                    'vary': True,
+        ("Cold_Dust", {
+                "function": "Modified_BlackBody",
+                "logM": {
+                    "value": 8.8,
+                    "range": [5.0, 12.0],
+                    "type": "c",
+                    "vary": True,
                 },
-                'beta': {
-                    'value': 2.0,
-                    'range': [1.5, 2.5],
-                    'type': 'c',
-                    'vary': True,
+                "beta": {
+                    "value": 2.0,
+                    "range": [1.5, 2.5],
+                    "type": "c",
+                    "vary": True,
                 },
-                'T': {
-                    'value': 26.1,
-                    'range': [5.0, 60.0],
-                    'type': 'c',
-                    'vary': True,
+                "T": {
+                    "value": 26.1,
+                    "range": [5.0, 60.0],
+                    "type": "c",
+                    "vary": True,
                 }
             }
         ),
@@ -594,105 +569,105 @@ inputModelDict = OrderedDict(
 #"""
 inputModelDict = OrderedDict(
     (
-        ('Hot_Dust', {
-                'function': 'Modified_BlackBody',
-                'logM': {
-                    'value': 0.32,
-                    'range': [-10., 3.0], #[0.3, 0.4], #
-                    'type': 'c',
-                    'vary': True,
+        ("Hot_Dust", {
+                "function": "Modified_BlackBody",
+                "logM": {
+                    "value": 0.32,
+                    "range": [-10., 3.0], #[0.3, 0.4], #
+                    "type": "c",
+                    "vary": True,
                 },
-                'beta': {
-                    'value': 2.0,
-                    'range': [1.5, 2.5], #[1.9, 2.1], #
-                    'type': 'c',
-                    'vary': False, #True, #
+                "beta": {
+                    "value": 2.0,
+                    "range": [1.5, 2.5], #[1.9, 2.1], #
+                    "type": "c",
+                    "vary": False, #True, #
                 },
-                'T': {
-                    'value': 846.77,
-                    'range': [500, 1300], #[846., 847], #
-                    'type': 'c',
-                    'vary': True,
+                "T": {
+                    "value": 846.77,
+                    "range": [500, 1300], #[846., 847], #
+                    "type": "c",
+                    "vary": True,
                 }
             }
         ),
-        ('CLUMPY', {
-                'function': 'CLUMPY_Torus_Model',
-                'TORUS_logsf': {
-                    'value': 6.33,
-                    'range': [0.0, 8.0], #[6.3, 6.4],
-                    'type': 'c',
-                    'vary': True,
+        ("CLUMPY", {
+                "function": "CLUMPY_Torus_Model",
+                "TORUS_logsf": {
+                    "value": 6.33,
+                    "range": [0.0, 8.0], #[6.3, 6.4],
+                    "type": "c",
+                    "vary": True,
                 },
-                'TORUS_i': {
-                    'value': 47.60,
-                    'range': [0.0, 90.0], #[47.0, 48.0], #
-                    'type': 'c',
-                    'vary': True,
+                "TORUS_i": {
+                    "value": 47.60,
+                    "range": [0.0, 90.0], #[47.0, 48.0], #
+                    "type": "c",
+                    "vary": True,
                 },
-                'TORUS_tv': {
-                    'value': 17.53,
-                    'range': [10.0, 300.0], #[17, 18], #
-                    'type': 'c',
-                    'vary': True,
+                "TORUS_tv": {
+                    "value": 17.53,
+                    "range": [10.0, 300.0], #[17, 18], #
+                    "type": "c",
+                    "vary": True,
                 },
-                'TORUS_q': {
-                    'value': 0.7,
-                    'range': [0.0, 3.0], #[0.6, 0.8], #
-                    'type': 'c',
-                    'vary': True,
+                "TORUS_q": {
+                    "value": 0.7,
+                    "range": [0.0, 3.0], #[0.6, 0.8], #
+                    "type": "c",
+                    "vary": True,
                 },
-                'TORUS_N0': {
-                    'value': 6.43,
-                    'range': [1.0, 15.0], #[6.42, 6.44], #
-                    'type': 'c',
-                    'vary': True,
+                "TORUS_N0": {
+                    "value": 6.43,
+                    "range": [1.0, 15.0], #[6.42, 6.44], #
+                    "type": "c",
+                    "vary": True,
                 },
-                'TORUS_sig': {
-                    'value': 58.14,
-                    'range': [15.0, 70.0], #[58.0, 59.0], #
-                    'type': 'c',
-                    'vary': True,
+                "TORUS_sig": {
+                    "value": 58.14,
+                    "range": [15.0, 70.0], #[58.0, 59.0], #
+                    "type": "c",
+                    "vary": True,
                 },
-                'TORUS_Y': {
-                    'value': 30.0,
-                    'range': [5.0, 100.0], #[29., 31.], #
-                    'type': 'c',
-                    'vary': True,
+                "TORUS_Y": {
+                    "value": 30.0,
+                    "range": [5.0, 100.0], #[29., 31.], #
+                    "type": "c",
+                    "vary": True,
                 }
             }
         ),
-        ('DL07', {
-                'function': 'DL07_Model_Intp',
-                'umin': {
-                    'value': 10.0,
-                    'range': uminList,
-                    'type': 'd',
-                    'vary': True,
+        ("DL07", {
+                "function": "DL07_Model_spl",
+                "umin": {
+                    "value": 10.0,
+                    "range": uminList,
+                    "type": "d",
+                    "vary": True,
                 },
-                'umax': {
-                    'value': 1e6,
-                    'range': umaxList,
-                    'type': 'd',
-                    'vary': False, #True, #
+                "umax": {
+                    "value": 1e6,
+                    "range": umaxList,
+                    "type": "d",
+                    "vary": False, #True, #
                 },
-                'qpah': {
-                    'value': 3.19,
-                    'range': qpahList,
-                    'type': 'd',
-                    'vary': True,
+                "qpah": {
+                    "value": 3.19,
+                    "range": qpahList,
+                    "type": "d",
+                    "vary": True,
                 },
-                'gamma': {
-                    'value': 0.02,
-                    'range': [0.01, 0.99], #[0.01, 0.03],
-                    'type': 'c',
-                    'vary': True,
+                "gamma": {
+                    "value": 0.02,
+                    "range": [0.01, 0.99], #[0.01, 0.03],
+                    "type": "c",
+                    "vary": True,
                 },
-                'logMd': {
-                    'value': 9.12,
-                    'range': [5.0, 11.0], #[9.0, 10.0],
-                    'type': 'c',
-                    'vary': True,
+                "logMd": {
+                    "value": 9.12,
+                    "range": [5.0, 11.0], #[9.0, 10.0],
+                    "type": "c",
+                    "vary": True,
                 }
             }
         ),
