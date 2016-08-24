@@ -11,6 +11,8 @@ from scipy.interpolate import interp1d
 from lmfit import minimize, Parameters, fit_report
 from collections import OrderedDict
 
+template_dir = "/Users/jinyi/Work/PG_QSO/templates/"
+
 #Func_bgn:
 #-------------------------------------#
 #   Created by SGJY, May. 3, 2016     #
@@ -134,6 +136,17 @@ def Stellar_SED_scale(logMs, flux_star_1Msun, wave):
 #   Created by SGJY, May. 3, 2016     #
 #-------------------------------------#
 #From: dev_CLUMPY_intp.ipynb
+### CLUMPY template
+try:
+    clumpyFile = template_dir+'clumpy_models_201410_tvavg.hdf5'
+    h = h5py.File(clumpyFile,'r')
+    theta = [np.unique(h[par][:]) for par in ('i','tv','q','N0','sig','Y','wave')]
+    data = h['flux_tor'].value
+    wave_tmpl = h['wave'].value
+    ip = ndip.NdimInterpolation(data,theta)
+except:
+    print("[model_functions]: Fail to import the CLUMPY template from the default directory!")
+    ip = None
 def CLUMPY_Torus_Model(TORUS_logsf,
                        TORUS_i,
                        TORUS_tv,
@@ -142,7 +155,7 @@ def CLUMPY_Torus_Model(TORUS_logsf,
                        TORUS_sig,
                        TORUS_Y,
                        wave,
-                       TORUS_tmpl_ip):
+                       TORUS_tmpl_ip=ip):
     '''
     This function provide the dust torus MIR flux with CLUMPY model.
 
@@ -247,7 +260,17 @@ def Power_Law(PL_alpha, PL_logsf, wave):
     flux = rmt.Power_Law(nu, PL_alpha, 10**PL_logsf)
     return flux
 
-#DL07 model
+#DL07 model#
+#----------#
+try:
+    fp = open(template_dir+'DL07spec/dl07_intp.tmplt', 'r')
+    tmpl_dl07 = pickle.load(fp)
+    fp.close()
+    waveModel = tmpl_dl07[0]['wavesim']
+except:
+    print("[model_functions]: Fail to import the DL07 template from the default directory!")
+    tmpl_dl07 = None
+
 m_H = 1.6726219e-24 #unit: gram
 Msun = 1.9891e33 #unit: gram
 Mpc = 3.08567758e24 #unit: cm
@@ -264,10 +287,40 @@ srtIndex = np.argsort(qpahList)
 qpahList = list(qpahList[srtIndex])
 mdust2mh = list(mdust2mh[srtIndex])
 
-def DL07_Model_Intp(umin, umax, qpah, gamma, logMd, tmpl_dl07, wave, DL):
+fp = open(template_dir+'DL07spec/dl07.tmplt', 'r')
+tmpl_dl07 = pickle.load(fp)
+fp.close()
+waveModel = tmpl_dl07[0]['wavesim']
+nTemplate = len(tmpl_dl07)
+tmpl_dl07_intp = np.empty(nTemplate, dtype=[('modelname', np.str_, 29), ('umin', np.float64),
+                                            ('umax', np.float64), ('qpah', np.float64),
+                                            ('index', int)])
+counter = 0
+dl07IntpList = []
+for umin in uminList:
+    umaxList_exp = [umin] + umaxList
+    for umax in umaxList_exp:
+        for qpah in qpahList:
+            fltr_umin = tmpl_dl07['umin'] == umin
+            fltr_umax = tmpl_dl07['umax'] == umax
+            fltr_qpah = tmpl_dl07['qpah'] == qpah
+            fltr = fltr_umin & fltr_umax & fltr_qpah
+            wavesim = tmpl_dl07[fltr]['wavesim'][0]
+            fluxsim = tmpl_dl07[fltr]['fluxsim'][0]
+            fluxInpt = interp1d(wavesim, fluxsim)
+            tmpl_dl07_intp[counter]['modelname'] = tmpl_dl07[fltr]['modelname'][0]
+            tmpl_dl07_intp[counter]['umin'] = umin
+            tmpl_dl07_intp[counter]['umax'] = umax
+            tmpl_dl07_intp[counter]['qpah'] = qpah
+            tmpl_dl07_intp[counter]['index'] = counter
+            dl07IntpList.append(fluxInpt)
+            counter += 1
+print 'Finish DL07 model interpolation!'
+
+def DL07_Model_Intp(umin, umax, qpah, gamma, logMd, DL, wave):
     '''
-    This function generates the dust emission template from Draine & Li (2007).
-    The fluxes are interpolated at the given wavelength.
+    This function generates the dust emission from Draine & Li (2007) template.
+    The returned SED is interpolated to the input wavelengths.
 
     Parameters
     ----------
@@ -281,17 +334,15 @@ def DL07_Model_Intp(umin, umax, qpah, gamma, logMd, tmpl_dl07, wave, DL):
         The fraction of the dust in the PDR.
     logMd : float
         The log10 of the dust mass in the unit of solar mass.
-    tmpl_dl07 : numpy.ndarray
-        The template of DL07 model.
-    wave : float array
-        The wavelengths of the output flux.
     DL : float
         The luminosity distance.
+    wave : float array
+        The wavelengths of the output flux.
 
     Returns
     -------
-    flux_model : float array
-        The flux density of the model at the given wavelength.
+    flux : float array
+        The flux density of the model.
 
     Notes
     -----
@@ -306,20 +357,19 @@ def DL07_Model_Intp(umin, umax, qpah, gamma, logMd, tmpl_dl07, wave, DL):
         raise ValueError('The umax={0} is invalid!'.format(umax))
     if not chk_qpah:
         raise ValueError('The qpah={0} is invalid!'.format(qpah))
-    fltr_qpah = tmpl_dl07['qpah'] == qpah
-    fltr_umin = tmpl_dl07['umin'] == umin
-    fltr_min = fltr_qpah & fltr_umin & (tmpl_dl07['umax'] == umin)
-    fltr_pl  = fltr_qpah & fltr_umin & (tmpl_dl07['umax'] == umax)
-    wave_min = tmpl_dl07[fltr_min]['wavesim'][0]
-    jnu_min  = tmpl_dl07[fltr_min]['fluxsim'][0]
-    wave_pl = tmpl_dl07[fltr_pl]['wavesim'][0]
-    jnu_pl  = tmpl_dl07[fltr_pl]['fluxsim'][0]
+    fltr_qpah = tmpl_dl07_intp['qpah'] == qpah
+    fltr_umin = tmpl_dl07_intp['umin'] == umin
+    fltr_min = fltr_qpah & fltr_umin & (tmpl_dl07_intp['umax'] == umin)
+    fltr_pl  = fltr_qpah & fltr_umin & (tmpl_dl07_intp['umax'] == umax)
+    index_jnu_min  = tmpl_dl07_intp[fltr_min][0]['index']
+    index_jnu_pl  = tmpl_dl07_intp[fltr_pl][0]['index']
+    jnu_min = dl07IntpList[index_jnu_min](wave)
+    jnu_pl  = dl07IntpList[index_jnu_pl](wave)
     jnu = (1 - gamma) * jnu_min + gamma * jnu_pl
     flux = 10**logMd * Msun/m_H * jnu/(DL * Mpc)**2 / mdust2mh[qpahList.index(qpah)] * 1e3 #unit: mJy
-    flux_model = interp1d(wave_pl, flux)(wave)
-    return flux_model
+    return flux
 
-def DL07_Model(umin, umax, qpah, gamma, logMd, tmpl_dl07, DL, wave):
+def DL07_Model(umin, umax, qpah, gamma, logMd, DL, wave, tmpl_dl07=tmpl_dl07):
     '''
     This function generates the dust emission template from Draine & Li (2007).
 
@@ -335,10 +385,12 @@ def DL07_Model(umin, umax, qpah, gamma, logMd, tmpl_dl07, DL, wave):
         The fraction of the dust in the PDR.
     logMd : float
         The log10 of the dust mass in the unit of solar mass.
-    tmpl_dl07 : numpy.ndarray
-        The template of DL07 model provided by user.
     DL : float
         The luminosity distance.
+    wave : float array
+        The wavelengths of the output flux.
+    tmpl_dl07 : numpy.ndarray
+        The template of DL07 model provided by user.
 
     Returns
     -------
@@ -366,7 +418,7 @@ def DL07_Model(umin, umax, qpah, gamma, logMd, tmpl_dl07, DL, wave):
     jnu_pl  = tmpl_dl07[fltr_pl][0]['fluxsim']
     jnu = (1 - gamma) * jnu_min + gamma * jnu_pl
     flux = 10**logMd * Msun/m_H * jnu/(DL * Mpc)**2 / mdust2mh[qpahList.index(qpah)] * 1e3 #unit: mJy
-    if len(wave) != len(flux):
+    if np.max( abs(wave - waveModel) ) != 0:
         raise ValueError('The input wavelength is incorrect!')
     return flux
 
@@ -554,7 +606,7 @@ inputModelDict = OrderedDict(
                     'value': 2.0,
                     'range': [1.5, 2.5], #[1.9, 2.1], #
                     'type': 'c',
-                    'vary': True,
+                    'vary': False, #True, #
                 },
                 'T': {
                     'value': 846.77,
@@ -622,7 +674,7 @@ inputModelDict = OrderedDict(
                     'value': 1e6,
                     'range': umaxList,
                     'type': 'd',
-                    'vary': True,
+                    'vary': False, #True, #
                 },
                 'qpah': {
                     'value': 3.19,
