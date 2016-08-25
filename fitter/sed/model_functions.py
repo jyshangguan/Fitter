@@ -458,7 +458,7 @@ aList = list( np.arange(-5.0, 5.0, 0.5) )
 bList = list( np.arange(0.0, 1000.0, 5.0) )
 #Input model dict
 #"""
-#"""
+"""
 inputModelDict = {
     "linear_c": {
         "function": "Linear",
@@ -477,7 +477,7 @@ inputModelDict = {
     }
 }
 #"""
-"""
+#"""
 inputModelDict = {
     "linear_d": {
         "function": "Linear",
