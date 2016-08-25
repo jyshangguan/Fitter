@@ -36,7 +36,9 @@ def Model2Data(sedData, sedModel):
     waveModel = sedModel.get_xList()
     fluxModel = sedModel.combineResult()
     fluxModelPht = sedData.model_pht(waveModel, fluxModel)
-    return fluxModelPht
+    fluxModelSpc = sedData.model_spc(sedModel.combineResult)
+    fluxModel = fluxModelPht + fluxModelSpc
+    return fluxModel
 
 def ChiSq(data, model, unct=None):
     '''
@@ -96,14 +98,15 @@ def logLFunc_SED(params, data, model):
                 pass
     """
     model.updateParList(params)
+    nParVary = len(model.get_parVaryList())
     y = np.array(data.get_List('y'))
     e = np.array(data.get_List('e'))
     #ym = np.array(model.combineResult(x))
     ym = np.array(Model2Data(data, model))
-    if len(params) == pIndex:
+    if len(params) == nParVary:
         s = e
-    elif len(params) == (pIndex+1):
-        f = np.exp(params[pIndex])
+    elif len(params) == (nParVary+1):
+        f = np.exp(params[nParVary]) #The last par is lnf.
         s = (e**2 + (ym * f)**2)**0.5
     else:
         raise ValueError("The length of params is incorrect!")

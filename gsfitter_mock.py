@@ -117,21 +117,22 @@ else:
     modelUnct = True #Whether to consider the model uncertainty in the fitting
     parNumber += 1
 dn4m = bc.DNest4Model(sedData, sedModel, logLFunc, modelUnct)
-
+"""
 fig, ax = sedData.plot_sed()
 fig, ax = sedModel.plot(FigAx=(fig, ax))
 plt.ylim([1e1, 1e3])
 plt.show()
+#"""
 
-"""
+#"""
 ## Create a model object and a sampler
 sampler = dnest4.DNest4Sampler(dn4m,
                                backend=dnest4.backends.CSVBackend(".",
                                                                   sep=" "))
 
 ## Set up the sampler. The first argument is max_num_levels
-gen = sampler.sample(max_num_levels=30, num_steps=1000, new_level_interval=10000,
-                      num_per_step=10000, thread_steps=100,
+gen = sampler.sample(max_num_levels=30, num_steps=1000, new_level_interval=1000,
+                      num_per_step=1000, thread_steps=100,
                       num_particles=5, lam=10, beta=100, seed=1234)
 
 ## Do the sampling (one iteration here = one particle save)

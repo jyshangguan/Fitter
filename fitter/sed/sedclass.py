@@ -201,7 +201,6 @@ class SedClass(bc.DataSet):
             flux = dataDict[name][1]
             sigma = dataDict[name][2]
             flag = dataDict[name][3]
-            print sigma
             FigAx = self.pht_plotter(wave, flux, sigma, flag, FigAx, linewidth,
                                        symbolColor, symbolSize, name)
         return FigAx
