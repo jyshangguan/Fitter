@@ -17,24 +17,27 @@ funcLib = sedmf.funcLib
 #Generate the mock data#
 #-----------------#
 ## Creat an SedClass object
-targname = 'mock_dl07'
+targname = "mock_dl07"
 redshift = 0.2
-bandList = ['w1', 'w2', 'w3', 'w4', 'PACS_70', 'PACS_100', 'PACS_160', 'SPIRE_250', 'SPIRE_350', 'SPIRE_500']
-nBands = len(bandList)
+bandList = ["w1", "w2", "w3", "w4", "PACS_70", "PACS_100", "PACS_160", "SPIRE_250", "SPIRE_350", "SPIRE_500"]
 sedwave = np.array([3.353, 4.603, 11.561, 22.088, 70.0, 100.0, 160.0, 250.0, 350.0, 500.0])/(1+redshift)
-fakedata = np.ones(nBands)
-phtData = {'WISE&Herschel': bc.DiscreteSet(bandList, sedwave, fakedata, fakedata, fakedata)}
-sedData = sedsc.SedClass(targname, redshift, phtDict=phtData)
+sedfake = np.ones_like(sedwave)
+spcwave = np.linspace(5.5, 38.0, 250)/(1+redshift)
+spcfake = np.ones_like(spcwave)
+phtData = {"WISE&Herschel": bc.DiscreteSet(bandList, sedwave, sedfake, sedfake, sedfake)}
+spcData = {"Spitzer": bc.ContinueSet(spcwave, spcfake, spcfake, spcfake)}
+sedData = sedsc.SedClass(targname, redshift, phtDict=phtData, spcDict=spcData)
+wave = np.array(sedData.get_List("x"))
 DL = sedData.dl
 
 ## Load the bandpass
 ### Load WISE bandpass
-wisePath = '/Users/jinyi/Work/PG_QSO/filters/wise/'
+wisePath = "/Users/jinyi/Work/PG_QSO/filters/wise/"
 wiseBandDict = OrderedDict()
 bandCenterList = [3.353, 4.603, 11.561, 22.088] #Isophotal wavelength
 for n in range(4):
-    bandName = 'w{0}'.format(n+1)
-    bandFile = '{0}.dat'.format(bandName)
+    bandName = "w{0}".format(n+1)
+    bandFile = "{0}.dat".format(bandName)
     bandPck = np.genfromtxt(wisePath+bandFile)
     bandWave = bandPck[:, 0]
     bandRsr = bandPck[:, 1]
@@ -42,18 +45,18 @@ for n in range(4):
     wiseBandDict[bandName] = sedsc.BandPass(bandWave, bandRsr, bandCenter, bandName=bandName)
 sedData.add_bandpass(wiseBandDict)
 ### Load Herschel bandpass
-fp = open('/Users/jinyi/Work/PG_QSO/filters/herschel/herschel_bandpass.dict', 'r')
+fp = open("/Users/jinyi/Work/PG_QSO/filters/herschel/herschel_bandpass.dict", "r")
 herschelBands = pickle.load(fp)
 fp.close()
 herschelBandList = herschelBands.keys()
-herschelBandList.remove('README')
+herschelBandList.remove("README")
 #print herschelBandList
 herschelBandDict = OrderedDict()
 for bandName in herschelBandList:
     #Be careful with the sequence!
-    bandWave = ls_mic / herschelBands[bandName]['bandpass'][0][::-1]
-    bandRsr = herschelBands[bandName]['bandpass'][1][::-1]
-    bandCenter = herschelBands[bandName]['wave0']
+    bandWave = ls_mic / herschelBands[bandName]["bandpass"][0][::-1]
+    bandRsr = herschelBands[bandName]["bandpass"][1][::-1]
+    bandCenter = herschelBands[bandName]["wave0"]
     herschelBandDict[bandName] = sedsc.BandPass(bandWave, bandRsr, bandCenter,
                                              bandFunc=bf.BandFunc_Herschel,
                                              bandName=bandName)
@@ -64,46 +67,17 @@ sedData.add_bandpass(herschelBandDict)
 #------------------#
 ## Load the templates
 
-### CLUMPY template
-clumpyFile = '/Users/jinyi/Work/PG_QSO/templates/clumpy_models_201410_tvavg.hdf5'
-h = h5py.File(clumpyFile,'r')
-theta = [np.unique(h[par][:]) for par in ('i','tv','q','N0','sig','Y','wave')]
-data = h['flux_tor'].value
-wave_tmpl = h['wave'].value
-ip = ndip.NdimInterpolation(data,theta)
-
-### DL07 template
-fp = open('dl07_intp.dict', 'r')
-tmpl_dl07_inpt = pickle.load(fp)
-fp.close()
-waveModel = tmpl_dl07_inpt[0]['wavesim']
-
 ### Build the model
 parAddDict_all = {
-    'DL': DL,
-    'tmpl_dl07': tmpl_dl07_inpt,
-    'TORUS_tmpl_ip': ip
+    "DL": DL,
+    #"tmpl_dl07": tmpl_dl07_inpt,
+    #"TORUS_tmpl_ip": ip
 }
-modelDict = OrderedDict()
-modelNameList = inputModelDict.keys()
-for modelName in modelNameList:
-    funcName = inputModelDict[modelName]['function']
-    funcInfo = funcLib[funcName]
-    xName = funcInfo['x_name']
-    parFitList = funcInfo['param_fit']
-    parAddList = funcInfo['param_add']
-    parFitDict = OrderedDict()
-    parAddDict = {}
-    for parName in parFitList:
-        parFitDict[parName] = inputModelDict[modelName][parName]
-    for parName in parAddList:
-        parAddDict[parName] = parAddDict_all[parName]
-    modelDict[modelName] = bc.ModelFunction(funcInfo['function'], xName, parFitDict, parAddDict)
-
-fAdd   = 0.02 #None #
-Ndata  = len(waveModel)
-xMax   = np.max(waveModel)
-sedModel = bc.ModelCombiner(modelDict, waveModel)
+fAdd   = None #0.02 #
+Ndata  = 700
+xMax   = 600.0
+waveModel = 10**np.linspace(0.0, np.log10(xMax), Ndata)
+sedModel = bc.Model_Generator(inputModelDict, funcLib, waveModel, parAddDict_all)
 parList = sedModel.get_parList()
 #print inputModelDict
 parNumber  = len(parList)
@@ -116,53 +90,60 @@ for modelName in yDict.keys():
 
 yTrueBand = sedData.model_pht(waveModel, yTrue)
 yTrueBand = np.array(yTrueBand)
-yErr = np.concatenate([1.0 * np.ones(4), 7.0*np.ones(3), 10.0*np.ones(3)])
-yObsr = yTrueBand.copy()
+yTrueSpec = sedData.model_spc(sedModel.combineResult)
+yTrueSpec = np.array(yTrueSpec)
+yErr = np.concatenate([1.0 * np.ones(4), 7.0*np.ones(3), 10.0*np.ones(3),
+                       3.0*np.ones_like(yTrueSpec)])
+yTrueComp = np.concatenate([yTrueBand, yTrueSpec])
+yObsr = yTrueComp.copy()
+lenY = len(yTrueComp)
 if not fAdd is None:
     print("The model uncertainty is considered!")
-    yObsr += np.abs(fAdd * yObsr) * np.random.rand(nBands)
-yObsr += yErr * np.random.randn(nBands)
+    yObsr += np.abs(fAdd * yObsr) * np.random.randn(lenY)
+yObsr += yErr * np.random.randn(lenY)
 
-logL_dir = -0.5 * np.sum( ((yObsr - yTrueBand)/yErr)**2. + np.log(2 * np.pi * yErr**2.) )
+logL_dir = -0.5 * np.sum( ((yObsr - yTrueComp)/yErr)**2. + np.log(2 * np.pi * yErr**2.) )
 print("logL_dir: {0:.3f}".format(logL_dir))
-chisq = sedff.ChiSq(yObsr, yTrueBand, yErr)
+chisq = sedff.ChiSq(yObsr, yTrueComp, yErr)
 logL_sed = -0.5 * ( chisq + np.sum( np.log(2 * np.pi * yErr**2.) ) )
 print("logL_sed: {0:.3f}".format(logL_sed))
 
 model = {}
-model['x_model']    = waveModel
-model['x_obsr']     = sedwave
-model['y_obsr']     = yObsr
-model['y_err']      = yErr
-model['y_true']     = yTrueBand
-model['f_add']      = fAdd
-model['parameters'] = parList
-model['components'] = cmpList
-model['logl_true']  = logL_dir
+model["x_model"]    = waveModel
+model["x_obsr"]     = wave
+model["y_obsr"]     = yObsr
+model["y_err"]      = yErr
+model["y_true"]     = yTrueComp
+model["f_add"]      = fAdd
+model["parameters"] = parList
+model["components"] = cmpList
+model["logl_true"]  = logL_dir
 
 fileName = "{0}.dict".format(targname)
 fp = open(fileName, "w")
 pickle.dump(model, fp)
 fp.close()
 print("{0} is saved!".format(fileName))
-sedArray = np.array([sedwave, yObsr, yErr, np.ones(nBands)])
+sedArray = np.array([wave, yObsr, yErr, np.ones(lenY)])
 sedArray = np.transpose(sedArray)
 sedFileName = "{0}.sed".format(targname)
 fp = open(sedFileName, "w")
 fp.write("wavelength\tflux\tsigma\n")
-np.savetxt(fp, sedArray, fmt='%.3f', delimiter='\t')
+np.savetxt(fp, sedArray, fmt="%.3f", delimiter="\t")
 fp.close()
 
 fig = plt.figure()
-plt.errorbar(sedwave, yObsr, yerr=yErr, fmt=".r")
+plt.errorbar(sedwave, yObsr[0:len(sedwave)], yerr=yErr[0:len(sedwave)], fmt=".r")
+plt.errorbar(spcwave, yObsr[len(sedwave):len(wave)], yerr=yErr[len(sedwave):len(wave)], fmt=".c")
 plt.scatter(sedwave, yTrueBand, linewidth=1.5, color="k")
+plt.plot(spcwave, yTrueSpec, linewidth=1.5, color="k")
 for y in cmpList:
-    plt.plot(waveModel, y, linestyle='--')
-plt.plot(waveModel, yTrue, color="k")
+    plt.plot(waveModel, y, linestyle="--")
+plt.plot(waveModel, yTrue, color="k", alpha=0.5)
 ymax = np.max(yTrue)
 plt.xlim([1.0, 7e2])
-plt.ylim([1e-3, ymax*2.0])
+plt.ylim([1e1, ymax*2.0])
 plt.xscale("log")
 plt.yscale("log")
-plt.savefig("{0}.pdf".format(targname))
+plt.savefig("{0}.png".format(targname))
 plt.show()

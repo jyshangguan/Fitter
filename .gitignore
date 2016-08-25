@@ -9,9 +9,8 @@ results/*
 *.pyc
 test_*.py
 sv_*.py
+test/*
+bak/*
 
 #SED data
 *.sed
-
-#Backup files
-bak/*

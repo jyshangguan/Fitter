@@ -535,7 +535,9 @@ class ModelCombiner(object):
             print '[{0}][{1}] {2}->{3}'.format(modelName, parName, orgValue, parValue)
         model.parAddDict[parName] = parValue
 
-    def plot(self, x, FigAx=None, DisplayPars=True):
+    def plot(self, x=None, FigAx=None, DisplayPars=True):
+        if x is None:
+            x = self.__x
         if FigAx is None:
             fig = plt.figure()
             ax = plt.gca()
