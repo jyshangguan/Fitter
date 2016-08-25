@@ -144,7 +144,7 @@ try:
     wave_tmpl = h["wave"].value
     ip = ndip.NdimInterpolation(data,theta)
 except:
-    print("[model_functions]: Fail to import the CLUMPY template from the default directory!")
+    print("[model_functions]: Fail to import the CLUMPY template from: {0}".format(clumpyFile))
     ip = None
 def CLUMPY_Torus_Model(TORUS_logsf,
                        TORUS_i,
@@ -262,12 +262,13 @@ def Power_Law(PL_alpha, PL_logsf, wave):
 #DL07 model#
 #----------#
 try:
-    fp = open(template_dir+"DL07spec/dl07.tmplt", "r")
+    dl07File = template_dir+"DL07spec/dl07.tmplt"
+    fp = open(dl07File, "r")
     tmpl_dl07 = pickle.load(fp)
     fp.close()
     waveModel = tmpl_dl07[0]["wavesim"]
 except:
-    print("[model_functions]: Fail to import the DL07 template from the default directory!")
+    print("[model_functions]: Fail to import the DL07 template from: {0}".format(dl07File))
     tmpl_dl07 = None
 
 m_H = 1.6726219e-24 #unit: gram
@@ -287,11 +288,12 @@ qpahList = list(qpahList[srtIndex])
 mdust2mh = list(mdust2mh[srtIndex])
 
 try:
-    fp = open(template_dir+"DL07spec/dl07_spl.tmplt", "r")
+    dl07SplFile = template_dir+"DL07spec/dl07_spl.tmplt"
+    fp = open(dl07SplFile, "r")
     tmpl_dl07_spl = pickle.load(fp)
     fp.close()
 except:
-    print("[model_functions]: Fail to import the DL07 template from the default directory!")
+    print("[model_functions]: Fail to import the DL07 template from: {0}".format(dl07SplFile))
     tmpl_dl07_spl = None
 
 def DL07_Model_spl(umin, umax, qpah, gamma, logMd, DL, wave, tmpl_dl07=tmpl_dl07_spl):
@@ -477,7 +479,7 @@ inputModelDict = {
     }
 }
 #"""
-#"""
+"""
 inputModelDict = {
     "linear_d": {
         "function": "Linear",
@@ -496,77 +498,55 @@ inputModelDict = {
     }
 }
 #"""
-"""
-inputModelDict = OrderedDict(
-    (
-        ("Hot_Dust", {
-                "function": "Modified_BlackBody",
-                "logM": {
-                    "value": 1.7,
-                    "range": [-5.0, 5.0],
-                    "type": "c",
-                    "vary": True,
-                },
-                "beta": {
-                    "value": 1.7,
-                    "range": [1.5, 2.5],
-                    "type": "c",
-                    "vary": True,
-                },
-                "T": {
-                    "value": 641.8,
-                    "range": [400.0, 1200.0],
-                    "type": "c",
-                    "vary": True,
-                }
-            }
-        ),
-        ("Warm_Dust", {
-                "function": "Modified_BlackBody",
-                "logM": {
-                    "value": 4.5,
-                    "range": [0.0, 6.0],
-                    "type": "c",
-                    "vary": True,
-                },
-                "beta": {
-                    "value": 2.3,
-                    "range": [1.5, 2.5],
-                    "type": "c",
-                    "vary": True,
-                },
-                "T": {
-                    "value": 147.4,
-                    "range": [60.0, 400.0],
-                    "type": "c",
-                    "vary": True,
-                }
-            }
-        ),
-        ("Cold_Dust", {
-                "function": "Modified_BlackBody",
-                "logM": {
-                    "value": 8.8,
-                    "range": [5.0, 12.0],
-                    "type": "c",
-                    "vary": True,
-                },
-                "beta": {
-                    "value": 2.0,
-                    "range": [1.5, 2.5],
-                    "type": "c",
-                    "vary": True,
-                },
-                "T": {
-                    "value": 26.1,
-                    "range": [5.0, 60.0],
-                    "type": "c",
-                    "vary": True,
-                }
-            }
-        ),
-    )
-)
+#"""
+
+inputModelDict = {
+    "CLUMPY": {
+        "function": "CLUMPY_Torus_Model",
+        "TORUS_logsf": {
+            "value": 6.33,
+            "range": [0.0, 8.0], #[6.3, 6.4],
+            "type": "c",
+            "vary": True,
+        },
+        "TORUS_i": {
+            "value": 47.60,
+            "range": [0.0, 90.0], #[47.0, 48.0], #
+            "type": "c",
+            "vary": True,
+        },
+        "TORUS_tv": {
+            "value": 17.53,
+            "range": [10.0, 300.0], #[17, 18], #
+            "type": "c",
+            "vary": True,
+        },
+        "TORUS_q": {
+            "value": 0.7,
+            "range": [0.0, 3.0], #[0.6, 0.8], #
+            "type": "c",
+            "vary": True,
+        },
+        "TORUS_N0": {
+            "value": 6.43,
+            "range": [1.0, 15.0], #[6.42, 6.44], #
+            "type": "c",
+            "vary": True,
+        },
+        "TORUS_sig": {
+            "value": 58.14,
+            "range": [15.0, 70.0], #[58.0, 59.0], #
+            "type": "c",
+            "vary": True,
+        },
+        "TORUS_Y": {
+            "value": 30.0,
+            "range": [5.0, 100.0], #[29., 31.], #
+            "type": "c",
+            "vary": True,
+        }
+    }
+}
 #"""
 """
 inputModelDict = OrderedDict(

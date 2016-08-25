@@ -24,86 +24,87 @@ bandpass_dir = dl.bandpass_dir
 #-------------#
 # Create the sedData
 ## Read in the data
-targname = "mock_line" #'mock_dl07' #'PG1612+261' #'PG0050+124'
-sedFile  = "mock_line.sed" #"mock_dl07.sed" #'mock_mbb.sed' #'/Users/jinyi/Work/PG_QSO/sobt/SEDs/{0}_cbr.sed'.format(targname)
+targname = "mock_clumpy" #"mock_dl07" #"mock_line" #"PG1612+261" #"PG0050+124"
+sedFile  = "mock_clumpy.sed" #"mock_dl07.sed" #"mock_line.sed" #"mock_mbb.sed" #"/Users/jinyi/Work/PG_QSO/sobt/SEDs/{0}_cbr.sed".format(targname)
 redshift = 0.2 #0.061
-sedRng   = [0, 10]
-spcRng   = [10, None]
-#sedRng   = [3, 13]
-#spcRng   = [13, None]
+#sedRng   = [0, 10]
+#spcRng   = [10, None]
+sedRng   = [0, 0]
+spcRng   = [0, None]
 spcRebin = 1.
 sedPck = sedt.Load_SED(sedFile, sedRng, spcRng, spcRebin)
-sed = sedPck['sed_cb']
+sed = sedPck["sed_cb"]
 nsed = sedRng[1] - sedRng[0]
 wave = sed[0]
 flux = sed[1]
 sigma = sed[2]
-sedwave = sedPck['sed'][0]
-sedflux = sedPck['sed'][1]
-sedsigma = sedPck['sed'][2]
-spcwave = sedPck['spc'][0]
-spcflux = sedPck['spc'][1]
-spcsigma = sedPck['spc'][2]
+sedwave = sedPck["sed"][0]
+sedflux = sedPck["sed"][1]
+sedsigma = sedPck["sed"][2]
+spcwave = sedPck["spc"][0]
+spcflux = sedPck["spc"][1]
+spcsigma = sedPck["spc"][2]
 
 ## Put into the sedData
-bandList = ['w1', 'w2', 'w3', 'w4', 'PACS_70', 'PACS_100', 'PACS_160', 'SPIRE_250', 'SPIRE_350', 'SPIRE_500']
-sedDataType = ['name', 'wavelength', 'flux', 'error', 'flag']
+bandList = ["w1", "w2", "w3", "w4", "PACS_70", "PACS_100", "PACS_160", "SPIRE_250", "SPIRE_350", "SPIRE_500"]
+sedDataType = ["name", "wavelength", "flux", "error", "flag"]
 sedflag = np.ones_like(sedwave)
-phtData = {'WISE&Herschel': bc.DiscreteSet(bandList, sedwave, sedflux, sedsigma, sedflag, sedDataType)}
+phtData = {} #{"WISE&Herschel": bc.DiscreteSet(bandList, sedwave, sedflux, sedsigma, sedflag, sedDataType)}
 spcflag = np.ones_like(spcwave)
-spcDataType = ['wavelength', 'flux', 'error', 'flag']
-spcData = {'IRS': bc.ContinueSet(spcwave, spcflux, spcsigma, spcflag, spcDataType)}
+spcDataType = ["wavelength", "flux", "error", "flag"]
+spcData = {"IRS": bc.ContinueSet(spcwave, spcflux, spcsigma, spcflag, spcDataType)}
 sedData = sedsc.SedClass(targname, redshift, phtDict=phtData, spcDict=spcData)
 DL = sedData.dl
 
 # Load the bandpass
 ## Load WISE bandpass
-wisePath = bandpass_dir+'wise/'
+wisePath = bandpass_dir+"wise/"
 wiseBandDict = OrderedDict()
 bandCenterList = [3.353, 4.603, 11.561, 22.088] #Isophotal wavelength
 for n in range(4):
-    bandName = 'w{0}'.format(n+1)
-    bandFile = '{0}.dat'.format(bandName)
+    bandName = "w{0}".format(n+1)
+    bandFile = "{0}.dat".format(bandName)
     bandPck = np.genfromtxt(wisePath+bandFile)
     bandWave = bandPck[:, 0]
     bandRsr = bandPck[:, 1]
     bandCenter = bandCenterList[n]
     wiseBandDict[bandName] = sedsc.BandPass(bandWave, bandRsr, bandCenter, bandName=bandName)
-sedData.add_bandpass(wiseBandDict)
+#sedData.add_bandpass(wiseBandDict)
 ## Load Herschel bandpass
-fp = open(bandpass_dir+'herschel/herschel_bandpass.dict', 'r')
+fp = open(bandpass_dir+"herschel/herschel_bandpass.dict", "r")
 herschelBands = pickle.load(fp)
 fp.close()
 herschelBandList = herschelBands.keys()
-herschelBandList.remove('README')
+herschelBandList.remove("README")
 #print herschelBandList
 herschelBandDict = OrderedDict()
 for bandName in herschelBandList:
     #Be careful with the sequence!
-    bandWave = ls_mic / herschelBands[bandName]['bandpass'][0][::-1]
-    bandRsr = herschelBands[bandName]['bandpass'][1][::-1]
-    bandCenter = herschelBands[bandName]['wave0']
+    bandWave = ls_mic / herschelBands[bandName]["bandpass"][0][::-1]
+    bandRsr = herschelBands[bandName]["bandpass"][1][::-1]
+    bandCenter = herschelBands[bandName]["wave0"]
     herschelBandDict[bandName] = sedsc.BandPass(bandWave, bandRsr, bandCenter,
                                              bandFunc=bf.BandFunc_Herschel,
                                              bandName=bandName)
-sedData.add_bandpass(herschelBandDict)
+#sedData.add_bandpass(herschelBandDict)
 
 #Build up the model#
 #------------------#
 
 parAddDict_all = {
-    'DL': DL,
+    "DL": DL,
 }
 #waveModel = sedmf.waveModel
 waveModel = 10**np.linspace(0.0, 3.0, 1000)
 sedModel = bc.Model_Generator(inputModelDict, funcLib, waveModel, parAddDict_all)
-parAllList = sedModel.get_parList()
+parAllList = sedModel.get_parVaryList()
 #print inputModelDict
 parNumber  = len(parAllList)
 print("The model we are using:")
 for modelName in inputModelDict.keys():
     print("{0}".format(modelName))
 print("#---------------------#")
+print("Parameter number: {0}".format(parNumber))
 
 
 #Fit with DNest4#
@@ -113,21 +114,26 @@ print("#---------------------#")
 fp = open("{0}.dict".format(targname))
 mockDict = pickle.load(fp)
 fp.close()
-fTrue = mockDict.get('f_add', None)
+fTrue = mockDict.get("f_add", None)
 if fTrue is None:
     modelUnct = False
 else:
     modelUnct = True #Whether to consider the model uncertainty in the fitting
     parNumber += 1
 dn4m = bc.DNest4Model(sedData, sedModel, logLFunc, modelUnct)
-"""
+#print dn4m.log_likelihood(parAllList)
+#dn4m.perturb(parAllList)
+#print dn4m.log_likelihood(parAllList)
+
+
+#"""
 fig, ax = sedData.plot_sed()
 fig, ax = sedModel.plot(FigAx=(fig, ax))
 plt.ylim([1e1, 1e3])
 plt.show()
 #"""
 
-"""
+#"""
 ## Create a model object and a sampler
 sampler = dnest4.DNest4Sampler(dn4m,
                                backend=dnest4.backends.CSVBackend(".",
@@ -147,7 +153,7 @@ for i, sample in enumerate(gen):
 dnest4.postprocess()
 #"""
 
-#"""
+"""
 #Process the posterior distributions of the parameters#
 #-----------------------------------------------------#
 ##Fitting results
@@ -158,7 +164,7 @@ except:
     raise AssertionError("The posterior sample is problematic!")
 ##Calculate the optimized paramter values
 parRangeList = map( lambda v: (v[1], v[2]-v[1], v[1]-v[0]),
-                   zip(*np.percentile(ps, [16, 50, 84], axis=0, interpolation='nearest')) )
+                   zip(*np.percentile(ps, [16, 50, 84], axis=0, interpolation="nearest")) )
 parRangeList = np.array(parRangeList)
 parBfList = parRangeList[:, 0] #The best fit parameters
 uncUlList = parRangeList[:, 1] #The upperlimits of the parameter uncertainties
@@ -176,10 +182,10 @@ yFitLl = sedModel.combineResult()
 yFitLl_cmp = sedModel.componentResult()
 
 ### Plot the Data
-cmpList = mockDict['components']
-parList = mockDict['parameters']
-xModel  = mockDict['x_model']
-loglTrue = mockDict['logl_true']
+cmpList = mockDict["components"]
+parList = mockDict["parameters"]
+xModel  = mockDict["x_model"]
+loglTrue = mockDict["logl_true"]
 
 if modelUnct:
     parList.append( np.log(fTrue) )
@@ -192,7 +198,7 @@ for loop in range(len(parBfList)):
 
 plt.close()
 plt.figure()
-cList = ['r', 'g', 'b', 'm', 'y', 'c']
+cList = ["r", "g", "b", "m", "y", "c"]
 plt.plot(waveModel, yFitBf, color="grey", linewidth=3.0)
 plt.fill_between(waveModel, yFitLl, yFitUl, color="grey", alpha=0.1)
 counter = 0
@@ -201,18 +207,18 @@ for modelName in sedModel._modelList:
     plt.fill_between(waveModel, yFitLl_cmp[modelName], yFitUl_cmp[modelName],
                      color=cList[counter], alpha=0.1)
     counter += 1
-plt.errorbar(wave, flux, yerr=sigma, fmt='.k', markersize=10, elinewidth=2, capsize=2)
+plt.errorbar(wave, flux, yerr=sigma, fmt=".k", markersize=10, elinewidth=2, capsize=2)
 yModel = np.zeros_like(xModel)
 counter = 0
 for y in cmpList:
-    plt.plot(xModel, y, color=cList[counter], linestyle='--')
+    plt.plot(xModel, y, color=cList[counter], linestyle="--")
     yModel += y
     counter += 1
-plt.plot(xModel, yModel, color='k', linewidth=1.5)
+plt.plot(xModel, yModel, color="k", linewidth=1.5)
 ymax = np.max(yModel)
 plt.ylim([1e-2, ymax*2.0])
-plt.xscale('log')
-plt.yscale('log')
+plt.xscale("log")
+plt.yscale("log")
 plt.savefig("{0}_result.png".format(targname))
 plt.close()
 #"""

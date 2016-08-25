@@ -14,14 +14,14 @@ funcLib = sedmf.funcLib
 #Generate the mock data#
 #-----------------#
 ## Creat an SedClass object
-targname = "mock_dl07"
+targname = "mock_clumpy"
 redshift = 0.2
 bandList = ["w1", "w2", "w3", "w4", "PACS_70", "PACS_100", "PACS_160", "SPIRE_250", "SPIRE_350", "SPIRE_500"]
 sedwave = np.array([3.353, 4.603, 11.561, 22.088, 70.0, 100.0, 160.0, 250.0, 350.0, 500.0])/(1+redshift)
 sedfake = np.ones_like(sedwave)
 spcwave = np.linspace(5.5, 38.0, 250)/(1+redshift)
 spcfake = np.ones_like(spcwave)
-phtData = {"WISE&Herschel": bc.DiscreteSet(bandList, sedwave, sedfake, sedfake, sedfake)}
+phtData = {} #{"WISE&Herschel": bc.DiscreteSet(bandList, sedwave, sedfake, sedfake, sedfake)}
 spcData = {"Spitzer": bc.ContinueSet(spcwave, spcfake, spcfake, spcfake)}
 sedData = sedsc.SedClass(targname, redshift, phtDict=phtData, spcDict=spcData)
 wave = np.array(sedData.get_List("x"))
@@ -40,7 +40,7 @@ for n in range(4):
     bandRsr = bandPck[:, 1]
     bandCenter = bandCenterList[n]
     wiseBandDict[bandName] = sedsc.BandPass(bandWave, bandRsr, bandCenter, bandName=bandName)
-sedData.add_bandpass(wiseBandDict)
+#sedData.add_bandpass(wiseBandDict)
 ### Load Herschel bandpass
 fp = open("/Users/jinyi/Work/PG_QSO/filters/herschel/herschel_bandpass.dict", "r")
 herschelBands = pickle.load(fp)
@@ -57,7 +57,7 @@ for bandName in herschelBandList:
     herschelBandDict[bandName] = sedsc.BandPass(bandWave, bandRsr, bandCenter,
                                              bandFunc=bf.BandFunc_Herschel,
                                              bandName=bandName)
-sedData.add_bandpass(herschelBandDict)
+#sedData.add_bandpass(herschelBandDict)
 
 ## Build the model
 #Build up the model#
@@ -87,8 +87,9 @@ yTrueBand = sedData.model_pht(waveModel, yTrue)
 yTrueBand = np.array(yTrueBand)
 yTrueSpec = sedData.model_spc(sedModel.combineResult)
 yTrueSpec = np.array(yTrueSpec)
-yErr = np.concatenate([1.0 * np.ones(4), 7.0*np.ones(3), 10.0*np.ones(3),
-                       3.0*np.ones_like(yTrueSpec)])
+#yErr = np.concatenate([1.0 * np.ones(4), 7.0*np.ones(3), 10.0*np.ones(3),
+#                       3.0*np.ones_like(yTrueSpec)])
+yErr = 3.0 * np.ones_like(yTrueSpec)
 yTrueComp = np.concatenate([yTrueBand, yTrueSpec])
 yObsr = yTrueComp.copy()
 lenY = len(yTrueComp)
@@ -128,9 +129,7 @@ np.savetxt(fp, sedArray, fmt="%.3f", delimiter="\t")
 fp.close()
 
 fig = plt.figure()
-plt.errorbar(sedwave, yObsr[0:len(sedwave)], yerr=yErr[0:len(sedwave)], fmt=".r")
-plt.errorbar(spcwave, yObsr[len(sedwave):len(wave)], yerr=yErr[len(sedwave):len(wave)], fmt=".c")
-plt.scatter(sedwave, yTrueBand, linewidth=1.5, color="k")
+plt.errorbar(spcwave, yObsr, yerr=yErr, fmt=".c")
 plt.plot(spcwave, yTrueSpec, linewidth=1.5, color="k")
 for y in cmpList:
     plt.plot(waveModel, y, linestyle="--")
