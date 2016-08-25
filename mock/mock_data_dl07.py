@@ -1,15 +1,12 @@
-import h5py
 import numpy as np
 import matplotlib.pyplot as plt
 import cPickle as pickle
 from collections import OrderedDict
-import ndiminterpolation as ndip
-from fitter import bandfunc as bf
+from fitter import bandfunc   as bf
 from fitter import basicclass as bc
-from fitter.sed import sedclass as sedsc
+from fitter.sed import sedclass        as sedsc
 from fitter.sed import model_functions as sedmf
-from fitter.sed import fit_functions as sedff
-from fitter.sed.model_functions import Modified_BlackBody
+from fitter.sed import fit_functions   as sedff
 ls_mic = 2.99792458e14 #micron/s
 inputModelDict = sedmf.inputModelDict
 funcLib = sedmf.funcLib
@@ -70,8 +67,6 @@ sedData.add_bandpass(herschelBandDict)
 ### Build the model
 parAddDict_all = {
     "DL": DL,
-    #"tmpl_dl07": tmpl_dl07_inpt,
-    #"TORUS_tmpl_ip": ip
 }
 fAdd   = None #0.02 #
 Ndata  = 700
