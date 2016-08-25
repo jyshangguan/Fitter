@@ -347,5 +347,8 @@ class SedClass(bc.DataSet):
             if cSet is None:
                 raise KeyError("The set name '{0}' is not found!".format(cSetName))
             cWaveList = cSet.get_List('x')
-        fluxList = list( fluxFunc( np.array(cWaveList) ) )
+        if len(cWaveList) > 0:
+            fluxList = list( fluxFunc( np.array(cWaveList) ) )
+        else:
+            fluxList = []
         return fluxList
