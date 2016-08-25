@@ -2,17 +2,16 @@ import h5py
 import copy
 import numpy as np
 import matplotlib.pyplot as plt
-from pprint import pprint
 import cPickle as pickle
 import rel_SED_Toolkit as sedt
 import rel_Radiation_Model_Toolkit as rmt
 import ndiminterpolation as ndip
-from scipy.interpolate import interp1d
-from scipy.interpolate import splrep, splev
+from scipy.interpolate import interp1d, splrep, splev
 from lmfit import minimize, Parameters, fit_report
 from collections import OrderedDict
+from .. import dir_list as dl
 
-template_dir = "/Users/jinyi/Work/PG_QSO/templates/"
+template_dir = dl.template_dir
 
 #Func_bgn:
 #-------------------------------------#
@@ -54,7 +53,6 @@ def Stellar_SED(logMs, age, zs, wave, band="h", zf_guess=1.0, spsmodel="bc03_ssp
     """
     import ezgal #Import the package for stellar synthesis.
     from scipy.optimize import fsolve
-    from scipy.interpolate import interp1d
     ls_mic = 2.99792458e14 #micron/s
     model = ezgal.model(spsmodel) #Choose a stellar population synthesis model.
     model.set_cosmology(Om=0.308, Ol=0.692, h=0.678)
@@ -288,9 +286,13 @@ srtIndex = np.argsort(qpahList)
 qpahList = list(qpahList[srtIndex])
 mdust2mh = list(mdust2mh[srtIndex])
 
-fp = open(template_dir+"DL07spec/dl07_spl.tmplt", "r")
-tmpl_dl07_spl = pickle.load(fp)
-fp.close()
+try:
+    fp = open(template_dir+"DL07spec/dl07_spl.tmplt", "r")
+    tmpl_dl07_spl = pickle.load(fp)
+    fp.close()
+except:
+    print("[model_functions]: Fail to import the DL07 template from the default directory!")
+    tmpl_dl07_spl = None
 
 def DL07_Model_spl(umin, umax, qpah, gamma, logMd, DL, wave, tmpl_dl07=tmpl_dl07_spl):
     """
@@ -456,7 +458,7 @@ aList = list( np.arange(-5.0, 5.0, 0.5) )
 bList = list( np.arange(0.0, 1000.0, 5.0) )
 #Input model dict
 #"""
-"""
+#"""
 inputModelDict = {
     "linear_c": {
         "function": "Linear",
@@ -566,7 +568,7 @@ inputModelDict = OrderedDict(
     )
 )
 #"""
-#"""
+"""
 inputModelDict = OrderedDict(
     (
         ("Hot_Dust", {

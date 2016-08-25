@@ -1,9 +1,7 @@
-import h5py
 import numpy as np
 import matplotlib.pyplot as plt
 import cPickle as pickle
 from collections import OrderedDict
-import ndiminterpolation as ndip
 from fitter import bandfunc as bf
 from fitter import basicclass as bc
 from fitter.sed import sedclass as sedsc
@@ -77,23 +75,25 @@ yDict = sedModel.componentResult()
 cmpList = []
 for modelName in yDict.keys():
     cmpList.append(yDict[modelName])
+
 yTrueBand = sedData.model_pht(waveModel, yTrue)
 yTrueBand = np.array(yTrueBand)
-yErr = np.concatenate([1.0 * np.ones(4), 7.0*np.ones(3), 10.0*np.ones(3)])
-yObsr = yTrueBand.copy()
+yTrueSpec = sedData.model_spc(sedModel.combineResult)
+yTrueSpec = np.array(yTrueSpec)
+yErr = np.concatenate([1.0 * np.ones(4), 7.0*np.ones(3), 10.0*np.ones(3),
+                       3.0*np.ones_like(yTrueSpec)])
+yTrueComp = np.concatenate([yTrueBand, yTrueSpec])
+yObsr = yTrueComp.copy()
+lenY = len(yTrueComp)
 if not fAdd is None:
     print("The model uncertainty is considered!")
-    yObsr += np.abs(fAdd * yObsr) * np.random.randn(nBands)
-yObsr += yErr * np.random.randn(nBands)
+    yObsr += np.abs(fAdd * yObsr) * np.random.randn(lenY)
+yObsr += yErr * np.random.randn(lenY)
 
-if not fAdd is None:
-    s2 = yErr**2. + (yTrueBand * fAdd)**2.
-else:
-    s2 = yErr**2.
-logL_dir = -0.5 * np.sum( (yObsr - yTrueBand)**2. / s2 + np.log(2 * np.pi * s2) )
+logL_dir = -0.5 * np.sum( ((yObsr - yTrueComp)/yErr)**2. + np.log(2 * np.pi * yErr**2.) )
 print("logL_dir: {0:.3f}".format(logL_dir))
-chisq = sedff.ChiSq(yObsr, yTrueBand, s2**0.5)
-logL_sed = -0.5 * ( chisq + np.sum( np.log(2 * np.pi * s2) ) )
+chisq = sedff.ChiSq(yObsr, yTrueComp, yErr)
+logL_sed = -0.5 * ( chisq + np.sum( np.log(2 * np.pi * yErr**2.) ) )
 print("logL_sed: {0:.3f}".format(logL_sed))
 
 model = {}
@@ -106,30 +106,32 @@ model['f_add']      = fAdd
 model['parameters'] = parList
 model['components'] = cmpList
 model['logl_true']  = logL_dir
+
 fileName = "{0}.dict".format(targname)
 fp = open(fileName, "w")
 pickle.dump(model, fp)
 fp.close()
 print("{0} is saved!".format(fileName))
-sedArray = np.array([sedwave, yObsr, yErr, np.ones(nBands)])
+sedArray = np.array([wave, yObsr, yErr, np.ones(lenY)])
 sedArray = np.transpose(sedArray)
 sedFileName = "{0}.sed".format(targname)
 fp = open(sedFileName, "w")
 fp.write("wavelength\tflux\tsigma\n")
-np.savetxt(fp, sedArray, fmt='%.3f', delimiter='\t')
+np.savetxt(fp, sedArray, fmt="%.3f", delimiter="\t")
 fp.close()
 
 fig = plt.figure()
-plt.errorbar(sedwave, yObsr, yerr=yErr, fmt=".r")
+plt.errorbar(sedwave, yObsr[0:len(sedwave)], yerr=yErr[0:len(sedwave)], fmt=".r")
+plt.errorbar(spcwave, yObsr[len(sedwave):len(wave)], yerr=yErr[len(sedwave):len(wave)], fmt=".c")
 plt.scatter(sedwave, yTrueBand, linewidth=1.5, color="k")
+plt.plot(spcwave, yTrueSpec, linewidth=1.5, color="k")
 for y in cmpList:
-    plt.plot(waveModel, y, linestyle='--')
-plt.plot(waveModel, yTrue, color="k")
-ymin = np.min(yTrueBand)
-ymax = np.max(yTrueBand)
+    plt.plot(waveModel, y, linestyle="--")
+plt.plot(waveModel, yTrue, color="k", alpha=0.5)
+ymax = np.max(yTrue)
 plt.xlim([1.0, 7e2])
-plt.ylim([ymin/2.0, ymax*2.0])
+plt.ylim([1e1, ymax*2.0])
 plt.xscale("log")
 plt.yscale("log")
-plt.savefig("{0}.pdf".format(targname))
+plt.savefig("{0}.png".format(targname))
 plt.show()

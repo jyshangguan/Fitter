@@ -6,6 +6,7 @@ import cPickle as pickle
 import rel_SED_Toolkit as sedt
 from fitter import basicclass as bc
 from fitter import bandfunc   as bf
+from fitter import dir_list   as dl
 from fitter.sed import model_functions as sedmf
 from fitter.sed import fit_functions   as sedff
 from fitter.sed import sedclass        as sedsc
@@ -16,13 +17,15 @@ logLFunc = sedff.logLFunc_SED
 funcLib = sedmf.funcLib
 inputModelDict = sedmf.inputModelDict
 Model2Data = sedff.Model2Data
+template_dir = dl.template_dir
+bandpass_dir = dl.bandpass_dir
 
 #Load SED data#
 #-------------#
 # Create the sedData
 ## Read in the data
-targname = 'mock_dl07' #"mock_line"#'PG1612+261' #'PG0050+124'
-sedFile  = "mock_dl07.sed" #"mock_line.sed"#'mock_mbb.sed' #'/Users/jinyi/Work/PG_QSO/sobt/SEDs/{0}_cbr.sed'.format(targname)
+targname = "mock_line" #'mock_dl07' #'PG1612+261' #'PG0050+124'
+sedFile  = "mock_line.sed" #"mock_dl07.sed" #'mock_mbb.sed' #'/Users/jinyi/Work/PG_QSO/sobt/SEDs/{0}_cbr.sed'.format(targname)
 redshift = 0.2 #0.061
 sedRng   = [0, 10]
 spcRng   = [10, None]
@@ -55,7 +58,7 @@ DL = sedData.dl
 
 # Load the bandpass
 ## Load WISE bandpass
-wisePath = '/Users/jinyi/Work/PG_QSO/filters/wise/'
+wisePath = bandpass_dir+'wise/'
 wiseBandDict = OrderedDict()
 bandCenterList = [3.353, 4.603, 11.561, 22.088] #Isophotal wavelength
 for n in range(4):
@@ -68,7 +71,7 @@ for n in range(4):
     wiseBandDict[bandName] = sedsc.BandPass(bandWave, bandRsr, bandCenter, bandName=bandName)
 sedData.add_bandpass(wiseBandDict)
 ## Load Herschel bandpass
-fp = open('/Users/jinyi/Work/PG_QSO/filters/herschel/herschel_bandpass.dict', 'r')
+fp = open(bandpass_dir+'herschel/herschel_bandpass.dict', 'r')
 herschelBands = pickle.load(fp)
 fp.close()
 herschelBandList = herschelBands.keys()
@@ -124,7 +127,7 @@ plt.ylim([1e1, 1e3])
 plt.show()
 #"""
 
-#"""
+"""
 ## Create a model object and a sampler
 sampler = dnest4.DNest4Sampler(dn4m,
                                backend=dnest4.backends.CSVBackend(".",
@@ -144,7 +147,7 @@ for i, sample in enumerate(gen):
 dnest4.postprocess()
 #"""
 
-"""
+#"""
 #Process the posterior distributions of the parameters#
 #-----------------------------------------------------#
 ##Fitting results
