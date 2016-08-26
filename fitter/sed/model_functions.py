@@ -293,7 +293,7 @@ try:
     tmpl_dl07_spl = pickle.load(fp)
     fp.close()
 except:
-    print("[model_functions]: Fail to import the DL07 template from: {0}".format(dl07SplFile))
+    print("[model_functions]: Fail to import the DL07_spl template from: {0}".format(dl07SplFile))
     tmpl_dl07_spl = None
 
 def DL07_Model_spl(umin, umax, qpah, gamma, logMd, DL, wave, tmpl_dl07=tmpl_dl07_spl):
@@ -498,8 +498,7 @@ inputModelDict = {
     }
 }
 #"""
-#"""
-
+"""
 inputModelDict = {
     "CLUMPY": {
         "function": "CLUMPY_Torus_Model",
@@ -507,48 +506,48 @@ inputModelDict = {
             "value": 6.33,
             "range": [0.0, 8.0], #[6.3, 6.4],
             "type": "c",
-            "vary": True,
+            "vary": True, #False, #
         },
         "TORUS_i": {
             "value": 47.60,
             "range": [0.0, 90.0], #[47.0, 48.0], #
             "type": "c",
-            "vary": True,
+            "vary": True, #False, #
         },
         "TORUS_tv": {
             "value": 17.53,
             "range": [10.0, 300.0], #[17, 18], #
             "type": "c",
-            "vary": True,
+            "vary": False, #True,
         },
         "TORUS_q": {
             "value": 0.7,
             "range": [0.0, 3.0], #[0.6, 0.8], #
             "type": "c",
-            "vary": True,
+            "vary": False, #True,
         },
         "TORUS_N0": {
             "value": 6.43,
             "range": [1.0, 15.0], #[6.42, 6.44], #
             "type": "c",
-            "vary": True,
+            "vary": False, #True,
         },
         "TORUS_sig": {
             "value": 58.14,
             "range": [15.0, 70.0], #[58.0, 59.0], #
             "type": "c",
-            "vary": True,
+            "vary": False, #True,
         },
         "TORUS_Y": {
             "value": 30.0,
             "range": [5.0, 100.0], #[29., 31.], #
             "type": "c",
-            "vary": True,
+            "vary": False, #True,
         }
     }
 }
 #"""
-"""
+#"""
 inputModelDict = OrderedDict(
     (
         ("Hot_Dust", {
@@ -557,7 +556,7 @@ inputModelDict = OrderedDict(
                     "value": 0.32,
                     "range": [-10., 3.0], #[0.3, 0.4], #
                     "type": "c",
-                    "vary": True,
+                    "vary": False, #True,
                 },
                 "beta": {
                     "value": 2.0,
@@ -569,7 +568,7 @@ inputModelDict = OrderedDict(
                     "value": 846.77,
                     "range": [500, 1300], #[846., 847], #
                     "type": "c",
-                    "vary": True,
+                    "vary": False, #True,
                 }
             }
         ),
@@ -579,43 +578,43 @@ inputModelDict = OrderedDict(
                     "value": 6.33,
                     "range": [0.0, 8.0], #[6.3, 6.4],
                     "type": "c",
-                    "vary": True,
+                    "vary": True, #False, #
                 },
                 "TORUS_i": {
                     "value": 47.60,
                     "range": [0.0, 90.0], #[47.0, 48.0], #
                     "type": "c",
-                    "vary": True,
+                    "vary": False, #True,
                 },
                 "TORUS_tv": {
                     "value": 17.53,
                     "range": [10.0, 300.0], #[17, 18], #
                     "type": "c",
-                    "vary": True,
+                    "vary": False, #True,
                 },
                 "TORUS_q": {
                     "value": 0.7,
                     "range": [0.0, 3.0], #[0.6, 0.8], #
                     "type": "c",
-                    "vary": True,
+                    "vary": False, #True,
                 },
                 "TORUS_N0": {
                     "value": 6.43,
                     "range": [1.0, 15.0], #[6.42, 6.44], #
                     "type": "c",
-                    "vary": True,
+                    "vary": False, #True,
                 },
                 "TORUS_sig": {
                     "value": 58.14,
                     "range": [15.0, 70.0], #[58.0, 59.0], #
                     "type": "c",
-                    "vary": True,
+                    "vary": False, #True,
                 },
                 "TORUS_Y": {
                     "value": 30.0,
                     "range": [5.0, 100.0], #[29., 31.], #
                     "type": "c",
-                    "vary": True,
+                    "vary": False, #True,
                 }
             }
         ),
@@ -643,7 +642,7 @@ inputModelDict = OrderedDict(
                     "value": 0.02,
                     "range": [0.01, 0.99], #[0.01, 0.03],
                     "type": "c",
-                    "vary": True,
+                    "vary": True, #False, #
                 },
                 "logMd": {
                     "value": 9.12,
