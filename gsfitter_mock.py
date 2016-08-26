@@ -198,25 +198,26 @@ for loop in range(len(parBfList)):
     t = parList[loop]
     print("{0}+{1}-{2}, {3}".format(p, u, l, t))
 
-plt.close()
-plt.figure()
+fig = plt.figure()
 cList = ["r", "g", "b", "m", "y", "c"]
-plt.plot(waveModel, yFitBf, color="grey", linewidth=3.0)
-plt.fill_between(waveModel, yFitLl, yFitUl, color="grey", alpha=0.1)
+plt.plot(waveModel, yFitBf, color="brown", linewidth=3.0)
+plt.fill_between(waveModel, yFitLl, yFitUl, color="brown", alpha=0.1)
 counter = 0
 for modelName in sedModel._modelList:
     plt.plot(waveModel, yFitBF_cmp[modelName], color=cList[counter])
     plt.fill_between(waveModel, yFitLl_cmp[modelName], yFitUl_cmp[modelName],
                      color=cList[counter], alpha=0.1)
     counter += 1
-plt.errorbar(wave, flux, yerr=sigma, fmt=".k", markersize=10, elinewidth=2, capsize=2)
+ax = plt.gca()
+#plt.errorbar(wave, flux, yerr=sigma, fmt=".k", markersize=10, elinewidth=2, capsize=2)
+sedData.plot_sed(FigAx=(fig, ax))
 yModel = np.zeros_like(xModel)
 counter = 0
 for y in cmpList:
     plt.plot(xModel, y, color=cList[counter], linestyle="--")
     yModel += y
     counter += 1
-plt.plot(xModel, yModel, color="k", linewidth=1.5)
+plt.plot(xModel, yModel, color="k", linewidth=1.5, linestyle="--")
 ymax = np.max(yModel)
 plt.ylim([1e-2, ymax*2.0])
 plt.xscale("log")
