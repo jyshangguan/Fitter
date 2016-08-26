@@ -24,13 +24,13 @@ bandpass_dir = dl.bandpass_dir
 #-------------#
 # Create the sedData
 ## Read in the data
-targname = "mock_clumpy" #"mock_dl07" #"mock_line" #"PG1612+261" #"PG0050+124"
-sedFile  = "mock_clumpy.sed" #"mock_dl07.sed" #"mock_line.sed" #"mock_mbb.sed" #"/Users/jinyi/Work/PG_QSO/sobt/SEDs/{0}_cbr.sed".format(targname)
+targname = "mock_dl07" #"mock_clumpy" #"mock_line" #"PG1612+261" #"PG0050+124"
+sedFile  = "mock_dl07.sed" #"mock_clumpy.sed" #"mock_line.sed" #"mock_mbb.sed" #"/Users/jinyi/Work/PG_QSO/sobt/SEDs/{0}_cbr.sed".format(targname)
 redshift = 0.2 #0.061
-#sedRng   = [0, 10]
-#spcRng   = [10, None]
-sedRng   = [0, 0]
-spcRng   = [0, None]
+sedRng   = [0, 10]
+spcRng   = [10, None]
+#sedRng   = [0, 0]
+#spcRng   = [0, None]
 spcRebin = 1.
 sedPck = sedt.Load_SED(sedFile, sedRng, spcRng, spcRebin)
 sed = sedPck["sed_cb"]
@@ -49,7 +49,7 @@ spcsigma = sedPck["spc"][2]
 bandList = ["w1", "w2", "w3", "w4", "PACS_70", "PACS_100", "PACS_160", "SPIRE_250", "SPIRE_350", "SPIRE_500"]
 sedDataType = ["name", "wavelength", "flux", "error", "flag"]
 sedflag = np.ones_like(sedwave)
-phtData = {} #{"WISE&Herschel": bc.DiscreteSet(bandList, sedwave, sedflux, sedsigma, sedflag, sedDataType)}
+phtData = {"WISE&Herschel": bc.DiscreteSet(bandList, sedwave, sedflux, sedsigma, sedflag, sedDataType)}
 spcflag = np.ones_like(spcwave)
 spcDataType = ["wavelength", "flux", "error", "flag"]
 spcData = {"IRS": bc.ContinueSet(spcwave, spcflux, spcsigma, spcflag, spcDataType)}
@@ -69,7 +69,7 @@ for n in range(4):
     bandRsr = bandPck[:, 1]
     bandCenter = bandCenterList[n]
     wiseBandDict[bandName] = sedsc.BandPass(bandWave, bandRsr, bandCenter, bandName=bandName)
-#sedData.add_bandpass(wiseBandDict)
+sedData.add_bandpass(wiseBandDict)
 ## Load Herschel bandpass
 fp = open(bandpass_dir+"herschel/herschel_bandpass.dict", "r")
 herschelBands = pickle.load(fp)
@@ -86,7 +86,7 @@ for bandName in herschelBandList:
     herschelBandDict[bandName] = sedsc.BandPass(bandWave, bandRsr, bandCenter,
                                              bandFunc=bf.BandFunc_Herschel,
                                              bandName=bandName)
-#sedData.add_bandpass(herschelBandDict)
+sedData.add_bandpass(herschelBandDict)
 
 #Build up the model#
 #------------------#
@@ -104,7 +104,7 @@ print("The model we are using:")
 for modelName in inputModelDict.keys():
     print("{0}".format(modelName))
 print("#---------------------#")
-print("Parameter number: {0}".format(parNumber))
+print("Varying parameter number: {0}".format(parNumber))
 
 
 #Fit with DNest4#
@@ -126,14 +126,14 @@ dn4m = bc.DNest4Model(sedData, sedModel, logLFunc, modelUnct)
 #print dn4m.log_likelihood(parAllList)
 
 
-#"""
+"""
 fig, ax = sedData.plot_sed()
 fig, ax = sedModel.plot(FigAx=(fig, ax))
-plt.ylim([1e1, 1e3])
+plt.ylim([1e-2, 1e4])
 plt.show()
 #"""
 
-#"""
+"""
 ## Create a model object and a sampler
 sampler = dnest4.DNest4Sampler(dn4m,
                                backend=dnest4.backends.CSVBackend(".",
@@ -153,10 +153,12 @@ for i, sample in enumerate(gen):
 dnest4.postprocess()
 #"""
 
-"""
+#"""
 #Process the posterior distributions of the parameters#
 #-----------------------------------------------------#
 ##Fitting results
+if parNumber == 1:
+    raise AssertionError("The parameter should be at least 2!")
 ps = np.loadtxt("posterior_sample.txt")
 try:
     assert ps.shape[1] == parNumber
