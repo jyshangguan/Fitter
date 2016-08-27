@@ -4,19 +4,19 @@ import matplotlib.pyplot as plt
 from collections import OrderedDict
 import cPickle as pickle
 import rel_SED_Toolkit as sedt
-from fitter import basicclass as bc
-from fitter import bandfunc   as bf
-from fitter import dir_list   as dl
-from fitter.sed import model_functions as sedmf
-from fitter.sed import fit_functions   as sedff
-from fitter.sed import sedclass        as sedsc
+from sedfit.fitter import basicclass as bc
+from sedfit.fitter import bandfunc   as bf
+from sedfit import dir_list        as dl
+from sedfit import model_functions as sedmf
+from sedfit import fit_functions   as sedff
+from sedfit import sedclass        as sedsc
 
 ls_mic = 2.99792458e14 #micron/s
 
 logLFunc = sedff.logLFunc_SED
 funcLib = sedmf.funcLib
 inputModelDict = sedmf.inputModelDict
-Model2Data = sedff.Model2Data
+Model2Data = sedmf.Model2Data
 template_dir = dl.template_dir
 bandpass_dir = dl.bandpass_dir
 
@@ -24,8 +24,8 @@ bandpass_dir = dl.bandpass_dir
 #-------------#
 # Create the sedData
 ## Read in the data
-targname = "mock_dl07" #"mock_clumpy" #"mock_line" #"PG1612+261" #"PG0050+124"
-sedFile  = "mock_dl07.sed" #"mock_clumpy.sed" #"mock_line.sed" #"mock_mbb.sed" #"/Users/jinyi/Work/PG_QSO/sobt/SEDs/{0}_cbr.sed".format(targname)
+targname = "mock_dl07" #"mock_line" #"mock_clumpy" #"PG1612+261" #"PG0050+124"
+sedFile  = "mock_dl07.sed" #"mock_line.sed" #"mock_clumpy.sed" #"mock_mbb.sed" #"/Users/jinyi/Work/PG_QSO/sobt/SEDs/{0}_cbr.sed".format(targname)
 redshift = 0.2 #0.061
 sedRng   = [0, 10]
 spcRng   = [10, None]
@@ -96,7 +96,8 @@ parAddDict_all = {
 }
 #waveModel = sedmf.waveModel
 waveModel = 10**np.linspace(0.0, 3.0, 1000)
-sedModel = bc.Model_Generator(inputModelDict, funcLib, waveModel, parAddDict_all)
+sedModel = bc.Model_Generator(inputModelDict, funcLib, waveModel, parAddDict_all,
+                              model2data=Model2Data)
 parAllList = sedModel.get_parVaryList()
 #print inputModelDict
 parNumber  = len(parAllList)
@@ -115,13 +116,16 @@ fp = open("{0}.dict".format(targname))
 mockDict = pickle.load(fp)
 fp.close()
 fTrue = mockDict.get("f_add", None)
+logl_True = mockDict['logl_true']
 if fTrue is None:
     modelUnct = False
 else:
     modelUnct = True #Whether to consider the model uncertainty in the fitting
     parNumber += 1
+    parAllList.append(np.log(fTrue))
 dn4m = bc.DNest4Model(sedData, sedModel, logLFunc, modelUnct)
-#print dn4m.log_likelihood(parAllList)
+print("True log likelihood: {0:.3f}".format(logl_True))
+print("Calculated log likelihood: {0:.3f}".format(dn4m.log_likelihood(parAllList)))
 #dn4m.perturb(parAllList)
 #print dn4m.log_likelihood(parAllList)
 
@@ -133,16 +137,16 @@ plt.ylim([1e-2, 1e4])
 plt.show()
 #"""
 
-"""
+#"""
 ## Create a model object and a sampler
 sampler = dnest4.DNest4Sampler(dn4m,
                                backend=dnest4.backends.CSVBackend(".",
                                                                   sep=" "))
 
 ## Set up the sampler. The first argument is max_num_levels
-gen = sampler.sample(max_num_levels=30, num_steps=1000, new_level_interval=1000,
-                      num_per_step=1000, thread_steps=100,
-                      num_particles=5, lam=10, beta=100, seed=1234)
+gen = sampler.sample(max_num_levels=30, num_steps=1000, new_level_interval=5000,
+                      num_per_step=5000, thread_steps=100,
+                      num_particles=5, lam=5, beta=100, seed=1234)
 
 ## Do the sampling (one iteration here = one particle save)
 for i, sample in enumerate(gen):
@@ -153,7 +157,7 @@ for i, sample in enumerate(gen):
 dnest4.postprocess()
 #"""
 
-#"""
+"""
 #Process the posterior distributions of the parameters#
 #-----------------------------------------------------#
 ##Fitting results

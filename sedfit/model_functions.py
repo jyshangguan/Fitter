@@ -618,37 +618,37 @@ inputModelDict = OrderedDict(
                     "value": 47.60,
                     "range": [0.0, 90.0], #[47.0, 48.0], #
                     "type": "c",
-                    "vary": False, #True,
+                    "vary": True, #False, #
                 },
                 "TORUS_tv": {
                     "value": 17.53,
                     "range": [10.0, 300.0], #[17, 18], #
                     "type": "c",
-                    "vary": False, #True,
+                    "vary": True, #False, #
                 },
                 "TORUS_q": {
                     "value": 0.7,
                     "range": [0.0, 3.0], #[0.6, 0.8], #
                     "type": "c",
-                    "vary": False, #True,
+                    "vary": True, #False, #
                 },
                 "TORUS_N0": {
                     "value": 6.43,
                     "range": [1.0, 15.0], #[6.42, 6.44], #
                     "type": "c",
-                    "vary": False, #True,
+                    "vary": True, #False, #
                 },
                 "TORUS_sig": {
                     "value": 58.14,
                     "range": [15.0, 70.0], #[58.0, 59.0], #
                     "type": "c",
-                    "vary": False, #True,
+                    "vary": True, #False, #
                 },
                 "TORUS_Y": {
                     "value": 30.0,
                     "range": [5.0, 100.0], #[29., 31.], #
                     "type": "c",
-                    "vary": False, #True,
+                    "vary": True, #False, #
                 }
             }
         ),
