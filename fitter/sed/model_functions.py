@@ -1,17 +1,51 @@
 import h5py
 import copy
 import numpy as np
-import matplotlib.pyplot as plt
 import cPickle as pickle
-import rel_SED_Toolkit as sedt
 import rel_Radiation_Model_Toolkit as rmt
 import ndiminterpolation as ndip
 from scipy.interpolate import interp1d, splrep, splev
 from lmfit import minimize, Parameters, fit_report
 from collections import OrderedDict
+from .. import basicclass as bc
+import sedclass as sc
 from .. import dir_list as dl
 
 template_dir = dl.template_dir
+
+#Model to data function#
+#----------------------#
+def Model2Data(sedModel, sedData):
+    """
+    Convert the continual model to the data-like model to directly
+    compare with the data.
+
+    Parameters
+    ----------
+    sedModel : ModelCombiner object
+        The combined model.
+    sedData : SEDClass object
+        The data set of SED.
+
+    Returns
+    -------
+    fluxModel : list
+        The model flux list of the data.
+
+    Notes
+    -----
+    None.
+    """
+    if not isinstance(sedModel, bc.ModelCombiner):
+        raise TypeError("The sedModel type is incorrect!")
+    if not isinstance(sedData, sc.SedClass):
+        raise TypeError("The sedData type is incorrect!")
+    waveModel = sedModel.get_xList()
+    fluxModel = sedModel.combineResult()
+    fluxModelPht = sedData.model_pht(waveModel, fluxModel)
+    fluxModelSpc = sedData.model_spc(sedModel.combineResult)
+    fluxModel = fluxModelPht + fluxModelSpc
+    return fluxModel
 
 #Func_bgn:
 #-------------------------------------#
