@@ -587,7 +587,7 @@ inputModelDict = OrderedDict(
                 "function": "Modified_BlackBody",
                 "logM": {
                     "value": 0.32,
-                    "range": [-10., 3.0], #[0.3, 0.4], #
+                    "range": [-10.0, 3.0], #[0.3, 0.4], #
                     "type": "c",
                     "vary": False, #True,
                 },
@@ -609,7 +609,7 @@ inputModelDict = OrderedDict(
                 "function": "CLUMPY_Torus_Model",
                 "TORUS_logsf": {
                     "value": 6.33,
-                    "range": [0.0, 8.0], #[6.3, 6.4],
+                    "range": [5.0, 8.0], #[6.3, 6.4],
                     "type": "c",
                     "vary": True, #False, #
                 },
@@ -679,7 +679,7 @@ inputModelDict = OrderedDict(
                 },
                 "logMd": {
                     "value": 9.12,
-                    "range": [5.0, 11.0], #[9.0, 10.0],
+                    "range": [8.0, 10.0], #[9.0, 10.0],
                     "type": "c",
                     "vary": True,
                 }
