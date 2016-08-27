@@ -5,7 +5,6 @@ import cPickle as pickle
 import rel_Radiation_Model_Toolkit as rmt
 import ndiminterpolation as ndip
 from scipy.interpolate import interp1d, splrep, splev
-from lmfit import minimize, Parameters, fit_report
 from collections import OrderedDict
 from fitter import basicclass as bc
 import sedclass as sc
