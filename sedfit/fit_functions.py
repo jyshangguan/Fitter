@@ -1,44 +1,5 @@
-import copy
 import numpy as np
-from scipy.interpolate import interp1d
-from .. import basicclass as bc
-import sedclass as sc
-import model_functions as sedmf
-from lmfit import minimize, Parameters, fit_report
-
-inputModelDict = sedmf.inputModelDict
-
-def Model2Data(sedData, sedModel):
-    """
-    Convert the continual model to the data-like model to directly
-    compare with the data.
-
-    Parameters
-    ----------
-    sedData : SEDClass object
-        The data set of SED.
-    sedModel : ModelCombiner object
-        The combined model.
-
-    Returns
-    -------
-    fluxModelPht : list
-        The model flux list of photometric data.
-
-    Notes
-    -----
-    None.
-    """
-    if not isinstance(sedData, sc.SedClass):
-        raise TypeError("The sedData type is incorrect!")
-    elif not isinstance(sedModel, bc.ModelCombiner):
-        raise TypeError("The sedModel type is incorrect!")
-    waveModel = sedModel.get_xList()
-    fluxModel = sedModel.combineResult()
-    fluxModelPht = sedData.model_pht(waveModel, fluxModel)
-    fluxModelSpc = sedData.model_spc(sedModel.combineResult)
-    fluxModel = fluxModelPht + fluxModelSpc
-    return fluxModel
+from fitter import basicclass as bc
 
 def ChiSq(data, model, unct=None):
     '''
@@ -86,23 +47,36 @@ def ChiSq(data, model, unct=None):
 #The log_likelihood function: for SED fitting
 def logLFunc_SED(params, data, model):
     """
-    parDict = model.get_modelParDict()
-    pIndex = 0
-    for modelName in model._modelList:
-        parFitDict = parDict[modelName]
-        for parName in parFitDict.keys():
-            if parFitDict[parName]["vary"]:
-                parFitDict[parName]["value"] = params[pIndex]
-                pIndex += 1
-            else:
-                pass
+    Calculate the likelihood of data according to the model and its parameters.
+
+    Parameters
+    ----------
+    params : list
+        The variable parameter list of the model.
+    data : DataSet
+        The data need to fit.
+    model : ModelCombiner
+        The model to fit the data.
+
+    Returns
+    -------
+    logL : float
+        The log likelihood.
+
+    Notes
+    -----
+    None.
     """
+    if not isinstance(model, bc.ModelCombiner):
+        raise TypeError("The model is incorrect!")
+    if not isinstance(data, bc.DataSet):
+        raise TypeError("The data is incorrect!")
     model.updateParList(params)
     nParVary = len(model.get_parVaryList())
     y = np.array(data.get_List('y'))
     e = np.array(data.get_List('e'))
     #ym = np.array(model.combineResult(x))
-    ym = np.array(Model2Data(data, model))
+    ym = np.array(model.model2Data(data))
     if len(params) == nParVary:
         s = e
     elif len(params) == (nParVary+1):

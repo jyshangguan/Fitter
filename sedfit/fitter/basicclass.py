@@ -429,11 +429,24 @@ class ModelFunction(object):
         return y
 
 #The combination of a number of models
+def Model2Data_Naive(model, data):
+    """
+    The function gets the model values that can directly compare with the data.
+    """
+    if not isinstance(data, DataSet):
+        raise ValueError("The data is incorrect!")
+    if not isinstance(model, ModelCombiner):
+        raise ValueError("The model is incorrect!")
+    x = np.array(data.get_List('x'))
+    y = model.combineResult(x)
+    return y
+
 class ModelCombiner(object):
-    def __init__(self, modelDict, xList):
+    def __init__(self, modelDict, xList, model2data=Model2Data_Naive):
         self.__modelDict = modelDict
         self._modelList = modelDict.keys()
         self.__x = xList
+        self.__model2data = model2data
 
     def get_xList(self):
         return self.__x
@@ -465,6 +478,13 @@ class ModelCombiner(object):
             result[modelName] = mf.result(x)
         return result
 
+    def model2Data(self, data):
+        """
+        Return the model value that can be directly compare with data.
+        """
+        if not isinstance(data, DataSet):
+            raise ValueError("The data is incorrect!")
+        return self.__model2data(self, data)
 
     def get_modelDict(self):
         return self.__modelDict
@@ -575,7 +595,7 @@ class ModelCombiner(object):
         return FigAx
 
 #The function generate the ModelCombiner from input model dict
-def Model_Generator(input_model_dict, func_lib, x_list, par_add_dict_all={}):
+def Model_Generator(input_model_dict, func_lib, x_list, par_add_dict_all={}, **kwargs):
     """
     Generate the ModelCombiner object from the input model dict.
     """
@@ -598,19 +618,40 @@ def Model_Generator(input_model_dict, func_lib, x_list, par_add_dict_all={}):
             else:
                 parAddDict[parName] = par_add_iterm
         modelDict[modelName] = ModelFunction(funcInfo['function'], xName, parFitDict, parAddDict)
-        sed_model = ModelCombiner(modelDict, x_list)
+    sed_model = ModelCombiner(modelDict, x_list, **kwargs)
     return sed_model
 
 #DNest4 model#
 #------------#
 #The class follow the format of DNest4
 
+#The log_likelihood function: naive one
+def logLFunc_naive(params, data, model):
+    """
+    This is the simplest log likelihood function.
+    """
+    model.updateParList(params)
+    nParVary = len(model.get_parVaryList())
+    y = np.array(data.get_List('y'))
+    e = np.array(data.get_List('e'))
+    ym = np.array(model.model2Data(data))
+    if len(params) == nParVary:
+        s = e
+    elif len(params) == (nParVary+1):
+        f = np.exp(params[nParVary]) #The last par is lnf.
+        s = (e**2 + (ym * f)**2)**0.5
+    else:
+        raise ValueError("The length of params is incorrect!")
+    #Calculate the log_likelihood
+    logL = -0.5 * np.sum( (y - ym)**2 / s**2 + np.log(2 * np.pi * s**2) )
+    return logL
+
 #The DNest4 model class
 class DNest4Model(object):
     """
     Specify the model
     """
-    def __init__(self, data, model, logl, ModelUnct=False):
+    def __init__(self, data, model, logl=logLFunc_naive, ModelUnct=False):
         if isinstance(data, DataSet):
             self.__data = data
         else:
@@ -714,18 +755,3 @@ class DNest4Model(object):
         """
         logL  = self._logl(params, self.__data, self.__model)
         return logL
-
-#The log_likelihood function: simple one
-def logLFunc_simple(params, data, model):
-    """
-    This is the simplest log likelihood function.
-    """
-    model.updateParList(params)
-    x = np.array(data.get_List('x'))
-    y = np.array(data.get_List('y'))
-    e = np.array(data.get_List('e'))
-    ym = np.array(model.combineResult(x))
-    #Calculate the log_likelihood
-    s2 = e**2.
-    logL = -0.5 * np.sum( (y - ym)**2 / s2 + np.log(2 * np.pi * s2) )
-    return logL
