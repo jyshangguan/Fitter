@@ -2,7 +2,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from .. import basicclass as bc
+from fitter import basicclass as bc
 from scipy.interpolate import interp1d
 import types
 

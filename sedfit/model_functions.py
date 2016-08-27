@@ -7,9 +7,9 @@ import ndiminterpolation as ndip
 from scipy.interpolate import interp1d, splrep, splev
 from lmfit import minimize, Parameters, fit_report
 from collections import OrderedDict
-from .. import basicclass as bc
+from fitter import basicclass as bc
 import sedclass as sc
-from .. import dir_list as dl
+import dir_list as dl
 
 template_dir = dl.template_dir
 

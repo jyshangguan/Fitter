@@ -441,7 +441,6 @@ def Model2Data_Naive(model, data):
     y = model.combineResult(x)
     return y
 
-
 class ModelCombiner(object):
     def __init__(self, modelDict, xList, model2data=Model2Data_Naive):
         self.__modelDict = modelDict
@@ -596,7 +595,7 @@ class ModelCombiner(object):
         return FigAx
 
 #The function generate the ModelCombiner from input model dict
-def Model_Generator(input_model_dict, func_lib, x_list, par_add_dict_all={}):
+def Model_Generator(input_model_dict, func_lib, x_list, par_add_dict_all={}, **kwargs):
     """
     Generate the ModelCombiner object from the input model dict.
     """
@@ -619,7 +618,7 @@ def Model_Generator(input_model_dict, func_lib, x_list, par_add_dict_all={}):
             else:
                 parAddDict[parName] = par_add_iterm
         modelDict[modelName] = ModelFunction(funcInfo['function'], xName, parFitDict, parAddDict)
-        sed_model = ModelCombiner(modelDict, x_list)
+    sed_model = ModelCombiner(modelDict, x_list, **kwargs)
     return sed_model
 
 #DNest4 model#
@@ -632,12 +631,19 @@ def logLFunc_naive(params, data, model):
     This is the simplest log likelihood function.
     """
     model.updateParList(params)
+    nParVary = len(model.get_parVaryList())
     y = np.array(data.get_List('y'))
     e = np.array(data.get_List('e'))
     ym = np.array(model.model2Data(data))
+    if len(params) == nParVary:
+        s = e
+    elif len(params) == (nParVary+1):
+        f = np.exp(params[nParVary]) #The last par is lnf.
+        s = (e**2 + (ym * f)**2)**0.5
+    else:
+        raise ValueError("The length of params is incorrect!")
     #Calculate the log_likelihood
-    s2 = e**2.
-    logL = -0.5 * np.sum( (y - ym)**2 / s2 + np.log(2 * np.pi * s2) )
+    logL = -0.5 * np.sum( (y - ym)**2 / s**2 + np.log(2 * np.pi * s**2) )
     return logL
 
 #The DNest4 model class
