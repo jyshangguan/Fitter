@@ -1,17 +1,50 @@
 import h5py
 import copy
 import numpy as np
-import matplotlib.pyplot as plt
 import cPickle as pickle
-import rel_SED_Toolkit as sedt
 import rel_Radiation_Model_Toolkit as rmt
 import ndiminterpolation as ndip
 from scipy.interpolate import interp1d, splrep, splev
-from lmfit import minimize, Parameters, fit_report
 from collections import OrderedDict
-from .. import dir_list as dl
+from fitter import basicclass as bc
+import sedclass as sc
+import dir_list as dl
 
 template_dir = dl.template_dir
+
+#Model to data function#
+#----------------------#
+def Model2Data(sedModel, sedData):
+    """
+    Convert the continual model to the data-like model to directly
+    compare with the data.
+
+    Parameters
+    ----------
+    sedModel : ModelCombiner object
+        The combined model.
+    sedData : SEDClass object
+        The data set of SED.
+
+    Returns
+    -------
+    fluxModel : list
+        The model flux list of the data.
+
+    Notes
+    -----
+    None.
+    """
+    if not isinstance(sedModel, bc.ModelCombiner):
+        raise TypeError("The sedModel type is incorrect!")
+    if not isinstance(sedData, sc.SedClass):
+        raise TypeError("The sedData type is incorrect!")
+    waveModel = sedModel.get_xList()
+    fluxModel = sedModel.combineResult()
+    fluxModelPht = sedData.model_pht(waveModel, fluxModel)
+    fluxModelSpc = sedData.model_spc(sedModel.combineResult)
+    fluxModel = fluxModelPht + fluxModelSpc
+    return fluxModel
 
 #Func_bgn:
 #-------------------------------------#
@@ -584,37 +617,37 @@ inputModelDict = OrderedDict(
                     "value": 47.60,
                     "range": [0.0, 90.0], #[47.0, 48.0], #
                     "type": "c",
-                    "vary": False, #True,
+                    "vary": True, #False, #
                 },
                 "TORUS_tv": {
                     "value": 17.53,
                     "range": [10.0, 300.0], #[17, 18], #
                     "type": "c",
-                    "vary": False, #True,
+                    "vary": True, #False, #
                 },
                 "TORUS_q": {
                     "value": 0.7,
                     "range": [0.0, 3.0], #[0.6, 0.8], #
                     "type": "c",
-                    "vary": False, #True,
+                    "vary": True, #False, #
                 },
                 "TORUS_N0": {
                     "value": 6.43,
                     "range": [1.0, 15.0], #[6.42, 6.44], #
                     "type": "c",
-                    "vary": False, #True,
+                    "vary": True, #False, #
                 },
                 "TORUS_sig": {
                     "value": 58.14,
                     "range": [15.0, 70.0], #[58.0, 59.0], #
                     "type": "c",
-                    "vary": False, #True,
+                    "vary": True, #False, #
                 },
                 "TORUS_Y": {
                     "value": 30.0,
                     "range": [5.0, 100.0], #[29., 31.], #
                     "type": "c",
-                    "vary": False, #True,
+                    "vary": True, #False, #
                 }
             }
         ),

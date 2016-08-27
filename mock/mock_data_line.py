@@ -2,15 +2,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 import cPickle as pickle
 from collections import OrderedDict
-from fitter import bandfunc as bf
-from fitter import basicclass as bc
-from fitter.sed import sedclass as sedsc
-from fitter.sed import model_functions as sedmf
-from fitter.sed import fit_functions as sedff
+from sedfit.fitter import bandfunc as bf
+from sedfit.fitter import basicclass as bc
+from sedfit import sedclass as sedsc
+from sedfit import model_functions as sedmf
+from sedfit import fit_functions as sedff
 ls_mic = 2.99792458e14 #micron/s
 inputModelDict = sedmf.inputModelDict
 funcLib = sedmf.funcLib
-Model2Data = sedff.Model2Data
+Model2Data = sedmf.Model2Data
 
 #Generate the mock data#
 #-----------------#
@@ -65,7 +65,7 @@ fAdd   = 0.05 #None
 Ndata  = 500
 xMax   = 600.0
 waveModel = 10**np.linspace(0.0, np.log10(xMax), Ndata)
-sedModel = bc.Model_Generator(inputModelDict, funcLib, waveModel)
+sedModel = bc.Model_Generator(inputModelDict, funcLib, waveModel, model2data=Model2Data)
 parList = sedModel.get_parList()
 #print inputModelDict
 parNumber  = len(parList)
@@ -90,10 +90,14 @@ if not fAdd is None:
     yObsr += np.abs(fAdd * yObsr) * np.random.randn(lenY)
 yObsr += yErr * np.random.randn(lenY)
 
-logL_dir = -0.5 * np.sum( ((yObsr - yTrueComp)/yErr)**2. + np.log(2 * np.pi * yErr**2.) )
+if fAdd is None:
+    s = yErr
+else:
+    s = (yErr**2.0 + (fAdd * yTrueComp)**2.)**0.5
+logL_dir = -0.5 * np.sum( ((yObsr - yTrueComp)/s)**2. + np.log(2 * np.pi * s**2.) )
 print("logL_dir: {0:.3f}".format(logL_dir))
-chisq = sedff.ChiSq(yObsr, yTrueComp, yErr)
-logL_sed = -0.5 * ( chisq + np.sum( np.log(2 * np.pi * yErr**2.) ) )
+chisq = sedff.ChiSq(yObsr, yTrueComp, s)
+logL_sed = -0.5 * ( chisq + np.sum( np.log(2 * np.pi * s**2.) ) )
 print("logL_sed: {0:.3f}".format(logL_sed))
 
 model = {}
