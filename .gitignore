@@ -6,11 +6,12 @@
 results/*
 
 #Python auxillary files
-*.pyc
-test_*.py
-sv_*.py
 test/*
 bak/*
+*.pyc
+input_*.py
+test_*.py
+sv_*.py
 
 #SED data
 *.sed
