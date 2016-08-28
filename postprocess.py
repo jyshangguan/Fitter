@@ -1,3 +1,5 @@
+#!/Users/jinyi/anaconda/bin/python
+
 import sys
 import importlib
 import dnest4
@@ -12,7 +14,7 @@ from sedfit import fit_functions   as sedff
 print("################################")
 print("# Galaxy SED Fitter postprocess#")
 print("################################")
-print("\n\n")
+print("\n")
 
 #Postprocess the DNest4 samples#
 ################################
@@ -30,6 +32,7 @@ if len(sys.argv) == 1:
 #Load the input info#
 #-------------------#
 inputModule = importlib.import_module(sys.argv[1])
+targname = inputModule.targname
 
 #Input SED data#
 #--------------#
