@@ -8,9 +8,9 @@ from scipy.interpolate import interp1d, splrep, splev
 from collections import OrderedDict
 from fitter import basicclass as bc
 import sedclass as sc
-import dir_list as dl
+#import dir_list as dl
 
-template_dir = dl.template_dir
+template_dir = "/Users/jinyi/Work/PG_QSO/templates/"
 
 #Model to data function#
 #----------------------#
