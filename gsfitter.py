@@ -18,7 +18,9 @@ print("\n")
 
 #Load the input info#
 #-------------------#
-inputModule = importlib.import_module(sys.argv[1])
+moduleName = sys.argv[1]
+print("Input module: {0}".format(moduleName))
+inputModule = importlib.import_module(moduleName)
 
 #Input SED data#
 #--------------#
