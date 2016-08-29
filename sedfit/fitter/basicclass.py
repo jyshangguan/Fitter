@@ -722,7 +722,8 @@ class DNest4Model(object):
                         #print "[DN4M]: continual"
                         r1, r2 = parRange
                         p0 = params[pIndex]
-                        p0 += (r2 - r1) * dnest4.randh() #Uniform distribution
+                        #p0 += (r2 - r1) * dnest4.randh() #Uniform distribution
+                        p0 += (r2 - r1) * dnest4.randh() / 2.0 #Uniform distribution
                         params[pIndex] = dnest4.wrap(p0, r1, r2)
                         if (params[pIndex] < r1) or (params[pIndex] > r2):
                             logH -= np.inf
@@ -730,7 +731,8 @@ class DNest4Model(object):
                         #print "[DN4M]: discrete"
                         rangeLen = len(parRange)
                         iBng = parRange.index(params[pIndex])
-                        iPro = int( iBng + rangeLen * dnest4.randh() )
+                        #iPro = int( iBng + rangeLen * dnest4.randh() ) #Uniform distribution
+                        iPro = int( iBng + rangeLen * dnest4.randh() / 2.0 ) #Uniform distribution
                         iPar = dnest4.wrap(iPro, 0, rangeLen)
                         params[pIndex] = parRange[iPar]
                         if not params[pIndex] in parRange:
