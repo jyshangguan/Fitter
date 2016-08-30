@@ -434,6 +434,26 @@ def DL07_Model(umin, umax, qpah, gamma, logMd, DL, wave, tmpl_dl07=tmpl_dl07):
         raise ValueError("The input wavelength is incorrect!")
     return flux
 
+fp = open("/Users/jinyi/Work/mcmc/Fitter/template/dl07_kdt.tmplt")
+tdl07 = pickle.load(fp)
+fp.close()
+modelInfo = tdl07.get_modelInfo()
+qpahList = modelInfo["qpah"]
+mdust2mh = modelInfo["mdmh"]
+def DL07(umin, umax, qpah, gamma, logMd, DL, wave, t=tdl07):
+    pmin = [umin, umin, qpah]
+    ppl  = [umin, umax, qpah]
+    jnu_min = t(wave, pmin)
+    jnu_pl  = t(wave, ppl)
+    qpah_min = t.get_nearestParameters(pmin)[2]
+    qpah_pl = t.get_nearestParameters(ppl)[2]
+    if qpah_min != qpah_pl:
+        raise RuntimeError("The DL07 model is inconsistent!")
+    mdmh = mdust2mh[qpahList.index(qpah_min)]
+    jnu = (1 - gamma) * jnu_min + gamma * jnu_pl
+    flux = 10**logMd * Msun/m_H * jnu/(DL * Mpc)**2 / mdmh * 1e3 #unit: mJy
+    return flux
+
 def Linear(a, b, x):
     return a * x + b
 
@@ -469,11 +489,11 @@ funcLib = {
         "param_fit": ["umin", "umax", "qpah", "gamma", "logMd"],
         "param_add": ["tmpl_dl07", "DL"]
     },
-    "DL07_Model_spl": {
-        "function": DL07_Model_spl,
+    "DL07": {
+        "function": DL07,
         "x_name": "wave",
         "param_fit": ["umin", "umax", "qpah", "gamma", "logMd"],
-        "param_add": ["tmpl_dl07", "DL"]
+        "param_add": ["t", "DL"]
     },
     "Modified_BlackBody": {
         "function": Modified_BlackBody,
@@ -488,203 +508,3 @@ funcLib = {
         "param_add": []
     }
 }
-
-aList = list( np.arange(-5.0, 5.0, 0.5) )
-bList = list( np.arange(0.0, 1000.0, 5.0) )
-#Input model dict
-#"""
-"""
-inputModelDict = {
-    "linear_c": {
-        "function": "Linear",
-        "a": {
-            "value": 3.26,
-            "range": [-5.0, 5.0], #[-10., 3.0],
-            "type": "c",
-            "vary": True,
-        },
-        "b": {
-            "value": 328.0,
-            "range": [0.0, 1000.0], #[1.5, 2.5],
-            "type": "c",
-            "vary": True,
-        }
-    }
-}
-#"""
-"""
-inputModelDict = {
-    "linear_d": {
-        "function": "Linear",
-        "a": {
-            "value": 3.26,
-            "range": aList, #[-5.0, 5.0], #[-10., 3.0],
-            "type": "d",
-            "vary": True,
-        },
-        "b": {
-            "value": 328.0,
-            "range": bList, #[0.0, 1000.0], #[1.5, 2.5],
-            "type": "d",
-            "vary": True,
-        }
-    }
-}
-#"""
-"""
-inputModelDict = {
-    "CLUMPY": {
-        "function": "CLUMPY_Torus_Model",
-        "TORUS_logsf": {
-            "value": 6.33,
-            "range": [0.0, 8.0], #[6.3, 6.4],
-            "type": "c",
-            "vary": True, #False, #
-        },
-        "TORUS_i": {
-            "value": 47.60,
-            "range": [0.0, 90.0], #[47.0, 48.0], #
-            "type": "c",
-            "vary": True, #False, #
-        },
-        "TORUS_tv": {
-            "value": 17.53,
-            "range": [10.0, 300.0], #[17, 18], #
-            "type": "c",
-            "vary": False, #True,
-        },
-        "TORUS_q": {
-            "value": 0.7,
-            "range": [0.0, 3.0], #[0.6, 0.8], #
-            "type": "c",
-            "vary": False, #True,
-        },
-        "TORUS_N0": {
-            "value": 6.43,
-            "range": [1.0, 15.0], #[6.42, 6.44], #
-            "type": "c",
-            "vary": False, #True,
-        },
-        "TORUS_sig": {
-            "value": 58.14,
-            "range": [15.0, 70.0], #[58.0, 59.0], #
-            "type": "c",
-            "vary": False, #True,
-        },
-        "TORUS_Y": {
-            "value": 30.0,
-            "range": [5.0, 100.0], #[29., 31.], #
-            "type": "c",
-            "vary": False, #True,
-        }
-    }
-}
-#"""
-#"""
-inputModelDict = OrderedDict(
-    (
-        ("Hot_Dust", {
-                "function": "Modified_BlackBody",
-                "logM": {
-                    "value": 0.32,
-                    "range": [-10.0, 3.0], #[0.3, 0.4], #
-                    "type": "c",
-                    "vary": False, #True,
-                },
-                "beta": {
-                    "value": 2.0,
-                    "range": [1.5, 2.5], #[1.9, 2.1], #
-                    "type": "c",
-                    "vary": False, #True, #
-                },
-                "T": {
-                    "value": 846.77,
-                    "range": [500, 1300], #[846., 847], #
-                    "type": "c",
-                    "vary": False, #True,
-                }
-            }
-        ),
-        ("CLUMPY", {
-                "function": "CLUMPY_Torus_Model",
-                "TORUS_logsf": {
-                    "value": 6.33,
-                    "range": [5.0, 8.0], #[6.3, 6.4],
-                    "type": "c",
-                    "vary": True, #False, #
-                },
-                "TORUS_i": {
-                    "value": 47.60,
-                    "range": [0.0, 90.0], #[47.0, 48.0], #
-                    "type": "c",
-                    "vary": True, #False, #
-                },
-                "TORUS_tv": {
-                    "value": 17.53,
-                    "range": [10.0, 300.0], #[17, 18], #
-                    "type": "c",
-                    "vary": True, #False, #
-                },
-                "TORUS_q": {
-                    "value": 0.7,
-                    "range": [0.0, 3.0], #[0.6, 0.8], #
-                    "type": "c",
-                    "vary": True, #False, #
-                },
-                "TORUS_N0": {
-                    "value": 6.43,
-                    "range": [1.0, 15.0], #[6.42, 6.44], #
-                    "type": "c",
-                    "vary": True, #False, #
-                },
-                "TORUS_sig": {
-                    "value": 58.14,
-                    "range": [15.0, 70.0], #[58.0, 59.0], #
-                    "type": "c",
-                    "vary": True, #False, #
-                },
-                "TORUS_Y": {
-                    "value": 30.0,
-                    "range": [5.0, 100.0], #[29., 31.], #
-                    "type": "c",
-                    "vary": True, #False, #
-                }
-            }
-        ),
-        ("DL07", {
-                "function": "DL07_Model_spl",
-                "umin": {
-                    "value": 10.0,
-                    "range": uminList,
-                    "type": "d",
-                    "vary": True,
-                },
-                "umax": {
-                    "value": 1e6,
-                    "range": umaxList,
-                    "type": "d",
-                    "vary": False, #True, #
-                },
-                "qpah": {
-                    "value": 3.19,
-                    "range": qpahList,
-                    "type": "d",
-                    "vary": True,
-                },
-                "gamma": {
-                    "value": 0.02,
-                    "range": [0.01, 0.99], #[0.01, 0.03],
-                    "type": "c",
-                    "vary": True, #False, #
-                },
-                "logMd": {
-                    "value": 9.12,
-                    "range": [8.0, 10.0], #[9.0, 10.0],
-                    "type": "c",
-                    "vary": True,
-                }
-            }
-        ),
-    )
-)
-#"""

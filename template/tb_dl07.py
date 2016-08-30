@@ -1,9 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import cPickle as pickle
+from sedfit.fitter.template import Template
 from sklearn.neighbors import KDTree
 from scipy.interpolate import splrep, splev
 
+'''
 class Template(object):
     """
     This is the object of a model template.
@@ -52,6 +54,7 @@ class Template(object):
 
     def readme(self):
         return self._readMe
+'''
 
 f_test = 0
 f_compile = 1
