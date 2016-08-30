@@ -11,7 +11,9 @@ bak/*
 *.pyc
 input_*.py
 test_*.py
+bak_*.py
 sv_*.py
 
 #SED data
 *.sed
+*.tmplt
