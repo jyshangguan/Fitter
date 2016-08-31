@@ -1,5 +1,4 @@
 import numpy as np
-from fitter import basicclass as bc
 
 def ChiSq(data, model, unct=None):
     '''
@@ -44,8 +43,37 @@ def ChiSq(data, model, unct=None):
     chsq = chsq_dtc + chsq_non
     return chsq
 
+#Model to data function#
+def Model2Data(sedModel, sedData):
+    """
+    Convert the continual model to the data-like model to directly
+    compare with the data.
+
+    Parameters
+    ----------
+    sedModel : ModelCombiner object
+        The combined model.
+    sedData : SEDClass object
+        The data set of SED.
+
+    Returns
+    -------
+    fluxModel : list
+        The model flux list of the data.
+
+    Notes
+    -----
+    None.
+    """
+    waveModel = sedModel.get_xList()
+    fluxModel = sedModel.combineResult()
+    fluxModelPht = sedData.model_pht(waveModel, fluxModel)
+    fluxModelSpc = sedData.model_spc(sedModel.combineResult)
+    fluxModel = fluxModelPht + fluxModelSpc
+    return fluxModel
+
 #The log_likelihood function: for SED fitting
-def logLFunc_SED(params, data, model):
+def logLFunc(params, data, model):
     """
     Calculate the likelihood of data according to the model and its parameters.
 
@@ -67,16 +95,12 @@ def logLFunc_SED(params, data, model):
     -----
     None.
     """
-    if not isinstance(model, bc.ModelCombiner):
-        raise TypeError("The model is incorrect!")
-    if not isinstance(data, bc.DataSet):
-        raise TypeError("The data is incorrect!")
     model.updateParList(params)
     nParVary = len(model.get_parVaryList())
     y = np.array(data.get_List('y'))
     e = np.array(data.get_List('e'))
     #ym = np.array(model.combineResult(x))
-    ym = np.array(model.model2Data(data))
+    ym = np.array(Model2Data(model, data))
     if len(params) == nParVary:
         s = e
     elif len(params) == (nParVary+1):
