@@ -1,18 +1,17 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import cPickle as pickle
-from sedfit.fitter.template import Template
+#from sedfit.fitter.template import Template
 from sklearn.neighbors import KDTree
 from scipy.interpolate import splrep, splev
 
-'''
+#'''
 class Template(object):
     """
     This is the object of a model template.
     """
 
     def __init__(self, tckList, kdTree, parList, modelInfo={}, parFormat=[], readMe=""):
-        assert isinstance(kdTree, KDTree)
         self.__tckList   = tckList
         self.__kdTree    = kdTree
         self.__parList   = parList
@@ -54,10 +53,10 @@ class Template(object):
 
     def readme(self):
         return self._readMe
-'''
+#'''
 
-f_test = 0
-f_compile = 1
+f_test = 1
+f_compile = 0
 
 if f_compile:
     fp = open("/Users/jinyi/Work/PG_QSO/templates/DL07spec/dl07.tmplt", "r")
@@ -109,22 +108,35 @@ if f_compile:
     This template is from: http://www.astro.princeton.edu/~draine/dust/irem.html
     The interpolation is tested well!
     '''
+    templateDict = {
+        "tckList": tckList,
+        "kdTree": kdt,
+        "parList": XList,
+        "modelInfo": modelInfo,
+        "parFormat": parFormat,
+        "readMe": readMe
+    }
+    print("haha")
     t = Template(tckList=tckList, kdTree=kdt, parList=XList, modelInfo=modelInfo,
                  parFormat=parFormat, readMe=readMe)
+    print("haha")
+    t = Template(**templateDict)
+    print("haha")
 
     fp = open("dl07_kdt.tmplt", "w")
-    pickle.dump(t, fp)
+    #pickle.dump(t, fp)
+    pickle.dump(templateDict, fp)
     fp.close()
 
 if f_test:
     fp = open("dl07_kdt.tmplt", "r")
-    t = pickle.load(fp)
+    tpDict = pickle.load(fp)
     fp.close()
     fp = open("/Users/jinyi/Work/PG_QSO/templates/DL07spec/dl07.tmplt", "r")
     tmpl_dl07 = pickle.load(fp)
     fp.close()
 
-
+    t = Template(**tpDict)
     x = 10**np.linspace(0, 3, 1000)
     pars = [0.44, 2e6, 2.3]
     for i in range(100): #range(len(tmpl_dl07)):
