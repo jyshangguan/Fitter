@@ -8,6 +8,15 @@ from sedfit.fitter import basicclass as bc
 from sedfit import model_functions as sedmf
 from sedfit import fit_functions   as sedff
 from sedfit.fitter import mcmc
+from emcee.utils import MPIPool
+
+# Initialize the MPI-based pool used for parallelization.
+pool = MPIPool()
+
+if not pool.is_master():
+    # Wait for instructions from the master process.
+    pool.wait()
+    sys.exit(0)
 
 #The code starts#
 #---------------#
@@ -41,10 +50,6 @@ modelDict = inputModule.inputModelDict
 sedModel = bc.Model_Generator(modelDict, funcLib, waveModel, parAddDict_all)
 parAllList = sedModel.get_parVaryList()
 
-
-#Fit with MCMC#
-#---------------#
-
 mockDict = inputModule.mockDict
 fTrue = mockDict.get("f_add", None)
 logl_True = mockDict['logl_true']
@@ -57,13 +62,15 @@ em = mcmc.EmceeModel(sedData, sedModel, modelUnct)
 print("True log likelihood: {0:.3f}".format(logl_True))
 print("Calculated log likelihood: {0:.3f}".format(mcmc.log_likelihood(parAllList, sedData, sedModel)))
 
+#Fit with MCMC#
+#---------------#
+
 nwalkers = inputModule.nwalkers
 p0 = [em.from_prior() for i in range(nwalkers)]
 ndim = len(p0[0])
 print("{0} walkers, {1} dimensions".format(nwalkers, ndim))
 lnprob = mcmc.lnprob
-threads = inputModule.threads
-sampler = em.EnsembleSampler(nwalkers, threads=threads)
+sampler = em.EnsembleSampler(nwalkers, pool=pool)
 
 printFraction = inputModule.printFraction
 burnIn = inputModule.burnIn
@@ -83,4 +90,8 @@ for i, (pos, lnprob, state) in enumerate(sampler.sample(pos, iterations=nSteps, 
         print("{0}%".format(100. * i / nSteps))
 print("MCMC finishes!")
 
+# Close the processes.
+pool.close()
+
+#Post process
 inputModule.postProcess(sampler, ndim)

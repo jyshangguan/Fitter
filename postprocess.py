@@ -2,12 +2,16 @@
 
 import sys
 import importlib
-import dnest4
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')
+import corner
 import matplotlib.pyplot as plt
 from sedfit.fitter import basicclass as bc
 from sedfit import model_functions as sedmf
 from sedfit import fit_functions   as sedff
+from sedfit.fitter import mcmc
+
 
 #The code starts#
 #################
@@ -16,22 +20,17 @@ print("# Galaxy SED Fitter postprocess#")
 print("################################")
 print("\n")
 
-#Postprocess the DNest4 samples#
-################################
-if len(sys.argv) == 1:
-    dnest4.postprocess()
-    print("#-------------------------------------#")
-    print("The DNest4 samplings are postprocessed!")
-    sys.exit("#-------------------------------------#")
-
-
-
 #Plot fitting results#
 ######################
 
 #Load the input info#
 #-------------------#
-inputModule = importlib.import_module(sys.argv[1])
+if len(sys.argv) > 1:
+    moduleName = sys.argv[1]
+else:
+    moduleName = "input_emcee"
+print("Input module: {0}".format(moduleName))
+inputModule = importlib.import_module(moduleName)
 targname = inputModule.targname
 
 #Input SED data#
@@ -44,12 +43,10 @@ sedData = inputModule.sedData
 parAddDict_all = {
     "DL": sedData.dl,
 }
-waveModel = 10**np.linspace(0.0, 3.0, 1000)
+waveModel = inputModule.waveModel
 funcLib = sedmf.funcLib
-Model2Data = sedmf.Model2Data
-inputModelDict = inputModule.inputModelDict
-sedModel = bc.Model_Generator(inputModelDict, funcLib, waveModel, parAddDict_all,
-                              model2data=Model2Data)
+modelDict = inputModule.inputModelDict
+sedModel = bc.Model_Generator(modelDict, funcLib, waveModel, parAddDict_all)
 parAllList = sedModel.get_parVaryList()
 parNumber  = len(parAllList)
 
@@ -67,23 +64,28 @@ else:
     modelUnct = True #Whether to consider the model uncertainty in the fitting
     parNumber += 1
     parAllList.append(np.log(fTrue))
-logLFunc = sedff.logLFunc_SED
-dn4m = bc.DNest4Model(sedData, sedModel, logLFunc, modelUnct)
 print("True log likelihood: {0:.3f}".format(logl_True))
-print("Calculated log likelihood: {0:.3f}".format(dn4m.log_likelihood(parAllList)))
+print("Calculated log likelihood: {0:.3f}".format(mcmc.log_likelihood(parAllList, sedData, sedModel)))
 
 
 ##Fitting results
 if parNumber == 1:
     raise AssertionError("The parameter should be at least 2!")
-ps = np.loadtxt("posterior_sample.txt")
+ps = np.loadtxt("{0}_samples.txt".format(targname), delimiter=",")
+
+#Plot the corner diagram
+fig = corner.corner(ps)
+plt.savefig("{0}_triangle.png".format(targname))
+plt.close()
+
+#Plot the SED data and fit
 try:
     assert ps.shape[1] == parNumber
 except:
     raise AssertionError("The posterior sample is problematic!")
 ##Calculate the optimized paramter values
 parRangeList = map( lambda v: (v[1], v[2]-v[1], v[1]-v[0]),
-                   zip(*np.percentile(ps, [16, 50, 84], axis=0, interpolation="nearest")) )
+                   zip(*np.percentile(ps, [16, 50, 84], axis=0, interpolation="linear")) )
 parRangeList = np.array(parRangeList)
 parBfList = parRangeList[:, 0] #The best fit parameters
 uncUlList = parRangeList[:, 1] #The upperlimits of the parameter uncertainties
@@ -112,7 +114,7 @@ for loop in range(len(parBfList)):
     p = parBfList[loop]
     u = uncUlList[loop]
     l = uncLlList[loop]
-    t = parList[loop]
+    t = parAllList[loop]
     print("{0}+{1}-{2}, {3}".format(p, u, l, t))
 
 fig = plt.figure()
