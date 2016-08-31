@@ -6,6 +6,7 @@ from collections import OrderedDict
 import matplotlib.pyplot as plt
 import dnest4
 from dnest4.utils import rng
+from .. import model_functions as sedmf
 
 
 #Data class#
@@ -48,6 +49,12 @@ class DataUnit(object):
             self.__f = int(f)
         else:
             raise ValueError('The flag should be 0 or 1!')
+
+    def __getstate__(self):
+        return self.__dict__
+
+    def __setstate__(self, dict):
+        self.__dict__ = dict
 
 #The discrete data set unit
 class DiscreteSet(object):
@@ -167,6 +174,12 @@ class DiscreteSet(object):
             self.__fList[loop] = int(fList[loop])
         return 1
 
+    def __getstate__(self):
+        return self.__dict__
+
+    def __setstate__(self, dict):
+        self.__dict__ = dict
+
 #The continual data set unit
 class ContinueSet(object):
     def __init__(self, xList, yList, eList, fList, dataType=None):
@@ -273,6 +286,12 @@ class ContinueSet(object):
             self.__dataUnitList[loop].set_flag(fList[loop])
             self.__fList[loop] = int(fList[loop])
         return 1
+
+    def __getstate__(self):
+        return self.__dict__
+
+    def __setstate__(self, dict):
+        self.__dict__ = dict
 
 #The total data set that contains a number of "DiscreteSet"s and "ContinueSet"s
 class DataSet(object):
@@ -394,11 +413,42 @@ class DataSet(object):
         csList = self.get_csList(typeName)
         return dsList + csList
 
+    def __getstate__(self):
+        return self.__dict__
+
+    def __setstate__(self, dict):
+        self.__dict__ = dict
+
 
 #Model class#
 #-----------#
 
 #The basic class of model
+class ModelFunction(object):
+    def __init__(self, function, xName, parFitDict={}, parAddDict={}):
+        self.__function = function
+        self.xName = xName
+        self.parFitDict = parFitDict
+        self.parAddDict = parAddDict
+
+    def __call__(self, x):
+        kwargs = {}
+        #Add in the parameters for fit
+        kwargs[self.xName] = x
+        for parName in self.parFitDict.keys():
+            kwargs[parName] = self.parFitDict[parName]["value"]
+        for parName in self.parAddDict.keys():
+            kwargs[parName] = self.parAddDict[parName]
+        exec "y = sedmf.{0}(**kwargs)".format(self.__function)
+        return y
+
+    def __getstate__(self):
+        return self.__dict__
+
+    def __setstate__(self, dict):
+        self.__dict__ = dict
+
+"""
 class ModelFunction(object):
     def __init__(self, function, xName, parFitDict={}, parAddDict={}):
         self.__function = function
@@ -427,26 +477,13 @@ class ModelFunction(object):
             kwargs[parName] = self.parAddDict[parName]
         y = self.__function(**kwargs)
         return y
-
-#The combination of a number of models
-def Model2Data_Naive(model, data):
-    """
-    The function gets the model values that can directly compare with the data.
-    """
-    if not isinstance(data, DataSet):
-        raise ValueError("The data is incorrect!")
-    if not isinstance(model, ModelCombiner):
-        raise ValueError("The model is incorrect!")
-    x = np.array(data.get_List('x'))
-    y = model.combineResult(x)
-    return y
+"""
 
 class ModelCombiner(object):
-    def __init__(self, modelDict, xList, model2data=Model2Data_Naive):
+    def __init__(self, modelDict, xList):
         self.__modelDict = modelDict
         self._modelList = modelDict.keys()
         self.__x = xList
-        self.__model2data = model2data
 
     def get_xList(self):
         return self.__x
@@ -463,7 +500,7 @@ class ModelCombiner(object):
         result = np.zeros_like(x)
         for modelName in self.__modelDict.keys():
             mf = self.__modelDict[modelName]
-            result += mf.result(x)
+            result += mf(x)
         return result
 
     def componentResult(self, x=None):
@@ -475,16 +512,8 @@ class ModelCombiner(object):
             x = self.__x
         for modelName in self.__modelDict.keys():
             mf = self.__modelDict[modelName]
-            result[modelName] = mf.result(x)
+            result[modelName] = mf(x)
         return result
-
-    def model2Data(self, data):
-        """
-        Return the model value that can be directly compare with data.
-        """
-        if not isinstance(data, DataSet):
-            raise ValueError("The data is incorrect!")
-        return self.__model2data(self, data)
 
     def get_modelDict(self):
         return self.__modelDict
@@ -579,7 +608,7 @@ class ModelCombiner(object):
             for parName in parFitDict.keys():
                 textList.append( TextIterm('{0}: {1:.2f}\n', parName,
                 parFitDict[parName]["value"]) )
-            y = mf.result(x)
+            y = mf(x)
             yTotal += y
             ax.plot(x, y, color=colorList[counter%nColor], label=modelName)
             ax.set_xscale('log')
@@ -593,6 +622,12 @@ class ModelCombiner(object):
                     verticalalignment='top', horizontalalignment='left',
                     transform=ax.transAxes, fontsize=14)
         return FigAx
+
+    def __getstate__(self):
+        return self.__dict__
+
+    def __setstate__(self, dict):
+        self.__dict__ = dict
 
 #The function generate the ModelCombiner from input model dict
 def Model_Generator(input_model_dict, func_lib, x_list, par_add_dict_all={}, **kwargs):
@@ -617,13 +652,27 @@ def Model_Generator(input_model_dict, func_lib, x_list, par_add_dict_all={}, **k
                 pass
             else:
                 parAddDict[parName] = par_add_iterm
-        modelDict[modelName] = ModelFunction(funcInfo['function'], xName, parFitDict, parAddDict)
+        #modelDict[modelName] = ModelFunction(funcInfo['function'], xName, parFitDict, parAddDict)
+        modelDict[modelName] = ModelFunction(funcName, xName, parFitDict, parAddDict)
     sed_model = ModelCombiner(modelDict, x_list, **kwargs)
     return sed_model
 
 #DNest4 model#
 #------------#
 #The class follow the format of DNest4
+
+#The combination of a number of models
+def Model2Data_Naive(model, data):
+    """
+    The function gets the model values that can directly compare with the data.
+    """
+    if not isinstance(data, DataSet):
+        raise ValueError("The data is incorrect!")
+    if not isinstance(model, ModelCombiner):
+        raise ValueError("The model is incorrect!")
+    x = np.array(data.get_List('x'))
+    y = model.combineResult(x)
+    return y
 
 #The log_likelihood function: naive one
 def logLFunc_naive(params, data, model):
@@ -634,7 +683,7 @@ def logLFunc_naive(params, data, model):
     nParVary = len(model.get_parVaryList())
     y = np.array(data.get_List('y'))
     e = np.array(data.get_List('e'))
-    ym = np.array(model.model2Data(data))
+    ym = np.array(Model2Data_Naive(model, data))
     if len(params) == nParVary:
         s = e
     elif len(params) == (nParVary+1):

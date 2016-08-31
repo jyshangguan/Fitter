@@ -3,7 +3,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from fitter import basicclass as bc
-from scipy.interpolate import interp1d
+from scipy.interpolate import splrep, splev
 import types
 
 
@@ -36,7 +36,7 @@ class BandPass(object):
             self.__bandFunc = bandFunc
         else:
             raise ValueError("The input bandFunc is incorrect!")
-        self.__filterFunction = interp1d(waveList, rsrList)
+        self.__filtertck = splrep(waveList, rsrList)
         if bandCenter is None: #The bandCenter is not specified, the effective wavelength will
                                #be used (Eq. A21, Bessell&Murphy 2012), assuming fnu~const.
             self._bandCenter = np.trapz(rsrList, waveList)/np.trapz(rsrList/waveList, waveList)
@@ -87,7 +87,7 @@ class BandPass(object):
             raise ValueError("The wavelength is not overlapped with the filter!")
         wavelength = wavelength[fltr]
         flux = flux[fltr]
-        rsrList = self.__filterFunction(wavelength)
+        rsrList = splev(wavelength, self.__filtertck)
         bandFunc = self.__bandFunc
         if bandFunc is None: #By default, the rsr is photon response and the band flux
                              #is defined as eq. A12 (Bessell&Murphy 2012).
@@ -105,6 +105,12 @@ class BandPass(object):
             kwargs.update(kwargsAdd)
             fluxFltr = bandFunc(kwargs)
         return fluxFltr
+
+    def __getstate__(self):
+        return self.__dict__
+
+    def __setstate__(self, dict):
+        self.__dict__ = dict
 
 
 class SedClass(bc.DataSet):
@@ -351,3 +357,9 @@ class SedClass(bc.DataSet):
         else:
             fluxList = []
         return fluxList
+
+    def __getstate__(self):
+        return self.__dict__
+
+    def __setstate__(self, dict):
+        self.__dict__ = dict
