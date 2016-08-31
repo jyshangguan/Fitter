@@ -68,16 +68,17 @@ sampler = em.EnsembleSampler(nwalkers, threads=threads)
 printFraction = inputModule.printFraction
 burnIn = inputModule.burnIn
 nSteps = inputModule.nSteps
+thin   = inputModule.thin
 
 print("MCMC is burning-in...")
-for i, (pos, lnprob, state) in enumerate(sampler.sample(p0, iterations=burnIn)):
+for i, (pos, lnprob, state) in enumerate(sampler.sample(p0, iterations=burnIn, thin=thin)):
     if not i % int(printFraction * burnIn):
         print("{0}%".format(100. * i / burnIn))
 print("Burn-in finishes!")
 
 sampler.reset()
 print("MCMC is running...")
-for i, (pos, lnprob, state) in enumerate(sampler.sample(pos, iterations=nSteps)):
+for i, (pos, lnprob, state) in enumerate(sampler.sample(pos, iterations=nSteps, thin=thin)):
     if not i % int(printFraction * nSteps):
         print("{0}%".format(100. * i / nSteps))
 print("MCMC finishes!")
