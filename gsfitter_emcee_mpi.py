@@ -64,29 +64,44 @@ print("Calculated log likelihood: {0:.3f}".format(mcmc.log_likelihood(parAllList
 
 #Fit with MCMC#
 #---------------#
+emceeDict = inputModule.emceeDict
+imSampler = emceeDict["sampler"]
+nwalkers  = emceeDict["nwalkers"]
+ntemps    = emceeDict["ntemps"]
+burnIn    = emceeDict["burn-in"]
+nSteps    = emceeDict["nsteps"]
+thin      = emceeDict["thin"]
+threads   = emceeDict["threads"]
+ndim = len(parAllList)
+print("#--------------------------------#")
+print("emcee Info:")
+for keys in emceeDict.keys():
+    print("{0}: {1}".format(keys, emceeDict[keys]))
+print("#--------------------------------#")
+if imSampler == "PTSampler":
+    p0 = np.zeros((ntemps, nwalkers, ndim))
+    for loop_t in range(ntemps):
+        for loop_w in range(nwalkers):
+            p0[loop_t, loop_w, :] = em.from_prior()
+    sampler = em.PTSampler(ntemps, nwalkers, threads=threads)
+elif imSampler == "EnsembleSampler":
+    p0 = [em.from_prior() for i in range(nwalkers)]
+    sampler = em.EnsembleSampler(nwalkers, threads=threads)
+else:
+    raise RuntimeError("Cannot recognise the sampler '{0}'!".format(imSampler))
 
-nwalkers = inputModule.nwalkers
-p0 = [em.from_prior() for i in range(nwalkers)]
-ndim = len(p0[0])
-print("{0} walkers, {1} dimensions".format(nwalkers, ndim))
-lnprob = mcmc.lnprob
-sampler = em.EnsembleSampler(nwalkers, pool=pool)
 
-printFraction = inputModule.printFraction
-burnIn = inputModule.burnIn
-nSteps = inputModule.nSteps
-thin   = inputModule.thin
-
+printFrac = emceeDict["printfrac"]
 print("MCMC is burning-in...")
 for i, (pos, lnprob, state) in enumerate(sampler.sample(p0, iterations=burnIn, thin=thin)):
-    if not i % int(printFraction * burnIn):
+    if not i % int(printFrac * burnIn):
         print("{0}%".format(100. * i / burnIn))
 print("Burn-in finishes!")
 
 sampler.reset()
 print("MCMC is running...")
 for i, (pos, lnprob, state) in enumerate(sampler.sample(pos, iterations=nSteps, thin=thin)):
-    if not i % int(printFraction * nSteps):
+    if not i % int(printFrac * nSteps):
         print("{0}%".format(100. * i / nSteps))
 print("MCMC finishes!")
 
