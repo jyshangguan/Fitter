@@ -91,6 +91,13 @@ class EmceeModel(object):
         return emcee.EnsembleSampler(nwalkers, ndim, lnprob,
                     args=[self.__data, self.__model, self.__modelunct], **kwargs)
 
+    def PTSampler(self, ntemps, nwalkers, **kwargs):
+        ndim = len(self.__model.get_parVaryList())
+        return emcee.PTSampler(ntemps, nwalkers, ndim,
+                    logl=log_likelihood, logp=lnprior,
+                    loglargs=[self.__data, self.__model],
+                    logpargs=[self.__data, self.__model, self.__modelunct], **kwargs)
+
     def __getstate__(self):
         return self.__dict__
 

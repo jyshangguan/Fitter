@@ -8,6 +8,15 @@ from sedfit.fitter import basicclass as bc
 from sedfit import model_functions as sedmf
 from sedfit import fit_functions   as sedff
 from sedfit.fitter import mcmc
+from emcee.utils import MPIPool
+
+# Initialize the MPI-based pool used for parallelization.
+pool = MPIPool()
+
+if not pool.is_master():
+    # Wait for instructions from the master process.
+    pool.wait()
+    sys.exit(0)
 
 #The code starts#
 #---------------#
@@ -40,7 +49,6 @@ waveModel = inputModule.waveModel
 modelDict = inputModule.inputModelDict
 sedModel = bc.Model_Generator(modelDict, funcLib, waveModel, parAddDict_all)
 parAllList = sedModel.get_parVaryList()
-
 
 mockDict = inputModule.mockDict
 fTrue = mockDict.get("f_add", None)
@@ -97,5 +105,8 @@ for i, (pos, lnprob, state) in enumerate(sampler.sample(pos, iterations=nSteps, 
         print("{0}%".format(100. * i / nSteps))
 print("MCMC finishes!")
 
+# Close the processes.
+pool.close()
+
+#Post process
 inputModule.postProcess(sampler, ndim)
-print("Post-processed!")
