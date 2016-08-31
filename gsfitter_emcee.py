@@ -66,12 +66,21 @@ sampler = em.EnsembleSampler(nwalkers, threads=4)
 
 printFraction = 0.1
 burnIn = 500
+nSteps = 10000
+
 print("MCMC is burning-in...")
 for i, (pos, lnprob, state) in enumerate(sampler.sample(p0, iterations=burnIn)):
     if not i % int(printFraction * burnIn):
         print("{0}%".format(100. * i / burnIn))
 print("Burn-in finishes!")
 
-samples = sampler.chain[:, 50:, :].reshape((-1, ndim))
+sampler.reset()
+print("MCMC is running...")
+for i, (pos, lnprob, state) in enumerate(sampler.sample(pos, iterations=nSteps)):
+    if not i % int(printFraction * nSteps):
+        print("{0}%".format(100. * i / nSteps))
+print("MCMC finishes!")
+
+samples = sampler.chain.reshape((-1, ndim))
 fig = corner.corner(samples)
 plt.show()

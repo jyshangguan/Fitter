@@ -8,7 +8,6 @@ class Template(object):
     """
 
     def __init__(self, tckList, kdTree, parList, modelInfo={}, parFormat=[], readMe=""):
-        assert isinstance(kdTree, KDTree)
         self.__tckList   = tckList
         self.__kdTree    = kdTree
         self.__parList   = parList

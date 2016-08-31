@@ -6,9 +6,7 @@ import rel_Radiation_Model_Toolkit as rmt
 import ndiminterpolation as ndip
 from scipy.interpolate import interp1d, splrep, splev
 from collections import OrderedDict
-#from fitter import basicclass as bc
-#import sedclass as sc
-#import dir_list as dl
+from fitter.template import Template
 
 template_dir = "/Users/jinyi/Work/PG_QSO/templates/"
 
@@ -401,8 +399,9 @@ def DL07_Model(umin, umax, qpah, gamma, logMd, DL, wave, tmpl_dl07=tmpl_dl07):
     return flux
 
 fp = open("/Users/jinyi/Work/mcmc/Fitter/template/dl07_kdt.tmplt")
-tdl07 = pickle.load(fp)
+tp_dl07 = pickle.load(fp)
 fp.close()
+tdl07 = Template(**tp_dl07)
 modelInfo = tdl07.get_modelInfo()
 qpahList = modelInfo["qpah"]
 mdust2mh = modelInfo["mdmh"]
