@@ -109,4 +109,5 @@ print("MCMC finishes!")
 pool.close()
 
 #Post process
-inputModule.postProcess(sampler, ndim)
+inputModule.postProcess(sampler, ndim, imSampler)
+print("Post-processed!")
