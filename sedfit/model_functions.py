@@ -6,45 +6,11 @@ import rel_Radiation_Model_Toolkit as rmt
 import ndiminterpolation as ndip
 from scipy.interpolate import interp1d, splrep, splev
 from collections import OrderedDict
-from fitter import basicclass as bc
-import sedclass as sc
+#from fitter import basicclass as bc
+#import sedclass as sc
 #import dir_list as dl
 
 template_dir = "/Users/jinyi/Work/PG_QSO/templates/"
-
-#Model to data function#
-#----------------------#
-def Model2Data(sedModel, sedData):
-    """
-    Convert the continual model to the data-like model to directly
-    compare with the data.
-
-    Parameters
-    ----------
-    sedModel : ModelCombiner object
-        The combined model.
-    sedData : SEDClass object
-        The data set of SED.
-
-    Returns
-    -------
-    fluxModel : list
-        The model flux list of the data.
-
-    Notes
-    -----
-    None.
-    """
-    if not isinstance(sedModel, bc.ModelCombiner):
-        raise TypeError("The sedModel type is incorrect!")
-    if not isinstance(sedData, sc.SedClass):
-        raise TypeError("The sedData type is incorrect!")
-    waveModel = sedModel.get_xList()
-    fluxModel = sedModel.combineResult()
-    fluxModelPht = sedData.model_pht(waveModel, fluxModel)
-    fluxModelSpc = sedData.model_spc(sedModel.combineResult)
-    fluxModel = fluxModelPht + fluxModelSpc
-    return fluxModel
 
 #Func_bgn:
 #-------------------------------------#
