@@ -97,5 +97,5 @@ for i, (pos, lnprob, state) in enumerate(sampler.sample(pos, iterations=nSteps, 
         print("{0}%".format(100. * i / nSteps))
 print("MCMC finishes!")
 
-inputModule.postProcess(sampler, ndim)
+inputModule.postProcess(sampler, ndim, imSampler)
 print("Post-processed!")
