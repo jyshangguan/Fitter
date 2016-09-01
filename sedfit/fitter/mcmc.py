@@ -1,8 +1,8 @@
 import acor
 import emcee
 import numpy as np
-from .. import fit_functions as sedff
 
+from .. import fit_functions as sedff
 logLFunc = sedff.logLFunc #The log_likelihood function
 
 def lnprior(params, data, model, ModelUnct):
@@ -93,6 +93,7 @@ class EmceeModel(object):
     def EnsembleSampler(self, nwalkers, **kwargs):
         self.sampler = emcee.EnsembleSampler(nwalkers, self.__dim, lnprob,
                        args=[self.__data, self.__model, self.__modelunct], **kwargs)
+        self.__nwalkers = nwalkers
         return self.sampler
 
     def PTSampler(self, ntemps, nwalkers, **kwargs):
@@ -100,6 +101,8 @@ class EmceeModel(object):
                        logl=log_likelihood, logp=lnprior,
                        loglargs=[self.__data, self.__model],
                        logpargs=[self.__data, self.__model, self.__modelunct], **kwargs)
+        self.__ntemps = ntemps
+        self.__nwalkers = nwalkers
         return self.sampler
 
     def integrated_time(self):
@@ -127,6 +130,29 @@ class EmceeModel(object):
         Return the mean acceptance fraction of the sampler.
         """
         return np.mean(self.sampler.acceptance_fraction)
+
+    def p_logl_max(self):
+        """
+        Find the position in the sampled parameter space that the likelihood is
+        the highest.
+        """
+        lnprob = self.sampler.lnprobability
+        chain  = self.sampler.chain
+        idx = lnprob.ravel().argmax()
+        p   = chain.reshape(-1, self.__dim)[idx]
+        return p
+
+    def p_ball(self, p0, nwalkers=None, radius=1e-5):
+        """
+        Generate the positions of parameters around the input positions.
+        """
+        ndim = self.__dim
+        if nwalkers is None:
+            nwalkers = self.__nwalkers
+        p = radius * np.random.randn(nwalkers, ndim)
+        for d in range(ndim):
+            p[:, d] += p0[d]
+        return p
 
     def __getstate__(self):
         return self.__dict__
