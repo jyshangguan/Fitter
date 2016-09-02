@@ -1,3 +1,4 @@
+from __future__ import print_function
 import sys
 import types
 import corner
@@ -91,19 +92,27 @@ else:
     raise RuntimeError("Cannot recognise the sampler '{0}'!".format(imSampler))
 
 
+#Burn-in
 printFrac = emceeDict["printfrac"]
 print("MCMC is burning-in...")
 for i, (pos, lnprob, state) in enumerate(sampler.sample(p0, iterations=burnIn, thin=thin)):
     if not i % int(printFrac * burnIn):
         print("{0}%".format(100. * i / burnIn))
 print("Burn-in finishes!")
+print("Mean acceptance fraction: {0:.3f}".format(em.accfrac_mean()))
+print("PN: Autocorr T")
+print('\n'.join('{l[0]}: {l[1]:.3f}'.format(l=k) for k in enumerate(em.integrated_time())))
 
+#Run MCMC
 sampler.reset()
 print("MCMC is running...")
 for i, (pos, lnprob, state) in enumerate(sampler.sample(pos, iterations=nSteps, thin=thin)):
     if not i % int(printFrac * nSteps):
         print("{0}%".format(100. * i / nSteps))
 print("MCMC finishes!")
+print("Mean acceptance fraction: {0:.3f}".format(em.accfrac_mean()))
+print("PN: Autocorr T")
+print('\n'.join('{l[0]}: {l[1]:.3f}'.format(l=k) for k in enumerate(em.integrated_time())))
 
 # Close the processes.
 pool.close()
