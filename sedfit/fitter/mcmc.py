@@ -48,7 +48,7 @@ class EmceeModel(object):
     """
     The MCMC model for emcee.
     """
-    def __init__(self, data, model, ModelUnct=False, sampler="EnsembleSampler"):
+    def __init__(self, data, model, ModelUnct=False, sampler=None):
         self.__data = data
         self.__model = model
         self.__modelunct = ModelUnct
@@ -95,6 +95,7 @@ class EmceeModel(object):
         self.sampler = emcee.EnsembleSampler(nwalkers, self.__dim, lnprob,
                        args=[self.__data, self.__model, self.__modelunct], **kwargs)
         self.__nwalkers = nwalkers
+        self.__sampler = "EnsembleSampler"
         return self.sampler
 
     def PTSampler(self, ntemps, nwalkers, **kwargs):
@@ -104,6 +105,7 @@ class EmceeModel(object):
                        logpargs=[self.__data, self.__model, self.__modelunct], **kwargs)
         self.__ntemps = ntemps
         self.__nwalkers = nwalkers
+        self.__sampler = "PTSampler"
         return self.sampler
 
     def integrated_time(self):
@@ -116,7 +118,7 @@ class EmceeModel(object):
         if sampler == "EnsembleSampler":
             chain = self.sampler.chain
         elif sampler == "PTSampler":
-            chain = np.squeeze(self.sampler.chain[0, ...])
+            chain = self.sampler.chain[0, ...]
         else:
             raise ValueError("{0} is an unrecognised sampler!".format(sampler))
         tauList = []
@@ -143,7 +145,7 @@ class EmceeModel(object):
         p   = chain.reshape(-1, self.__dim)[idx]
         return p
 
-    def p_ball(self, p0, nwalkers=None, ratio=5e-2):
+    def p_ball(self, p0, ratio=5e-2, nwalkers=None):
         """
         Generate the positions of parameters around the input positions.
         The scipy.stats.truncnorm is used to generate the truncated normal distrubution
@@ -153,15 +155,49 @@ class EmceeModel(object):
         if nwalkers is None:
             nwalkers = self.__nwalkers
         pRange = np.array(self.__model.get_parVaryRanges())
-        p = np.zeros((nwalkers, ndim))
-        for d in range(ndim):
-            r0, r1 = pRange[d]
-            std = (r1 - r0) * ratio
-            loc = p0[d]
-            a = (r0 - loc) / std
-            b = (r1 - loc) /std
-            p[:, d] = truncnorm.rvs(a=a, b=b, loc=loc, scale=std, size=nwalkers)
+        sampler = self.__sampler
+        if sampler == "EnsembleSampler":
+            p = np.zeros((nwalkers, ndim))
+            for d in range(ndim):
+                r0, r1 = pRange[d]
+                std = (r1 - r0) * ratio
+                loc = p0[d]
+                a = (r0 - loc) / std
+                b = (r1 - loc) /std
+                p[:, d] = truncnorm.rvs(a=a, b=b, loc=loc, scale=std, size=nwalkers)
+        if sampler == "PTSampler":
+            ntemps = self.__ntemps
+            p = np.zeros((ntemps, nwalkers, ndim))
+            for t in range(ntemps):
+                for d in range(ndim):
+                    r0, r1 = pRange[d]
+                    std = (r1 - r0) * ratio
+                    loc = p0[d]
+                    a = (r0 - loc) / std
+                    b = (r1 - loc) /std
+                    p[t, :, d] = truncnorm.rvs(a=a, b=b, loc=loc, scale=std, size=nwalkers)
         return p
+
+    def p_prior(self):
+        """
+        Generate the positions in the parameter space from the prior.
+        For EnsembleSampler, the result p0 shape is (nwalkers, dim).
+        For PTSampler, the result p0 shape is (ntemps, nwalker, dim).
+        """
+        sampler  = self.__sampler
+        nwalkers = self.__nwalkers
+        dim      = self.__dim
+        if sampler == "EnsembleSampler":
+            p0 = [self.from_prior() for i in range(nwalkers)]
+        elif sampler == "PTSampler":
+            ntemps = self.__ntemps
+            p0 = np.zeros((ntemps, nwalkers, dim))
+            for loop_t in range(ntemps):
+                for loop_w in range(nwalkers):
+                    p0[loop_t, loop_w, :] = self.from_prior()
+        else:
+            raise ValueError("The sampler '{0}' is unrecognised!".format(sampler))
+        return p0
 
     def burn_in(self, pos, iterations, printFrac=1, quiet=False, **kwargs):
         """
@@ -170,7 +206,7 @@ class EmceeModel(object):
         in the middle of the run.
         """
         if not quiet:
-            print("MCMC is burning-in...")
+            print("MCMC ({0}) is burning-in...".format(self.__sampler))
         for i, (pos, lnprob, state) in enumerate(self.sampler.sample(pos, iterations=iterations, **kwargs)):
             if not i % int(printFrac * iterations):
                 if quiet:
@@ -188,7 +224,7 @@ class EmceeModel(object):
         in the middle of the run.
         """
         if not quiet:
-            print("MCMC is running...")
+            print("MCMC ({0}) is running...".format(self.__sampler))
         for i, (pos, lnprob, state) in enumerate(self.sampler.sample(pos, iterations=iterations, **kwargs)):
             if not i % int(printFrac * iterations):
                 if quiet:
@@ -212,6 +248,18 @@ class EmceeModel(object):
         print("Mean acceptance fraction: {0:.3f}".format(self.accfrac_mean()))
         print("PN: ACT")
         print('\n'.join('{l[0]}: {l[1]:.3f}'.format(l=k) for k in enumerate(self.integrated_time())))
+
+    def sampler_type(self):
+        return self.__sampler
+
+    def postProcess(self, filename):
+        sampler = self.sampler
+        if self.__sampler == "EnsembleSampler":
+            chain = sampler.chain
+        elif self.__sampler == "PTSampler":
+            chain = np.squeeze(sampler.chain[0, ...])
+        samples = chain.reshape((-1, ndim))
+        np.savetxt(filename, samples, delimiter=",")
 
     def __getstate__(self):
         return self.__dict__
