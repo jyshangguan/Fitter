@@ -1,8 +1,9 @@
 import acor
 import emcee
 import numpy as np
-from .. import fit_functions as sedff
+from scipy.stats import truncnorm
 
+from .. import fit_functions as sedff
 logLFunc = sedff.logLFunc #The log_likelihood function
 
 def lnprior(params, data, model, ModelUnct):
@@ -93,6 +94,7 @@ class EmceeModel(object):
     def EnsembleSampler(self, nwalkers, **kwargs):
         self.sampler = emcee.EnsembleSampler(nwalkers, self.__dim, lnprob,
                        args=[self.__data, self.__model, self.__modelunct], **kwargs)
+        self.__nwalkers = nwalkers
         return self.sampler
 
     def PTSampler(self, ntemps, nwalkers, **kwargs):
@@ -100,6 +102,8 @@ class EmceeModel(object):
                        logl=log_likelihood, logp=lnprior,
                        loglargs=[self.__data, self.__model],
                        logpargs=[self.__data, self.__model, self.__modelunct], **kwargs)
+        self.__ntemps = ntemps
+        self.__nwalkers = nwalkers
         return self.sampler
 
     def integrated_time(self):
@@ -127,6 +131,87 @@ class EmceeModel(object):
         Return the mean acceptance fraction of the sampler.
         """
         return np.mean(self.sampler.acceptance_fraction)
+
+    def p_logl_max(self):
+        """
+        Find the position in the sampled parameter space that the likelihood is
+        the highest.
+        """
+        lnprob = self.sampler.lnprobability
+        chain  = self.sampler.chain
+        idx = lnprob.ravel().argmax()
+        p   = chain.reshape(-1, self.__dim)[idx]
+        return p
+
+    def p_ball(self, p0, nwalkers=None, ratio=5e-2):
+        """
+        Generate the positions of parameters around the input positions.
+        The scipy.stats.truncnorm is used to generate the truncated normal distrubution
+        of the parameters within the prior ranges.
+        """
+        ndim = self.__dim
+        if nwalkers is None:
+            nwalkers = self.__nwalkers
+        pRange = np.array(self.__model.get_parVaryRanges())
+        p = np.zeros((nwalkers, ndim))
+        for d in range(ndim):
+            r0, r1 = pRange[d]
+            std = (r1 - r0) * ratio
+            loc = p0[d]
+            a = (r0 - loc) / std
+            b = (r1 - loc) /std
+            p[:, d] = truncnorm.rvs(a=a, b=b, loc=loc, scale=std, size=nwalkers)
+        return p
+
+    def burn_in(self, pos, iterations, printFrac=1, quiet=False, **kwargs):
+        """
+        Burn in the MCMC chain.
+        This function just wraps up the sampler.sample() so that there is output
+        in the middle of the run.
+        """
+        if not quiet:
+            print("MCMC is burning-in...")
+        for i, (pos, lnprob, state) in enumerate(self.sampler.sample(pos, iterations=iterations, **kwargs)):
+            if not i % int(printFrac * iterations):
+                if quiet:
+                    pass
+                else:
+                    print("{0}%".format(100. * i / iterations))
+        if not quiet:
+            print("Burn-in finishes!")
+        return pos, lnprob, state
+
+    def run_mcmc(self, pos, iterations, printFrac=1, quiet=False, **kwargs):
+        """
+        Run the MCMC chain.
+        This function just wraps up the sampler.sample() so that there is output
+        in the middle of the run.
+        """
+        if not quiet:
+            print("MCMC is running...")
+        for i, (pos, lnprob, state) in enumerate(self.sampler.sample(pos, iterations=iterations, **kwargs)):
+            if not i % int(printFrac * iterations):
+                if quiet:
+                    pass
+                else:
+                    print("{0}%".format(100. * i / iterations))
+        if not quiet:
+            print("MCMC finishes!")
+        return pos, lnprob, state
+
+    def reset(self):
+        """
+        Reset the sampler, for completeness.
+        """
+        self.sampler.reset()
+
+    def diagnose(self):
+        """
+        Diagnose whether the MCMC run is reliable.
+        """
+        print("Mean acceptance fraction: {0:.3f}".format(self.accfrac_mean()))
+        print("PN: ACT")
+        print('\n'.join('{l[0]}: {l[1]:.3f}'.format(l=k) for k in enumerate(self.integrated_time())))
 
     def __getstate__(self):
         return self.__dict__

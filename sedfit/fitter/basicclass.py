@@ -552,6 +552,22 @@ class ModelCombiner(object):
                     pass
         return parList
 
+    def get_parVaryRanges(self):
+        """
+        Return a list of ranges for each variable parameters.
+        """
+        parRList = []
+        for modelName in self._modelList:
+            model = self.__modelDict[modelName]
+            modelParDict = model.parFitDict
+            for parName in modelParDict.keys():
+                if modelParDict[parName]["vary"]:
+                    parRList.append(modelParDict[parName]["range"])
+                else:
+                    pass
+        return parRList
+
+
     def updateParFit(self, modelName, parName, parValue, QuietMode=True):
         model = self.__modelDict[modelName]
         if not QuietMode:
