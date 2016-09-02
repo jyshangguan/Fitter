@@ -65,6 +65,7 @@ burnIn    = emceeDict["burn-in"]
 nSteps    = emceeDict["nsteps"]
 thin      = emceeDict["thin"]
 threads   = emceeDict["threads"]
+printFrac = emceeDict["printfrac"]
 ndim = len(parAllList)
 print("#--------------------------------#")
 print("emcee Info:")
@@ -73,25 +74,13 @@ for keys in emceeDict.keys():
 print("#--------------------------------#")
 em = mcmc.EmceeModel(sedData, sedModel, modelUnct)
 
+#Burn-in
 sampler = em.EnsembleSampler(nwalkers, threads=threads)
 p0 = np.array(em.p_prior())
-
-#Burn-in 1st
-printFrac = emceeDict["printfrac"]
 em.burn_in(p0, iterations=burnIn, printFrac=printFrac, thin=thin)
 em.diagnose()
 pmax = em.p_logl_max()
 print("p logL max: ", pmax)
-
-"""
-#Burn-in 2nd
-em.reset()
-p1 = em.p_ball(pmax, ratio=1e-1)
-em.burn_in(p0, iterations=2*burnIn, printFrac=printFrac, thin=thin)
-em.diagnose()
-pmax = em.p_logl_max()
-print("p logL max: ", pmax)
-"""
 
 #Run MCMC
 sampler = em.PTSampler(ntemps, nwalkers, threads=threads)

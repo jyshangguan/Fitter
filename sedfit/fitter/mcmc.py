@@ -258,7 +258,7 @@ class EmceeModel(object):
             chain = sampler.chain
         elif self.__sampler == "PTSampler":
             chain = np.squeeze(sampler.chain[0, ...])
-        samples = chain.reshape((-1, ndim))
+        samples = chain.reshape((-1, self.__dim))
         np.savetxt(filename, samples, delimiter=",")
 
     def __getstate__(self):
