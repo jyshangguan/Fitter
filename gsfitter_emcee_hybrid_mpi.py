@@ -50,6 +50,8 @@ waveModel = inputModule.waveModel
 modelDict = inputModule.inputModelDict
 sedModel = bc.Model_Generator(modelDict, funcLib, waveModel, parAddDict_all)
 parAllList = sedModel.get_parVaryList()
+#print(sedModel.get_parVaryRanges())
+
 
 mockDict = inputModule.mockDict
 fTrue = mockDict.get("f_add", None)
@@ -59,7 +61,6 @@ if fTrue is None:
 else:
     modelUnct = True #Whether to consider the model uncertainty in the fitting
     parAllList.append(np.log(fTrue))
-em = mcmc.EmceeModel(sedData, sedModel, modelUnct)
 print("True log likelihood: {0:.3f}".format(logl_True))
 print("Calculated log likelihood: {0:.3f}".format(mcmc.log_likelihood(parAllList, sedData, sedModel)))
 
@@ -80,42 +81,27 @@ print("emcee Info:")
 for keys in emceeDict.keys():
     print("{0}: {1}".format(keys, emceeDict[keys]))
 print("#--------------------------------#")
-if imSampler == "PTSampler":
-    p0 = np.zeros((ntemps, nwalkers, ndim))
-    for loop_t in range(ntemps):
-        for loop_w in range(nwalkers):
-            p0[loop_t, loop_w, :] = em.from_prior()
-    sampler = em.PTSampler(ntemps, nwalkers, pool=pool)
-elif imSampler == "EnsembleSampler":
-    p0 = [em.from_prior() for i in range(nwalkers)]
-    sampler = em.EnsembleSampler(nwalkers, pool=pool)
-else:
-    raise RuntimeError("Cannot recognise the sampler '{0}'!".format(imSampler))
+em = mcmc.EmceeModel(sedData, sedModel, modelUnct)
 
-
-#Burn-in 1st
-printFrac = emceeDict["printfrac"]
+#Burn-in
+sampler = em.EnsembleSampler(nwalkers, pool=pool)
+p0 = np.array(em.p_prior())
 em.burn_in(p0, iterations=burnIn, printFrac=printFrac, thin=thin)
 em.diagnose()
 pmax = em.p_logl_max()
 print("p logL max: ", pmax)
 
-#Burn-in 2nd
-sampler.reset()
-p1 = em.p_ball(pmax, ratio=1e-1)
-em.burn_in(p0, iterations=2*burnIn, printFrac=printFrac, thin=thin)
-em.diagnose()
-pmax = em.p_logl_max()
-print("p logL max: ", pmax)
-
 #Run MCMC
-sampler.reset()
-pos = em.p_ball(pmax, ratio=1e-2)
+sampler = em.PTSampler(ntemps, nwalkers, pool=pool)
+em.reset()
+pos = em.p_ball(pmax, ratio=1e-1)
 em.run_mcmc(pos, iterations=nSteps, printFrac=printFrac, thin=thin)
 em.diagnose()
 
 #Close the pools
 pool.close()
 
-inputModule.postProcess(sampler, ndim, imSampler)
+#inputModule.postProcess(sampler, ndim, em.sampler_type())
+filename = "{0}_samples.txt".format(inputModule.targname)
+em.postProcess(filename)
 print("Post-processed!")
