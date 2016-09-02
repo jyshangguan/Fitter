@@ -118,7 +118,7 @@ class EmceeModel(object):
         if sampler == "EnsembleSampler":
             chain = self.sampler.chain
         elif sampler == "PTSampler":
-            chain = np.squeeze(self.sampler.chain[0, ...])
+            chain = self.sampler.chain[0, ...]
         else:
             raise ValueError("{0} is an unrecognised sampler!".format(sampler))
         tauList = []

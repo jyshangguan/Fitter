@@ -73,32 +73,8 @@ for keys in emceeDict.keys():
 print("#--------------------------------#")
 em = mcmc.EmceeModel(sedData, sedModel, modelUnct)
 
-"""
-if imSampler == "PTSampler":
-    p0 = np.zeros((ntemps, nwalkers, ndim))
-    for loop_t in range(ntemps):
-        for loop_w in range(nwalkers):
-            p0[loop_t, loop_w, :] = em.from_prior()
-    sampler = em.PTSampler(ntemps, nwalkers, threads=threads)
-elif imSampler == "EnsembleSampler":
-    p0 = [em.from_prior() for i in range(nwalkers)]
-    sampler = em.EnsembleSampler(nwalkers, threads=threads)
-else:
-    raise RuntimeError("Cannot recognise the sampler '{0}'!".format(imSampler))
-"""
-
 sampler = em.EnsembleSampler(nwalkers, threads=threads)
 p0 = np.array(em.p_prior())
-"""
-ntemps = 7
-nwalkers = 10000
-p0 = em.p_ball(parAllList, ratio=0.1)
-print(p0.shape)
-for d in range(ndim):
-    p = p0[..., d].reshape(-1)
-    plt.hist(p, 50)
-    plt.show()
-"""
 
 #Burn-in 1st
 printFrac = emceeDict["printfrac"]
@@ -120,7 +96,7 @@ print("p logL max: ", pmax)
 #Run MCMC
 sampler = em.PTSampler(ntemps, nwalkers, threads=threads)
 em.reset()
-pos = em.p_ball(pmax, ratio=1e-2)
+pos = em.p_ball(pmax, ratio=1e-1)
 em.run_mcmc(pos, iterations=nSteps, printFrac=printFrac, thin=thin)
 em.diagnose()
 
