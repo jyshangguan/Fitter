@@ -41,6 +41,7 @@ waveModel = inputModule.waveModel
 modelDict = inputModule.inputModelDict
 sedModel = bc.Model_Generator(modelDict, funcLib, waveModel, parAddDict_all)
 parAllList = sedModel.get_parVaryList()
+#print(sedModel.get_parVaryRanges())
 
 
 mockDict = inputModule.mockDict
@@ -87,42 +88,24 @@ else:
 
 #Burn-in 1st
 printFrac = emceeDict["printfrac"]
-print("MCMC is burning-in...")
-for i, (pos, lnprob, state) in enumerate(sampler.sample(p0, iterations=burnIn, thin=thin)):
-    if not i % int(printFrac * burnIn):
-        print("{0}%".format(100. * i / burnIn))
-print("Burn-in finishes!")
-print("Mean acceptance fraction: {0:.3f}".format(em.accfrac_mean()))
-print("PN: ACT")
-print('\n'.join('{l[0]}: {l[1]:.3f}'.format(l=k) for k in enumerate(em.integrated_time())))
+em.burn_in(p0, iterations=burnIn, printFrac=printFrac, thin=thin)
+em.diagnose()
 pmax = em.p_logl_max()
 print("p logL max: ", pmax)
 
 #Burn-in 2nd
 sampler.reset()
-p1 = em.p_ball(pmax)
-printFrac = emceeDict["printfrac"]
-print("MCMC is burning-in...")
-for i, (pos, lnprob, state) in enumerate(sampler.sample(p1, iterations=burnIn, thin=thin)):
-    if not i % int(printFrac * burnIn):
-        print("{0}%".format(100. * i / burnIn))
-print("Burn-in finishes!")
-print("Mean acceptance fraction: {0:.3f}".format(em.accfrac_mean()))
-print("PN: ACT")
-print('\n'.join('{l[0]}: {l[1]:.3f}'.format(l=k) for k in enumerate(em.integrated_time())))
+p1 = em.p_ball(pmax, ratio=1e-1)
+em.burn_in(p0, iterations=2*burnIn, printFrac=printFrac, thin=thin)
+em.diagnose()
 pmax = em.p_logl_max()
 print("p logL max: ", pmax)
 
 #Run MCMC
 sampler.reset()
-print("MCMC is running...")
-for i, (pos, lnprob, state) in enumerate(sampler.sample(pos, iterations=nSteps, thin=thin)):
-    if not i % int(printFrac * nSteps):
-        print("{0}%".format(100. * i / nSteps))
-print("MCMC finishes!")
-print("Mean acceptance fraction: {0:.3f}".format(em.accfrac_mean()))
-print("PN: Autocorr T")
-print('\n'.join('{l[0]}: {l[1]:.3f}'.format(l=k) for k in enumerate(em.integrated_time())))
+pos = em.p_ball(pmax, ratio=1e-2)
+em.run_mcmc(pos, iterations=nSteps, printFrac=printFrac, thin=thin)
+em.diagnose()
 
 inputModule.postProcess(sampler, ndim, imSampler)
 print("Post-processed!")
