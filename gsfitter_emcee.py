@@ -65,6 +65,7 @@ burnIn    = emceeDict["burn-in"]
 nSteps    = emceeDict["nsteps"]
 thin      = emceeDict["thin"]
 threads   = emceeDict["threads"]
+printFrac = emceeDict["printfrac"]
 ndim = len(parAllList)
 print("#--------------------------------#")
 print("emcee Info:")
@@ -86,14 +87,13 @@ else:
     raise RuntimeError("Cannot recognise the sampler '{0}'!".format(imSampler))
 
 
+"""
 #Burn-in 1st
-printFrac = emceeDict["printfrac"]
 pos, lnprob, state = em.burn_in(p0, iterations=burnIn, printFrac=printFrac, thin=thin)
 em.diagnose()
 pmax = em.p_logl_max()
 em.print_parameters(parAllList)
 
-"""
 #Burn-in 2nd
 sampler.reset()
 p1 = em.p_ball(pmax, ratio=1e-1)
@@ -105,9 +105,10 @@ em.print_parameters(parAllList)
 
 #Run MCMC
 #pos = em.p_ball(pmax, ratio=1e-1)
-em.run_mcmc(pos, iterations=nSteps, printFrac=printFrac, thin=thin)
+#em.run_mcmc(pos, iterations=nSteps, printFrac=printFrac, thin=thin)
+em.run_mcmc(p0, iterations=burnIn+nSteps, printFrac=printFrac, thin=thin)
 em.diagnose()
-em.print_parameters(parAllList)
+em.print_parameters(parAllList, burnin=burnIn)
 
 #Post process
 targname = inputModule.targname

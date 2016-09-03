@@ -2,6 +2,7 @@ import acor
 import emcee
 import corner
 import numpy as np
+import matplotlib.pyplot as plt
 from scipy.stats import truncnorm
 
 from .. import fit_functions as sedff
@@ -279,7 +280,7 @@ class EmceeModel(object):
             pmax = pMAP[d]
             name = nameList[d]
             if (pmax < plow) or (pmax > phgh):
-                raise Warning("[MCMC]: The best-fit '{0}' is not consistent with its posterior sample".format(name))
+                print("[MCMC Warning]: The best-fit '{0}' is not consistent with its posterior sample".format(name))
             pl = [plow, pcen, phgh]
             if truths is None:
                 print("{0[0]:.3e}\t {0[1]:.3e}\t {0[2]:.3e}\t {1:.3e}\t {2}".format(pl, pmax, name))
