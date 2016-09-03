@@ -89,7 +89,6 @@ pos = em.p_ball(pmax, ratio=1e-1)
 em.run_mcmc(pos, iterations=nSteps, printFrac=printFrac, thin=thin)
 em.diagnose()
 
-#inputModule.postProcess(sampler, ndim, em.sampler_type())
 filename = "{0}_samples.txt".format(inputModule.targname)
-em.postProcess(filename)
+em.Save_Samples(filename)
 print("Post-processed!")

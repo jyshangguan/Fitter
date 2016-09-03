@@ -1,6 +1,8 @@
 import acor
 import emcee
+import corner
 import numpy as np
+import matplotlib.pyplot as plt
 from scipy.stats import truncnorm
 
 from .. import fit_functions as sedff
@@ -108,43 +110,6 @@ class EmceeModel(object):
         self.__sampler = "PTSampler"
         return self.sampler
 
-    def integrated_time(self):
-        """
-        Estimate the integrated autocorrelation time of a time series.
-        Since it seems there is something wrong with the sampler.integrated_time(),
-        I have to calculated myself using acor package.
-        """
-        sampler = self.__sampler
-        if sampler == "EnsembleSampler":
-            chain = self.sampler.chain
-        elif sampler == "PTSampler":
-            chain = self.sampler.chain[0, ...]
-        else:
-            raise ValueError("{0} is an unrecognised sampler!".format(sampler))
-        tauList = []
-        for np in range(self.__dim):
-            pchain = chain[:, :, np].mean(axis=0)
-            tau, mean, sigma = acor.acor(pchain)
-            tauList.append(tau)
-        return tauList
-
-    def accfrac_mean(self):
-        """
-        Return the mean acceptance fraction of the sampler.
-        """
-        return np.mean(self.sampler.acceptance_fraction)
-
-    def p_logl_max(self):
-        """
-        Find the position in the sampled parameter space that the likelihood is
-        the highest.
-        """
-        lnprob = self.sampler.lnprobability
-        chain  = self.sampler.chain
-        idx = lnprob.ravel().argmax()
-        p   = chain.reshape(-1, self.__dim)[idx]
-        return p
-
     def p_ball(self, p0, ratio=5e-2, nwalkers=None):
         """
         Generate the positions of parameters around the input positions.
@@ -235,6 +200,161 @@ class EmceeModel(object):
             print("MCMC finishes!")
         return pos, lnprob, state
 
+    def integrated_time(self):
+        """
+        Estimate the integrated autocorrelation time of a time series.
+        Since it seems there is something wrong with the sampler.integrated_time(),
+        I have to calculated myself using acor package.
+        """
+        sampler = self.__sampler
+        if sampler == "EnsembleSampler":
+            chain = self.sampler.chain
+        elif sampler == "PTSampler":
+            chain = self.sampler.chain[0, ...]
+        else:
+            raise ValueError("{0} is an unrecognised sampler!".format(sampler))
+        tauList = []
+        for np in range(self.__dim):
+            pchain = chain[:, :, np].mean(axis=0)
+            tau, mean, sigma = acor.acor(pchain)
+            tauList.append(tau)
+        return tauList
+
+    def accfrac_mean(self):
+        """
+        Return the mean acceptance fraction of the sampler.
+        """
+        return np.mean(self.sampler.acceptance_fraction)
+
+    def p_logl_max(self):
+        """
+        Find the position in the sampled parameter space that the likelihood is
+        the highest.
+        """
+        sampler = self.__sampler
+        if sampler == "EnsembleSampler":
+            lnlike = self.sampler.lnprobability
+        else:
+            lnlike = self.sampler.lnlikelihood
+        chain  = self.sampler.chain
+        idx = lnlike.ravel().argmax()
+        p   = chain.reshape(-1, self.__dim)[idx]
+        return p
+
+    def posterior_sample(self, burnin=0):
+        """
+        Return the samples merging from the chains of all the walkers.
+        """
+        sampler = self.sampler
+        if self.__sampler == "EnsembleSampler":
+            chain = sampler.chain
+        elif self.__sampler == "PTSampler":
+            chain = np.squeeze(sampler.chain[0, ...])
+        samples = chain[:, burnin:, :].reshape((-1, self.__dim))
+        return samples
+
+    def p_uncertainty(self, low=1, center=50, high=99, burnin=50):
+        """
+        Return the uncertainty of each parameter according to its posterior sample.
+        """
+        ps = self.posterior_sample(burnin)
+        parRange = np.percentile(ps, [low, center, high], axis=0)
+        return parRange
+
+    def print_parameters(self, truths=None, **kwargs):
+        """
+        Print the ranges of the parameters according to their posterior samples
+        and the values of the maximum a posterior (MAP).
+        """
+        nameList = self.__model.get_parVaryNames(latex=False)
+        parRange = self.p_uncertainty(**kwargs)
+        pMAP = self.p_logl_max()
+        if truths is None:
+            print("low \t\t center \t high \t\t map \t\t name")
+        else:
+            print("low \t\t center \t high \t\t map \t\t truth \t\t name")
+        for d in range(self.__dim):
+            plow = parRange[0, d]
+            pcen = parRange[1, d]
+            phgh = parRange[2, d]
+            pmax = pMAP[d]
+            name = nameList[d]
+            if (pmax < plow) or (pmax > phgh):
+                print("[MCMC Warning]: The best-fit '{0}' is not consistent with its posterior sample".format(name))
+            pl = [plow, pcen, phgh]
+            if truths is None:
+                print("{0[0]:.3e}\t {0[1]:.3e}\t {0[2]:.3e}\t {1:.3e}\t {2}".format(pl, pmax, name))
+            else:
+                print("{0[0]:.3e}\t {0[1]:.3e}\t {0[2]:.3e}\t {1:.3e}\t {2:.3e}\t {3}".format(pl, pmax, truths[d], name))
+
+    def Save_Samples(self, filename, burnin=50):
+        """
+        Save the posterior samples.
+        """
+        samples = self.posterior_sample(burnin)
+        np.savetxt(filename, samples, delimiter=",")
+
+    def plot_corner(self, filename=None, truths=None, burnin=50):
+        """
+        Plot the corner diagram that illustrate the posterior probability distribution
+        of each parameter.
+        """
+        ps = self.posterior_sample(burnin)
+        parname = self.__model.get_parVaryNames()
+        fig = corner.corner(ps, labels=parname, truths=truths)
+        if filename is None:
+            return fig
+        else:
+            plt.savefig(filename)
+            plt.close()
+
+    def plot_fit(self, filename=None, truths=None, FigAx=None, **kwargs):
+        """
+        Plot the best-fit model and the data.
+        """
+        sedData   = self.__data
+        sedModel  = self.__model
+        parRange  = self.p_uncertainty(**kwargs)
+        waveModel = sedModel.get_xList()
+        plow = parRange[0, :]
+        phgh = parRange[2, :]
+        pmax = self.p_logl_max()
+        sedModel.updateParList(pmax)
+        ymax = sedModel.combineResult()
+        ymax_cmp = sedModel.componentResult()
+        sedModel.updateParList(phgh)
+        yhgh = sedModel.combineResult()
+        yhgh_cmp = sedModel.componentResult()
+        sedModel.updateParList(plow)
+        ylow = sedModel.combineResult()
+        ylow_cmp = sedModel.componentResult()
+        fig, ax = sedData.plot_sed(FigAx=FigAx)
+        cList = ["r", "g", "b", "m", "y", "c"]
+        ncolor = len(cList)
+        ax.plot(waveModel, ymax, color="brown", linewidth=3.0)
+        ax.fill_between(waveModel, ylow, yhgh, color="brown", alpha=0.1)
+        modelList = sedModel._modelList
+        counter = 0
+        for modelName in modelList:
+            ax.plot(waveModel, ymax_cmp[modelName], color=cList[counter%ncolor])
+            ax.fill_between(waveModel, ylow_cmp[modelName], yhgh_cmp[modelName],
+                             color=cList[counter], alpha=0.1)
+            counter += 1
+        if not truths is None:
+            sedModel.updateParList(truths)
+            ytrue = sedModel.combineResult()
+            ytrue_cmp = sedModel.componentResult()
+            ax.plot(waveModel, ytrue, color="k", linestyle="--")
+            counter = 0
+            for modelName in modelList:
+                ax.plot(waveModel, ytrue_cmp[modelName], color=cList[counter%ncolor])
+                counter += 1
+        if filename is None:
+            return (fig, ax)
+        else:
+            plt.savefig(filename, bbox_inches="tight")
+            plt.close()
+
     def reset(self):
         """
         Reset the sampler, for completeness.
@@ -251,15 +371,6 @@ class EmceeModel(object):
 
     def sampler_type(self):
         return self.__sampler
-
-    def postProcess(self, filename):
-        sampler = self.sampler
-        if self.__sampler == "EnsembleSampler":
-            chain = sampler.chain
-        elif self.__sampler == "PTSampler":
-            chain = np.squeeze(sampler.chain[0, ...])
-        samples = chain.reshape((-1, self.__dim))
-        np.savetxt(filename, samples, delimiter=",")
 
     def __getstate__(self):
         return self.__dict__
