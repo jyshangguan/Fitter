@@ -65,6 +65,7 @@ burnIn    = emceeDict["burn-in"]
 nSteps    = emceeDict["nsteps"]
 thin      = emceeDict["thin"]
 threads   = emceeDict["threads"]
+printFrac = emceeDict["printfrac"]
 ndim = len(parAllList)
 print("#--------------------------------#")
 print("emcee Info:")
@@ -86,12 +87,12 @@ else:
     raise RuntimeError("Cannot recognise the sampler '{0}'!".format(imSampler))
 
 
+"""
 #Burn-in 1st
-printFrac = emceeDict["printfrac"]
-em.burn_in(p0, iterations=burnIn, printFrac=printFrac, thin=thin)
+pos, lnprob, state = em.burn_in(p0, iterations=burnIn, printFrac=printFrac, thin=thin)
 em.diagnose()
 pmax = em.p_logl_max()
-print("p logL max: ", pmax)
+em.print_parameters(parAllList)
 
 #Burn-in 2nd
 sampler.reset()
@@ -99,13 +100,19 @@ p1 = em.p_ball(pmax, ratio=1e-1)
 em.burn_in(p0, iterations=2*burnIn, printFrac=printFrac, thin=thin)
 em.diagnose()
 pmax = em.p_logl_max()
-print("p logL max: ", pmax)
+em.print_parameters(parAllList)
+"""
 
 #Run MCMC
-sampler.reset()
-pos = em.p_ball(pmax, ratio=1e-2)
-em.run_mcmc(pos, iterations=nSteps, printFrac=printFrac, thin=thin)
+#pos = em.p_ball(pmax, ratio=1e-1)
+#em.run_mcmc(pos, iterations=nSteps, printFrac=printFrac, thin=thin)
+em.run_mcmc(p0, iterations=burnIn+nSteps, printFrac=printFrac, thin=thin)
 em.diagnose()
+em.print_parameters(parAllList, burnin=burnIn)
 
-inputModule.postProcess(sampler, ndim, imSampler)
+#Post process
+targname = inputModule.targname
+em.plot_corner(filename="{0}_triangle.png".format(targname), truths=parAllList, burnin=burnIn)
+em.plot_fit(filename="{0}_result.png".format(targname), truths=parAllList, burnin=burnIn)
+em.Save_Samples("{0}_samples.txt".format(targname), burnin=burnIn)
 print("Post-processed!")

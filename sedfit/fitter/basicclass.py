@@ -554,7 +554,7 @@ class ModelCombiner(object):
 
     def get_parVaryRanges(self):
         """
-        Return a list of ranges for each variable parameters.
+        Return a list of ranges for all the variable parameters.
         """
         parRList = []
         for modelName in self._modelList:
@@ -567,6 +567,25 @@ class ModelCombiner(object):
                     pass
         return parRList
 
+    def get_parVaryNames(self, latex=True):
+        """
+        Return a list of names for all the variable parameters. The latex format
+        is preferred. If the latex format is not found, the variable name is used.
+        """
+        parNList = []
+        for modelName in self._modelList:
+            model = self.__modelDict[modelName]
+            modelParDict = model.parFitDict
+            for parName in modelParDict.keys():
+                if modelParDict[parName]["vary"]:
+                    if latex:
+                        name = modelParDict[parName].get("latex", parName)
+                    else:
+                        name = parName
+                    parNList.append(name)
+                else:
+                    pass
+        return parNList
 
     def updateParFit(self, modelName, parName, parValue, QuietMode=True):
         model = self.__modelDict[modelName]
