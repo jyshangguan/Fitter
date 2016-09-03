@@ -47,8 +47,9 @@ waveModel = inputModule.waveModel
 funcLib = sedmf.funcLib
 modelDict = inputModule.inputModelDict
 sedModel = bc.Model_Generator(modelDict, funcLib, waveModel, parAddDict_all)
-parAllList = sedModel.get_parVaryList()
-parNumber  = len(parAllList)
+parVaryList = sedModel.get_parVaryList()
+parVaryName = sedModel.get_parVaryNames()
+parNumber  = len(parVaryList)
 
 
 #Fit with DNest4#
@@ -63,9 +64,9 @@ if fTrue is None:
 else:
     modelUnct = True #Whether to consider the model uncertainty in the fitting
     parNumber += 1
-    parAllList.append(np.log(fTrue))
+    parVaryList.append(np.log(fTrue))
 print("True log likelihood: {0:.3f}".format(logl_True))
-print("Calculated log likelihood: {0:.3f}".format(mcmc.log_likelihood(parAllList, sedData, sedModel)))
+print("Calculated log likelihood: {0:.3f}".format(mcmc.log_likelihood(parVaryList, sedData, sedModel)))
 
 
 ##Fitting results
@@ -74,7 +75,7 @@ if parNumber == 1:
 ps = np.loadtxt("{0}_samples.txt".format(targname), delimiter=",")
 
 #Plot the corner diagram
-fig = corner.corner(ps)
+fig = corner.corner(ps, truths=parVaryList, labels=parVaryName)
 plt.savefig("{0}_triangle.png".format(targname))
 plt.close()
 
@@ -84,8 +85,12 @@ try:
 except:
     raise AssertionError("The posterior sample is problematic!")
 ##Calculate the optimized paramter values
+parEstimate = inputModule.parEstimate
+l = parEstimate["low"]
+c = parEstimate["center"]
+h = parEstimate["high"]
 parRangeList = map( lambda v: (v[1], v[2]-v[1], v[1]-v[0]),
-                   zip(*np.percentile(ps, [16, 50, 84], axis=0, interpolation="linear")) )
+                   zip(*np.percentile(ps, [l, c, h], axis=0)) )
 parRangeList = np.array(parRangeList)
 parBfList = parRangeList[:, 0] #The best fit parameters
 uncUlList = parRangeList[:, 1] #The upperlimits of the parameter uncertainties
@@ -114,7 +119,7 @@ for loop in range(len(parBfList)):
     p = parBfList[loop]
     u = uncUlList[loop]
     l = uncLlList[loop]
-    t = parAllList[loop]
+    t = parVaryList[loop]
     print("{0}+{1}-{2}, {3}".format(p, u, l, t))
 
 fig = plt.figure()

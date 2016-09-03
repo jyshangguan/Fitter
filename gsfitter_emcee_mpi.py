@@ -117,5 +117,6 @@ em.diagnose()
 #Close the pools
 pool.close()
 
-inputModule.postProcess(sampler, ndim, imSampler)
+filename = "{0}_samples.txt".format(inputModule.targname)
+em.Save_Samples(filename)
 print("Post-processed!")
