@@ -109,6 +109,7 @@ em.print_parameters(parAllList)
 em.run_mcmc(p0, iterations=burnIn+nSteps, printFrac=printFrac, thin=thin)
 em.diagnose()
 em.print_parameters(parAllList, burnin=burnIn)
+print("Max log_likelihood: {0:.3e}".format(em.get_logl_max()))
 
 #Post process
 targname = inputModule.targname
