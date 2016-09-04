@@ -70,6 +70,9 @@ imSampler = emceeDict["sampler"]
 nwalkers  = emceeDict["nwalkers"]
 ntemps    = emceeDict["ntemps"]
 burnIn    = emceeDict["burn-in"]
+iteration = emceeDict["iteration"]
+ballR     = emceeDict["ball-r"]
+ballT     = emceeDict["ball-t"]
 nSteps    = emceeDict["nsteps"]
 thin      = emceeDict["thin"]
 threads   = emceeDict["threads"]
@@ -82,30 +85,45 @@ for keys in emceeDict.keys():
 print("#--------------------------------#")
 em = mcmc.EmceeModel(sedData, sedModel, modelUnct)
 
-#Burn-in
-sampler = em.EnsembleSampler(nwalkers, pool=pool)
+
+#Burn-in 1st
+sampler = em.EnsembleSampler(nwalkers, threads=threads)
 p0 = np.array(em.p_prior())
-em.run_mcmc(p0, iterations=burnIn, printFrac=printFrac, thin=thin)
+print( "\n{:*^35}".format(" {0}th iteration ".format(0)) )
+pos, lnprob, state = em.run_mcmc(p0, iterations=burnIn, printFrac=printFrac, thin=thin)
 em.diagnose()
-em.print_parameters(parAllList, burnin=burnIn)
-print("Max log_likelihood: {0:.3e}".format(em.get_logl_max()))
+pmax = em.p_logl_max()
+em.print_parameters(parAllList, burnin=50)
+
+#Burn-in rest iteration
+for i in range(iteration-1):
+    print( "\n{:*^35}".format(" {0}th iteration ".format(i+1)) )
+    em.reset()
+    ratio = ballR * ballT**i
+    print("-- P1 ball radius ratio: {0:.3f}".format(ratio))
+    p1 = em.p_ball(pmax, ratio=ratio)
+    em.run_mcmc(p1, iterations=burnIn, printFrac=printFrac, thin=thin)
+    em.diagnose()
+    pmax = em.p_logl_max()
+    em.print_parameters(parAllList, burnin=50)
 
 #Run MCMC
-pmax = em.p_logl_max()
-sampler = em.PTSampler(ntemps, nwalkers, pool=pool)
+print( "\n{:*^35}".format(" Final Sampling ") )
+sampler = em.PTSampler(ntemps, nwalkers, threads=threads)
 em.reset()
-pos = em.p_ball(pmax, ratio=1e-1)
-em.run_mcmc(pos, iterations=nSteps, printFrac=printFrac, thin=thin)
+ratio = ballR * ballT**i
+print("-- P1 ball radius ratio: {0:.3f}".format(ratio))
+p1 = em.p_ball(pmax, ratio=ratio)
+em.run_mcmc(p1, iterations=nSteps, printFrac=printFrac, thin=thin)
 em.diagnose()
-em.print_parameters(parAllList, burnin=burnIn)
-print("Max log_likelihood: {0:.3e}".format(em.get_logl_max()))
+em.print_parameters(parAllList, burnin=100, low=16, high=84)
 
 #Close the pools
 pool.close()
 
 #Post process
 targname = inputModule.targname
-em.plot_corner(filename="{0}_triangle.png".format(targname), truths=parAllList, burnin=burnIn)
-em.plot_fit(filename="{0}_result.png".format(targname), truths=parAllList, burnin=burnIn)
-em.Save_Samples("{0}_samples.txt".format(targname), burnin=burnIn)
+em.plot_corner(filename="{0}_triangle.png".format(targname), truths=parAllList, burnin=100)
+em.plot_fit(filename="{0}_result.png".format(targname), truths=parAllList, burnin=100, low=16, high=84)
+em.Save_Samples("{0}_samples.txt".format(targname), burnin=100)
 print("Post-processed!")
