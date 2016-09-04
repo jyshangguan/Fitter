@@ -205,11 +205,11 @@ class EmceeModel(object):
             print("MCMC ({0}) is running...".format(sampler))
         #Notice that the third parameters yielded by EnsembleSampler and PTSampler are different.
         for i, (pos, lnprob, logl) in enumerate(self.sampler.sample(pos, iterations=iterations, **kwargs)):
-            if not i % int(printFrac * iterations):
+            if not (i + 1) % int(printFrac * iterations):
                 if quiet:
                     pass
                 else:
-                    progress = 100. * i / iterations
+                    progress = 100. * (i + 1) / iterations
                     if sampler == "EnsembleSampler":
                         lnlike = lnprob
                     elif sampler == "PTSampler":
@@ -220,8 +220,8 @@ class EmceeModel(object):
                     pname = self.__model.get_parVaryNames(latex=False)
                     print("-----------------------------")
                     print("[{0:.1f}%] logL_max = {1:.3e}".format(progress, lmax))
-                    for i, name in enumerate(pname):
-                        print("{0:18s} {1:10.3e}".format(name, pmax[i]))
+                    for p, name in enumerate(pname):
+                        print("{0:18s} {1:10.3e}".format(name, pmax[p]))
         if not quiet:
             print("MCMC finishes!")
         return pos, lnprob, logl
@@ -300,6 +300,7 @@ class EmceeModel(object):
                 print(info)
             else:
                 print(info+" {0:<12.3e}".format(truths[d]))
+        print("Max log_likelihood: {0:.3e}".format(self.get_logl_max()))
 
     def Save_Samples(self, filename, burnin=50):
         """
