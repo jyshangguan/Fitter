@@ -2,6 +2,8 @@ import acor
 import emcee
 import corner
 import numpy as np
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from scipy.stats import truncnorm
 
@@ -98,6 +100,7 @@ class EmceeModel(object):
                        args=[self.__data, self.__model, self.__modelunct], **kwargs)
         self.__nwalkers = nwalkers
         self.__sampler = "EnsembleSampler"
+        self.__lnprob = lnprob
         return self.sampler
 
     def PTSampler(self, ntemps, nwalkers, **kwargs):
@@ -108,6 +111,7 @@ class EmceeModel(object):
         self.__ntemps = ntemps
         self.__nwalkers = nwalkers
         self.__sampler = "PTSampler"
+        self.__lnlike = log_likelihood
         return self.sampler
 
     def p_ball(self, p0, ratio=5e-2, nwalkers=None):
@@ -164,6 +168,34 @@ class EmceeModel(object):
             raise ValueError("The sampler '{0}' is unrecognised!".format(sampler))
         return p0
 
+    def p_logl_max(self):
+        """
+        Find the position in the sampled parameter space that the likelihood is
+        the highest.
+        """
+        sampler = self.__sampler
+        if sampler == "EnsembleSampler":
+            lnlike = self.sampler.lnprobability
+        else:
+            lnlike = self.sampler.lnlikelihood
+        chain  = self.sampler.chain
+        idx = lnlike.ravel().argmax()
+        p   = chain.reshape(-1, self.__dim)[idx]
+        return p
+
+    def get_logl_max(self):
+        """
+        Get the maximum of the likelihood at current particle distribution.
+        """
+        pmax = self.p_logl_max()
+        sampler = self.__sampler
+        if sampler == "EnsembleSampler":
+            return self.__lnprob(pmax, self.__data, self.__model, self.__modelunct)
+        elif sampler == "PTSampler":
+            return self.__lnlike(pmax, self.__data, self.__model)
+        else:
+            raise ValueError("'{0}' is not recognised!".format(sampler))
+
     def burn_in(self, pos, iterations, printFrac=1, quiet=False, **kwargs):
         """
         Burn in the MCMC chain.
@@ -188,17 +220,31 @@ class EmceeModel(object):
         This function just wraps up the sampler.sample() so that there is output
         in the middle of the run.
         """
+        sampler = self.__sampler
         if not quiet:
-            print("MCMC ({0}) is running...".format(self.__sampler))
-        for i, (pos, lnprob, state) in enumerate(self.sampler.sample(pos, iterations=iterations, **kwargs)):
+            print("MCMC ({0}) is running...".format(sampler))
+        #Notice that the third parameters yielded by EnsembleSampler and PTSampler are different.
+        for i, (pos, lnprob, logl) in enumerate(self.sampler.sample(pos, iterations=iterations, **kwargs)):
             if not i % int(printFrac * iterations):
                 if quiet:
                     pass
                 else:
-                    print("{0}%".format(100. * i / iterations))
+                    progress = 100. * i / iterations
+                    if sampler == "EnsembleSampler":
+                        lnlike = lnprob
+                    elif sampler == "PTSampler":
+                        lnlike = logl.ravel()
+                    idx = lnlike.argmax()
+                    lmax = lnlike[idx]
+                    pmax = pos.reshape((-1, self.__dim))[idx]
+                    pname = self.__model.get_parVaryNames(latex=False)
+                    print("-----------------------------")
+                    print("[{0:.1f}%] logL_max = {1:.3e}".format(progress, lmax))
+                    for i, name in enumerate(pname):
+                        print("{0:18s} {1:10.3e}".format(name, pmax[i]))
         if not quiet:
             print("MCMC finishes!")
-        return pos, lnprob, state
+        return pos, lnprob, logl
 
     def integrated_time(self):
         """
@@ -225,21 +271,6 @@ class EmceeModel(object):
         Return the mean acceptance fraction of the sampler.
         """
         return np.mean(self.sampler.acceptance_fraction)
-
-    def p_logl_max(self):
-        """
-        Find the position in the sampled parameter space that the likelihood is
-        the highest.
-        """
-        sampler = self.__sampler
-        if sampler == "EnsembleSampler":
-            lnlike = self.sampler.lnprobability
-        else:
-            lnlike = self.sampler.lnlikelihood
-        chain  = self.sampler.chain
-        idx = lnlike.ravel().argmax()
-        p   = chain.reshape(-1, self.__dim)[idx]
-        return p
 
     def posterior_sample(self, burnin=0):
         """
@@ -269,10 +300,12 @@ class EmceeModel(object):
         nameList = self.__model.get_parVaryNames(latex=False)
         parRange = self.p_uncertainty(**kwargs)
         pMAP = self.p_logl_max()
-        if truths is None:
-            print("low \t\t center \t high \t\t map \t\t name")
-        else:
-            print("low \t\t center \t high \t\t map \t\t truth \t\t name")
+        ttList = ["name", "low", "center", "high", "map"]
+        if not truths is None:
+            ttList.append("truth")
+        tt = " ".join(["{0:12s}".format(i) for i in ttList])
+        print("{:-<74}".format(""))
+        print(tt)
         for d in range(self.__dim):
             plow = parRange[0, d]
             pcen = parRange[1, d]
@@ -282,10 +315,11 @@ class EmceeModel(object):
             if (pmax < plow) or (pmax > phgh):
                 print("[MCMC Warning]: The best-fit '{0}' is not consistent with its posterior sample".format(name))
             pl = [plow, pcen, phgh]
+            info = "{0:12s} {1[0]:<12.3e} {1[1]:<12.3e} {1[2]:<12.3e} {2:<12.3e}".format(name, pl, pmax)
             if truths is None:
-                print("{0[0]:.3e}\t {0[1]:.3e}\t {0[2]:.3e}\t {1:.3e}\t {2}".format(pl, pmax, name))
+                print(info)
             else:
-                print("{0[0]:.3e}\t {0[1]:.3e}\t {0[2]:.3e}\t {1:.3e}\t {2:.3e}\t {3}".format(pl, pmax, truths[d], name))
+                print(info+" {0:<12.3e}".format(truths[d]))
 
     def Save_Samples(self, filename, burnin=50):
         """
@@ -365,6 +399,7 @@ class EmceeModel(object):
         """
         Diagnose whether the MCMC run is reliable.
         """
+        print("---------------------------------")
         print("Mean acceptance fraction: {0:.3f}".format(self.accfrac_mean()))
         print("PN: ACT")
         print('\n'.join('{l[0]}: {l[1]:.3f}'.format(l=k) for k in enumerate(self.integrated_time())))
