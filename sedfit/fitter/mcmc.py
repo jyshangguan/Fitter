@@ -300,6 +300,7 @@ class EmceeModel(object):
                 print(info)
             else:
                 print(info+" {0:<12.3e}".format(truths[d]))
+        print("Max log_likelihood: {0:.3e}".format(self.get_logl_max()))
 
     def Save_Samples(self, filename, burnin=50):
         """
