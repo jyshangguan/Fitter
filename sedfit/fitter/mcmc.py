@@ -346,12 +346,13 @@ class EmceeModel(object):
         fig, ax = sedData.plot_sed(FigAx=FigAx)
         cList = ["r", "g", "b", "m", "y", "c"]
         ncolor = len(cList)
-        ax.plot(waveModel, ymax, color="brown", linewidth=3.0)
+        ax.plot(waveModel, ymax, color="brown", linewidth=3.0, linestyle="--")
         ax.fill_between(waveModel, ylow, yhgh, color="brown", alpha=0.1)
         modelList = sedModel._modelList
         counter = 0
         for modelName in modelList:
-            ax.plot(waveModel, ymax_cmp[modelName], color=cList[counter%ncolor])
+            ax.plot(waveModel, ymax_cmp[modelName], color=cList[counter%ncolor],
+                    linestyle="--", label=modelName)
             ax.fill_between(waveModel, ylow_cmp[modelName], yhgh_cmp[modelName],
                              color=cList[counter], alpha=0.1)
             counter += 1
@@ -359,7 +360,7 @@ class EmceeModel(object):
             sedModel.updateParList(truths)
             ytrue = sedModel.combineResult()
             ytrue_cmp = sedModel.componentResult()
-            ax.plot(waveModel, ytrue, color="k", linestyle="--")
+            ax.plot(waveModel, ytrue, color="k", linestyle="-")
             counter = 0
             for modelName in modelList:
                 ax.plot(waveModel, ytrue_cmp[modelName], color=cList[counter%ncolor])
@@ -367,6 +368,8 @@ class EmceeModel(object):
         if filename is None:
             return (fig, ax)
         else:
+            plt.ylim([1e-2, 1e4])
+            plt.legend(loc="lower left")
             plt.savefig(filename, bbox_inches="tight")
             plt.close()
 
