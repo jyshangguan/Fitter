@@ -2,8 +2,6 @@ import acor
 import emcee
 import corner
 import numpy as np
-import matplotlib
-matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from scipy.stats import truncnorm
 
@@ -195,24 +193,6 @@ class EmceeModel(object):
             return self.__lnlike(pmax, self.__data, self.__model)
         else:
             raise ValueError("'{0}' is not recognised!".format(sampler))
-
-    def burn_in(self, pos, iterations, printFrac=1, quiet=False, **kwargs):
-        """
-        Burn in the MCMC chain.
-        This function just wraps up the sampler.sample() so that there is output
-        in the middle of the run.
-        """
-        if not quiet:
-            print("MCMC ({0}) is burning-in...".format(self.__sampler))
-        for i, (pos, lnprob, state) in enumerate(self.sampler.sample(pos, iterations=iterations, **kwargs)):
-            if not i % int(printFrac * iterations):
-                if quiet:
-                    pass
-                else:
-                    print("{0}%".format(100. * i / iterations))
-        if not quiet:
-            print("Burn-in finishes!")
-        return pos, lnprob, state
 
     def run_mcmc(self, pos, iterations, printFrac=1, quiet=False, **kwargs):
         """

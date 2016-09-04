@@ -1,10 +1,11 @@
 from __future__ import print_function
+import matplotlib
+matplotlib.use("Agg")
 import sys
 import types
 import corner
 import importlib
 import numpy as np
-import matplotlib.pyplot as plt
 from sedfit.fitter import basicclass as bc
 from sedfit import model_functions as sedmf
 from sedfit import fit_functions   as sedff
@@ -77,18 +78,24 @@ em = mcmc.EmceeModel(sedData, sedModel, modelUnct)
 #Burn-in
 sampler = em.EnsembleSampler(nwalkers, threads=threads)
 p0 = np.array(em.p_prior())
-em.burn_in(p0, iterations=burnIn, printFrac=printFrac, thin=thin)
+em.run_mcmc(p0, iterations=burnIn, printFrac=printFrac, thin=thin)
 em.diagnose()
-pmax = em.p_logl_max()
-print("p logL max: ", pmax)
+em.print_parameters(parAllList, burnin=50)
+print("Max log_likelihood: {0:.3e}".format(em.get_logl_max()))
 
 #Run MCMC
+pmax = em.p_logl_max()
 sampler = em.PTSampler(ntemps, nwalkers, threads=threads)
 em.reset()
 pos = em.p_ball(pmax, ratio=1e-1)
 em.run_mcmc(pos, iterations=nSteps, printFrac=printFrac, thin=thin)
 em.diagnose()
+em.print_parameters(parAllList, burnin=50)
+print("Max log_likelihood: {0:.3e}".format(em.get_logl_max()))
 
-filename = "{0}_samples.txt".format(inputModule.targname)
-em.Save_Samples(filename)
+#Post process
+targname = inputModule.targname
+em.plot_corner(filename="{0}_triangle.png".format(targname), truths=parAllList, burnin=burnIn)
+em.plot_fit(filename="{0}_result.png".format(targname), truths=parAllList, burnin=burnIn)
+em.Save_Samples("{0}_samples.txt".format(targname), burnin=burnIn)
 print("Post-processed!")
