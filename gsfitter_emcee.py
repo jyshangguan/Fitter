@@ -4,7 +4,6 @@ import types
 import corner
 import importlib
 import numpy as np
-import matplotlib.pyplot as plt
 from sedfit.fitter import basicclass as bc
 from sedfit import model_functions as sedmf
 from sedfit import fit_functions   as sedff
