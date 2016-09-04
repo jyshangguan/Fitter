@@ -74,6 +74,8 @@ nwalkers  = emceeDict["nwalkers"]
 ntemps    = emceeDict["ntemps"]
 burnIn    = emceeDict["burn-in"]
 iteration = emceeDict["iteration"]
+ballR     = emceeDict["ball-r"]
+ballT     = emceeDict["ball-t"]
 nSteps    = emceeDict["nsteps"]
 thin      = emceeDict["thin"]
 threads   = emceeDict["threads"]
@@ -110,7 +112,9 @@ em.print_parameters(parAllList, burnin=50)
 for i in range(iteration-1):
     print( "\n{:*^35}".format(" {0}th iteration ".format(i+1)) )
     em.reset()
-    p1 = em.p_ball(pmax, ratio=1e-1)
+    ratio = ballR * ballT**i
+    print("-- P1 ball radius ratio: {0:.3f}".format(ratio))
+    p1 = em.p_ball(pmax, ratio=ratio)
     em.run_mcmc(p1, iterations=burnIn, printFrac=printFrac, thin=thin)
     em.diagnose()
     pmax = em.p_logl_max()
@@ -119,7 +123,9 @@ for i in range(iteration-1):
 #Run MCMC
 print( "\n{:*^35}".format(" Final Sampling ") )
 em.reset()
-p1 = em.p_ball(pmax, ratio=1e-1)
+ratio = ballR * ballT**i
+print("-- P1 ball radius ratio: {0:.3f}".format(ratio))
+p1 = em.p_ball(pmax, ratio=ratio)
 em.run_mcmc(p1, iterations=nSteps, printFrac=printFrac, thin=thin)
 em.diagnose()
 em.print_parameters(parAllList, burnin=100, low=16, high=84)
