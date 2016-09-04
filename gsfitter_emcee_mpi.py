@@ -4,7 +4,6 @@ import types
 import corner
 import importlib
 import numpy as np
-import matplotlib.pyplot as plt
 from sedfit.fitter import basicclass as bc
 from sedfit import model_functions as sedmf
 from sedfit import fit_functions   as sedff
@@ -96,6 +95,7 @@ else:
 em.run_mcmc(p0, iterations=burnIn+nSteps, printFrac=printFrac, thin=thin)
 em.diagnose()
 em.print_parameters(parAllList, burnin=burnIn)
+print("Max log_likelihood: {0:.3e}".format(em.get_logl_max()))
 
 #Close the pools
 pool.close()
