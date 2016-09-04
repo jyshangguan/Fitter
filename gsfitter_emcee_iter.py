@@ -90,7 +90,7 @@ else:
 
 
 #Burn-in 1st
-print( "\n{:*^45}".format("{0}th iteration".format(0)) )
+print( "\n{:*^35}".format(" {0}th iteration ".format(0)) )
 pos, lnprob, state = em.run_mcmc(p0, iterations=burnIn, printFrac=printFrac, thin=thin)
 em.diagnose()
 pmax = em.p_logl_max()
@@ -98,7 +98,7 @@ em.print_parameters(parAllList, burnin=50)
 
 #Burn-in rest iteration
 for i in range(iteration-1):
-    print( "\n{:*^45}".format("{0}th iteration".format(i+1)) )
+    print( "\n{:*^35}".format(" {0}th iteration ".format(i+1)) )
     em.reset()
     p1 = em.p_ball(pmax, ratio=1e-1)
     em.run_mcmc(p1, iterations=burnIn, printFrac=printFrac, thin=thin)
