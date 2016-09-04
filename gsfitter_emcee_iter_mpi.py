@@ -11,6 +11,15 @@ from sedfit import model_functions as sedmf
 from sedfit import fit_functions   as sedff
 from sedfit.fitter import mcmc
 
+
+# Initialize the MPI-based pool used for parallelization.
+pool = MPIPool()
+
+if not pool.is_master():
+    # Wait for instructions from the master process.
+    pool.wait()
+    sys.exit(0)
+
 #The code starts#
 #---------------#
 print("############################")
@@ -81,10 +90,10 @@ if imSampler == "PTSampler":
     for loop_t in range(ntemps):
         for loop_w in range(nwalkers):
             p0[loop_t, loop_w, :] = em.from_prior()
-    sampler = em.PTSampler(ntemps, nwalkers, threads=threads)
+    sampler = em.PTSampler(ntemps, nwalkers, pool=pool)
 elif imSampler == "EnsembleSampler":
     p0 = [em.from_prior() for i in range(nwalkers)]
-    sampler = em.EnsembleSampler(nwalkers, threads=threads)
+    sampler = em.EnsembleSampler(nwalkers, pool=pool)
 else:
     raise RuntimeError("Cannot recognise the sampler '{0}'!".format(imSampler))
 
@@ -113,6 +122,9 @@ p1 = em.p_ball(pmax, ratio=1e-1)
 em.run_mcmc(p1, iterations=nSteps, printFrac=printFrac, thin=thin)
 em.diagnose()
 em.print_parameters(parAllList, burnin=50)
+
+#Close the pools
+pool.close()
 
 #Post process
 targname = inputModule.targname
