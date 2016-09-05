@@ -346,7 +346,7 @@ class EmceeModel(object):
         fig, ax = sedData.plot_sed(FigAx=FigAx)
         cList = ["r", "g", "b", "m", "y", "c"]
         ncolor = len(cList)
-        ax.plot(waveModel, ymax, color="brown", linewidth=3.0, linestyle="--")
+        ax.plot(waveModel, ymax, color="brown", linewidth=3.0, linestyle="--", label="Total")
         ax.fill_between(waveModel, ylow, yhgh, color="brown", alpha=0.1)
         modelList = sedModel._modelList
         counter = 0
@@ -369,7 +369,7 @@ class EmceeModel(object):
             return (fig, ax)
         else:
             plt.ylim([1e-2, 1e4])
-            plt.legend(loc="lower left")
+            plt.legend(loc="lower right")
             plt.savefig(filename, bbox_inches="tight")
             plt.close()
 
