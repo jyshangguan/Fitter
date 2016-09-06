@@ -10,6 +10,10 @@ from fitter.template import Template
 
 template_dir = "/Users/jinyi/Work/PG_QSO/templates/"
 
+m_H = 1.6726219e-24 #unit: gram
+Msun = 1.9891e33 #unit: gram
+Mpc = 3.08567758e24 #unit: cm
+
 #Func_bgn:
 #-------------------------------------#
 #   Created by SGJY, May. 3, 2016     #
@@ -193,6 +197,24 @@ def CLUMPY_Torus_Model(TORUS_logsf,
     return flux
 #Func_end
 
+fp = open("/Users/jinyi/Work/mcmc/Fitter/template/clumpy_kdt.tmplt")
+tp_clumpy = pickle.load(fp)
+fp.close()
+tclumpy = Template(**tp_clumpy)
+def Clumpy(logL, i, tv, q, N0, sigma, Y, wave, DL, t=tclumpy):
+    """
+    The CLUMPY model generating the emission from the clumpy torus.
+
+    Parameters
+    ----------
+    logL : float
+        The log of the torus luminosity, unit erg/s.
+    """
+    par = [i, tv, q, N0, sigma, Y]
+    f0 = 10**(logL+26) / (4 * np.pi * (DL * Mpc)**2.) #Convert to mJy unit
+    flux = f0 * t(wave, par)
+    return flux
+
 def Modified_BlackBody(logM, T, beta, wave, DL, kappa0=16.2, lambda0=140):
     """
     This function is a wrapper to calculate the modified blackbody model.
@@ -268,9 +290,6 @@ except:
     print("[model_functions]: Fail to import the DL07 template from: {0}".format(dl07File))
     tmpl_dl07 = None
 
-m_H = 1.6726219e-24 #unit: gram
-Msun = 1.9891e33 #unit: gram
-Mpc = 3.08567758e24 #unit: cm
 uminList = [0.10, 0.15, 0.20, 0.30, 0.40, 0.50, 0.70, 0.80, 1.00, 1.20,
         1.50, 2.00, 2.50, 3.00, 4.00, 5.00, 7.00, 8.00, 10.0, 12.0,
         15.0, 20.0, 25.0]
@@ -447,6 +466,12 @@ funcLib = {
         "x_name": "wave",
         "param_fit": ["TORUS_logsf", "TORUS_i", "TORUS_tv", "TORUS_q", "TORUS_N0", "TORUS_sig", "TORUS_Y"],
         "param_add": ["TORUS_tmpl_ip"]
+    },
+    "Clumpy": {
+        "function": Clumpy,
+        "x_name": "wave",
+        "param_fit": ["logL", "i", "tv", "q", "N0", "sigma", "Y"],
+        "param_add": ["DL", "t"]
     },
     "DL07_Model": {
         "function": DL07_Model,
