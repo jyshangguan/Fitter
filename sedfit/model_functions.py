@@ -138,7 +138,8 @@ def Stellar_SED_scale(logMs, flux_star_1Msun, wave):
 #From: dev_CLUMPY_intp.ipynb
 ### CLUMPY template
 try:
-    clumpyFile = template_dir+"clumpy_models_201410_tvavg.hdf5"
+    #clumpyFile = template_dir+"clumpy_models_201410_tvavg.hdf5"
+    clumpyFile = template_dir+"clumpy_fnu_norm.hdf5"
     h = h5py.File(clumpyFile,"r")
     theta = [np.unique(h[par][:]) for par in ("i","tv","q","N0","sig","Y","wave")]
     data = h["flux_tor"].value
@@ -147,37 +148,31 @@ try:
 except:
     print("[model_functions]: Fail to import the CLUMPY template from: {0}".format(clumpyFile))
     ip = None
-def CLUMPY_Torus_Model(TORUS_logsf,
-                       TORUS_i,
-                       TORUS_tv,
-                       TORUS_q,
-                       TORUS_N0,
-                       TORUS_sig,
-                       TORUS_Y,
-                       wave,
-                       TORUS_tmpl_ip=ip):
+def CLUMPY_intp(logL, i, tv, q, N0, sigma, Y, wave, DL, t=ip):
     """
     This function provide the dust torus MIR flux with CLUMPY model.
 
     Parameters
     ----------
-    TORUS_logsf : float
-        The scaling factor of the model to fit the data.
-    TORUS_i : float
+    logL : float
+        The log of the torus luminosity, unit erg/s.
+    i : float
         The inclination angle of the torus to the observer.
-    TORUS_tv : float
+    tv : float
         The visual optical depth of individual clumps.
-    TORUS_q : float
+    q : float
         The radial distribution power law exponent of the dust clumps.
-    TORUS_N0 : float
+    N0 : float
         The total number of clumps along the radial equatorial ray.
-    TORUS_sig : float
+    sigma : float
         The angular distribution with of the torus.
-    TORUS_Y : float
+    Y : float
         The radial torus relative thickness, Y=Ro/Rd.
     wave : float array
         The wavelength at which we want to calculate the flux.
-    TORUS_tmpl_ip : NdimInterpolation class
+    DL : float
+        The luminosity distance
+    t : NdimInterpolation class
         The NdimInterpolation class obtained from Nikutta"s interpolation code.
 
     Returns
@@ -189,11 +184,9 @@ def CLUMPY_Torus_Model(TORUS_logsf,
     -----
     None.
     """
-    ls_mic = 2.99792458e14 #micron/s
-    nu = ls_mic / wave
-    vector = np.array([TORUS_i, TORUS_tv, TORUS_q, TORUS_N0, TORUS_sig, TORUS_Y])
-    sed = TORUS_tmpl_ip(vector,wave)/nu * 1e10
-    flux = (10**TORUS_logsf) * sed
+    vector = np.array([i, tv, q, N0, sigma, Y])
+    f0 = 10**(logL+26) / (4 * np.pi * (DL * Mpc)**2.) #Convert to mJy unit
+    flux = f0 * t(vector, wave)
     return flux
 #Func_end
 
@@ -209,6 +202,33 @@ def Clumpy(logL, i, tv, q, N0, sigma, Y, wave, DL, t=tclumpy):
     ----------
     logL : float
         The log of the torus luminosity, unit erg/s.
+    i : float
+        The inclination angle of the torus to the observer.
+    tv : float
+        The visual optical depth of individual clumps.
+    q : float
+        The radial distribution power law exponent of the dust clumps.
+    N0 : float
+        The total number of clumps along the radial equatorial ray.
+    sig : float
+        The angular distribution with of the torus.
+    Y : float
+        The radial torus relative thickness, Y=Ro/Rd.
+    wave : float array
+        The wavelength at which we want to calculate the flux.
+    DL : float
+        The luminosity distance
+    t : NdimInterpolation class
+        The NdimInterpolation class obtained from Nikutta"s interpolation code.
+
+    Returns
+    -------
+    flux : array of float
+        The flux density (F_nu) from the model.
+
+    Notes
+    -----
+    None.
     """
     par = [i, tv, q, N0, sigma, Y]
     f0 = 10**(logL+26) / (4 * np.pi * (DL * Mpc)**2.) #Convert to mJy unit
@@ -461,11 +481,11 @@ funcLib = {
         "param_fit": ["logMs"],
         "param_add": ["flux_star_1Msun"]
     },
-    "CLUMPY_Torus_Model": {
-        "function": CLUMPY_Torus_Model,
+    "CLUMPY_intp": {
+        "function": CLUMPY_intp,
         "x_name": "wave",
-        "param_fit": ["TORUS_logsf", "TORUS_i", "TORUS_tv", "TORUS_q", "TORUS_N0", "TORUS_sig", "TORUS_Y"],
-        "param_add": ["TORUS_tmpl_ip"]
+        "param_fit": ["logL", "i", "tv", "q", "N0", "sigma", "Y"],
+        "param_add": ["DL", "t"]
     },
     "Clumpy": {
         "function": Clumpy,
