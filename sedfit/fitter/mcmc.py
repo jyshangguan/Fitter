@@ -3,6 +3,7 @@ import emcee
 import corner
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.ticker import MaxNLocator
 from scipy.stats import truncnorm
 
 from .. import fit_functions as sedff
@@ -334,7 +335,7 @@ class EmceeModel(object):
         """
         ps = self.posterior_sample(burnin)
         parname = self.__model.get_parVaryNames()
-        fig = corner.corner(ps, labels=parname, truths=truths)
+        fig = corner.corner(ps, labels=parname, truths=truths, fontsize=24)
         if filename is None:
             return fig
         else:
@@ -366,6 +367,8 @@ class EmceeModel(object):
         ncolor = len(cList)
         ax.plot(waveModel, ymax, color="brown", linewidth=3.0, linestyle="--", label="Total")
         ax.fill_between(waveModel, ylow, yhgh, color="brown", alpha=0.1)
+        ax.set_xlabel(r"Wavelength ($\mu m$)", fontsize=24)
+        ax.set_ylabel(r"$f_\nu$ (mJy)", fontsize=24)
         modelList = sedModel._modelList
         counter = 0
         for modelName in modelList:
@@ -389,6 +392,29 @@ class EmceeModel(object):
             plt.ylim([1e-2, 1e4])
             plt.legend(loc="lower right")
             plt.savefig(filename, bbox_inches="tight")
+            plt.close()
+
+    def plot_chain(self, filename=None, truths=None):
+        dim = self.__dim
+        sampler = self.sampler
+        nameList = self.__model.get_parVaryNames()
+        if self.__modelunct:
+            dim += 1
+            nameList.append(r"$\mathrm{ln}f$")
+        if self.__sampler == "EnsembleSampler":
+            chain = sampler.chain
+        elif self.__sampler == "PTSampler":
+            chain = np.squeeze(sampler.chain[0, ...])
+        fig, axes = pl.subplots(dim, 1, sharex=True, figsize=(8, 3*dim))
+        for loop in range(dim):
+            axes[loop].plot(chain[:, :, loop].T, color="k", alpha=0.4)
+            axes[loop].yaxis.set_major_locator(MaxNLocator(5))
+            axes[loop].axhline(truths[loop], color="#888888", lw=2)
+            axes[loop].set_ylabel(nameList[loop], fontsize=24)
+        if filename is None:
+            return (fig, axes)
+        else:
+            plt.savefig(filename)
             plt.close()
 
     def reset(self):

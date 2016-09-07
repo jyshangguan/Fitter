@@ -124,5 +124,6 @@ em.print_parameters(parAllList, burnin=100, low=16, high=84)
 targname = inputModule.targname
 em.plot_corner(filename="{0}_triangle.png".format(targname), truths=parAllList, burnin=100)
 em.plot_fit(filename="{0}_result.png".format(targname), truths=parAllList, burnin=100, low=16, high=84)
+em.plot_chain(filename="{0}_chain.png".format(targname), truths=parAllList)
 em.Save_Samples("{0}_samples.txt".format(targname), burnin=100)
 print("Post-processed!")
