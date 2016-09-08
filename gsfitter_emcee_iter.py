@@ -86,7 +86,7 @@ if imSampler == "PTSampler":
     sampler = em.PTSampler(ntemps, nwalkers, threads=threads)
 elif imSampler == "EnsembleSampler":
     p0 = [em.from_prior() for i in range(nwalkers)]
-    sampler = em.EnsembleSampler(nwalkers, threads=threads)
+    sampler = em.EnsembleSampler(nwalkers, threads=threads, a=2.0)
 else:
     raise RuntimeError("Cannot recognise the sampler '{0}'!".format(imSampler))
 
