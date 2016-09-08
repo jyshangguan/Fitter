@@ -288,17 +288,19 @@ class EmceeModel(object):
         parRange = np.percentile(ps, [low, center, high], axis=0)
         return parRange
 
-    def print_parameters(self, truths=None, **kwargs):
+    def print_parameters(self, truths=None, low=1, center=50, high=99, burnin=50):
         """
         Print the ranges of the parameters according to their posterior samples
         and the values of the maximum a posterior (MAP).
         """
         nameList = self.__model.get_parVaryNames(latex=False)
-        parRange = self.p_uncertainty(**kwargs)
+        parRange = self.p_uncertainty(low, center, high, burnin)
         pMAP = self.p_logl_max()
-        ttList = ["name", "low", "center", "high", "map"]
+        ttList = ["Name", "L ({0}%)".format(low),
+                  "C ({0}%)".format(center),
+                  "H ({0}%)".format(high), "MAP"]
         if not truths is None:
-            ttList.append("truth")
+            ttList.append("Truth")
         tt = " ".join(["{0:12s}".format(i) for i in ttList])
         print("{:-<74}".format(""))
         print(tt)
@@ -317,9 +319,7 @@ class EmceeModel(object):
             else:
                 print(info+" {0:<12.3e}".format(truths[d]))
         p_logl_max = self.p_logl_max()
-        p_logl_min = self.p_logl_min()
         print("lnL_max: {0:.3e}".format(self.get_logl(p_logl_max)))
-        print("lnL_min: {0:.3e}".format(self.get_logl(p_logl_min)))
 
     def Save_Samples(self, filename, burnin=50):
         """
@@ -328,14 +328,15 @@ class EmceeModel(object):
         samples = self.posterior_sample(burnin)
         np.savetxt(filename, samples, delimiter=",")
 
-    def plot_corner(self, filename=None, truths=None, burnin=50):
+    def plot_corner(self, filename=None, burnin=50, ps=None, **kwargs):
         """
         Plot the corner diagram that illustrate the posterior probability distribution
         of each parameter.
         """
-        ps = self.posterior_sample(burnin)
+        if ps is None:
+            ps = self.posterior_sample(burnin)
         parname = self.__model.get_parVaryNames()
-        fig = corner.corner(ps, labels=parname, truths=truths, fontsize=24)
+        fig = corner.corner(ps, labels=parname, **kwargs)
         if filename is None:
             return fig
         else:

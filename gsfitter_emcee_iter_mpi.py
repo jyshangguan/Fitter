@@ -72,14 +72,20 @@ emceeDict = inputModule.emceeDict
 imSampler = emceeDict["sampler"]
 nwalkers  = emceeDict["nwalkers"]
 ntemps    = emceeDict["ntemps"]
-burnIn    = emceeDict["burn-in"]
 iteration = emceeDict["iteration"]
+iStep     = emceeDict["iter-step"]
 ballR     = emceeDict["ball-r"]
 ballT     = emceeDict["ball-t"]
-nSteps    = emceeDict["nsteps"]
+rStep     = emceeDict["run-step"]
+burnIn    = emceeDict["burn-in"]
 thin      = emceeDict["thin"]
 threads   = emceeDict["threads"]
 printFrac = emceeDict["printfrac"]
+ppDict   = inputModule.ppDict
+psLow    = ppDict["low"]
+psCenter = ppDict["center"]
+psHigh   = ppDict["high"]
+
 ndim = len(parAllList)
 print("#--------------------------------#")
 print("emcee Info:")
@@ -103,7 +109,7 @@ else:
 
 #Burn-in 1st
 print( "\n{:*^35}".format(" {0}th iteration ".format(0)) )
-pos, lnprob, state = em.run_mcmc(p0, iterations=burnIn, printFrac=printFrac, thin=thin)
+pos, lnprob, state = em.run_mcmc(p0, iterations=iStep, printFrac=printFrac, thin=thin)
 em.diagnose()
 pmax = em.p_logl_max()
 em.print_parameters(parAllList, burnin=50)
@@ -115,7 +121,7 @@ for i in range(iteration-1):
     ratio = ballR * ballT**i
     print("-- P1 ball radius ratio: {0:.3f}".format(ratio))
     p1 = em.p_ball(pmax, ratio=ratio)
-    em.run_mcmc(p1, iterations=burnIn, printFrac=printFrac, thin=thin)
+    em.run_mcmc(p1, iterations=iStep, printFrac=printFrac, thin=thin)
     em.diagnose()
     pmax = em.p_logl_max()
     em.print_parameters(parAllList, burnin=50)
@@ -126,16 +132,20 @@ em.reset()
 ratio = ballR * ballT**i
 print("-- P1 ball radius ratio: {0:.3f}".format(ratio))
 p1 = em.p_ball(pmax, ratio=ratio)
-em.run_mcmc(p1, iterations=nSteps, printFrac=printFrac, thin=thin)
+em.run_mcmc(p1, iterations=rStep, printFrac=printFrac, thin=thin)
 em.diagnose()
-em.print_parameters(parAllList, burnin=100, low=16, high=84)
+em.print_parameters(parAllList, burnin=burnIn, low=psLow, center=psCenter, high=psHigh)
 
 #Close the pools
 pool.close()
 
 #Post process
 targname = inputModule.targname
-em.plot_corner(filename="{0}_triangle.png".format(targname), truths=parAllList, burnin=100)
-em.plot_fit(filename="{0}_result.png".format(targname), truths=parAllList, burnin=100, low=16, high=84)
-em.Save_Samples("{0}_samples.txt".format(targname), burnin=100)
+em.plot_chain(filename="{0}_chain.png".format(targname), truths=parAllList)
+em.plot_corner(filename="{0}_triangle.png".format(targname), burnin=burnIn, truths=parAllList,
+               quantiles=[psLow/100., psCenter/100., psHigh/100.], show_titles=True,
+               title_kwargs={"fontsize": 24})
+em.plot_fit(filename="{0}_result.png".format(targname), truths=parAllList, burnin=burnIn,
+            low=psLow, center=psCenter, high=psHigh)
+em.Save_Samples("{0}_samples.txt".format(targname), burnin=0)
 print("Post-processed!")
