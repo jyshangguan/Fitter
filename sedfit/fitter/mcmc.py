@@ -409,7 +409,7 @@ class EmceeModel(object):
         for loop in range(dim):
             axes[loop].plot(chain[:, :, loop].T, color="k", alpha=0.4)
             axes[loop].yaxis.set_major_locator(MaxNLocator(5))
-            axes[loop].axhline(truths[loop], color="#888888", lw=2)
+            axes[loop].axhline(truths[loop], color="r", lw=2)
             axes[loop].set_ylabel(nameList[loop], fontsize=24)
         if filename is None:
             return (fig, axes)

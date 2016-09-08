@@ -75,7 +75,7 @@ if parNumber == 1:
 ps = np.loadtxt("{0}_samples.txt".format(targname), delimiter=",")
 
 #Plot the corner diagram
-fig = corner.corner(ps, truths=parVaryList, labels=parVaryName)
+fig = corner.corner(ps[400:, :], truths=parVaryList, labels=parVaryName)
 plt.savefig("{0}_triangle.png".format(targname))
 plt.close()
 
