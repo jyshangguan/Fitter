@@ -405,7 +405,7 @@ class EmceeModel(object):
             chain = sampler.chain
         elif self.__sampler == "PTSampler":
             chain = np.squeeze(sampler.chain[0, ...])
-        fig, axes = pl.subplots(dim, 1, sharex=True, figsize=(8, 3*dim))
+        fig, axes = plt.subplots(dim, 1, sharex=True, figsize=(8, 3*dim))
         for loop in range(dim):
             axes[loop].plot(chain[:, :, loop].T, color="k", alpha=0.4)
             axes[loop].yaxis.set_major_locator(MaxNLocator(5))
