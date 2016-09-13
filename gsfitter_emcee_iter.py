@@ -96,7 +96,6 @@ elif imSampler == "EnsembleSampler":
 else:
     raise RuntimeError("Cannot recognise the sampler '{0}'!".format(imSampler))
 
-
 #Burn-in 1st
 print( "\n{:*^35}".format(" {0}th iteration ".format(0)) )
 pos, lnprob, state = em.run_mcmc(p0, iterations=iStep, printFrac=printFrac, thin=thin)
@@ -131,7 +130,7 @@ targname = inputModule.targname
 em.plot_chain(filename="{0}_chain.png".format(targname), truths=parAllList)
 em.plot_corner(filename="{0}_triangle.png".format(targname), burnin=burnIn, truths=parAllList,
                quantiles=[psLow/100., psCenter/100., psHigh/100.], show_titles=True,
-               title_kwargs={"fontsize": 24})
+               title_kwargs={"fontsize": 20})
 em.plot_fit(filename="{0}_result.png".format(targname), truths=parAllList, burnin=burnIn,
             low=psLow, center=psCenter, high=psHigh)
 em.Save_Samples("{0}_samples.txt".format(targname), burnin=0)

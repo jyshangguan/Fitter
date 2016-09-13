@@ -30,7 +30,7 @@ def lnprior(params, data, model, ModelUnct):
     #If the model uncertainty is concerned.
     if ModelUnct:
         lnf =  params[parIndex]
-        if (lnf < -20) or (lnf > 1.0):
+        if (lnf < -15.0) or (lnf > 5.0):
             lnprior -= np.inf
     return lnprior
 
@@ -56,11 +56,12 @@ class EmceeModel(object):
         self.__model = model
         self.__modelunct = ModelUnct
         self.__sampler = sampler
-        self.__dim = len(model.get_parVaryList())
         print("[EmceeModel]: {0}".format(sampler))
         if ModelUnct:
+            self.__dim = len(model.get_parVaryList()) + 1
             print("[EmceeModel]: ModelUnct is on!")
         else:
+            self.__dim = len(model.get_parVaryList())
             print "[EmceeModel]: ModelUnct is off!"
 
     def from_prior(self):
@@ -89,7 +90,7 @@ class EmceeModel(object):
                     pass
         #If the model uncertainty is concerned.
         if self.__modelunct:
-            lnf =  20.0 * np.random.rand() - 10.0
+            lnf =  -15.0 * np.random.rand() + 5.0
             parList.append(lnf)
         parList = np.array(parList)
         return parList
@@ -122,7 +123,10 @@ class EmceeModel(object):
         ndim = self.__dim
         if nwalkers is None:
             nwalkers = self.__nwalkers
-        pRange = np.array(self.__model.get_parVaryRanges())
+        pRange = self.__model.get_parVaryRanges()
+        if self.__modelunct:
+            pRange.append([-15.0, 5.0])
+        pRange = np.array(pRange)
         sampler = self.__sampler
         if sampler == "EnsembleSampler":
             p = np.zeros((nwalkers, ndim))
@@ -295,6 +299,8 @@ class EmceeModel(object):
         """
         nameList = self.__model.get_parVaryNames(latex=False)
         parRange = self.p_uncertainty(low, center, high, burnin)
+        if self.__modelunct:
+            nameList.append("lnf")
         pMAP = self.p_logl_max()
         ttList = ["Name", "L ({0}%)".format(low),
                   "C ({0}%)".format(center),
@@ -336,6 +342,8 @@ class EmceeModel(object):
         if ps is None:
             ps = self.posterior_sample(burnin)
         parname = self.__model.get_parVaryNames()
+        if self.__modelunct:
+            parname.append(r"$\mathrm{ln}f$")
         fig = corner.corner(ps, labels=parname, **kwargs)
         if filename is None:
             return fig
@@ -400,7 +408,6 @@ class EmceeModel(object):
         sampler = self.sampler
         nameList = self.__model.get_parVaryNames()
         if self.__modelunct:
-            dim += 1
             nameList.append(r"$\mathrm{ln}f$")
         if self.__sampler == "EnsembleSampler":
             chain = sampler.chain
