@@ -7,7 +7,11 @@ from matplotlib.ticker import MaxNLocator
 from scipy.stats import truncnorm
 
 from .. import fit_functions as sedff
-logLFunc = sedff.logLFunc #The log_likelihood function
+
+#The log_likelihood function
+lnlike = sedff.logLFunc
+#The log_likelihood function using Gaussian process regression
+lnlike_gp = sedff.logLFunc_gp
 
 def lnprior(params, data, model, ModelUnct):
     """
@@ -29,23 +33,33 @@ def lnprior(params, data, model, ModelUnct):
                 pass
     #If the model uncertainty is concerned.
     if ModelUnct:
-        lnf =  params[parIndex]
+        lnf, lna, lntau =  params[parIndex:]
         if (lnf < -15.0) or (lnf > 5.0):
+            lnprior -= np.inf
+        if (lna < -5.0) or (lna > 5.0):
+            lnprior -= np.inf
+        if (lntau < -5.0) or (lntau > 5.0):
             lnprior -= np.inf
     return lnprior
 
-def log_likelihood(params, data, model):
-    """
-    Gaussian sampling distrubution.
-    """
-    logL  = logLFunc(params, data, model)
-    return logL
-
 def lnprob(params, data, model, ModelUnct):
+    """
+    Calculate the probability at the parameter spacial position.
+    """
     lp = lnprior(params, data, model, ModelUnct)
     if not np.isfinite(lp):
         return -np.inf
-    return lp + log_likelihood(params, data, model)
+    return lp + lnlike(params, data, model)
+
+def lnprob_gp(params, data, model, ModelUnct):
+    """
+    Calculate the probability at the parameter spacial position.
+    The likelihood function consider the Gaussian process regression.
+    """
+    lp = lnprior(params, data, model, ModelUnct)
+    if not np.isfinite(lp):
+        return -np.inf
+    return lp + lnlike_gp(params, data, model)
 
 class EmceeModel(object):
     """
@@ -58,7 +72,7 @@ class EmceeModel(object):
         self.__sampler = sampler
         print("[EmceeModel]: {0}".format(sampler))
         if ModelUnct:
-            self.__dim = len(model.get_parVaryList()) + 1
+            self.__dim = len(model.get_parVaryList()) + 3
             print("[EmceeModel]: ModelUnct is on!")
         else:
             self.__dim = len(model.get_parVaryList())
@@ -91,27 +105,37 @@ class EmceeModel(object):
         #If the model uncertainty is concerned.
         if self.__modelunct:
             lnf =  -15.0 * np.random.rand() + 5.0
+            lna =  -5.0 * np.random.rand() + 5.0
+            lntau =  -5.0 * np.random.rand() + 5.0
             parList.append(lnf)
+            parList.append(lna)
+            parList.append(lntau)
         parList = np.array(parList)
         return parList
 
     def EnsembleSampler(self, nwalkers, **kwargs):
-        self.sampler = emcee.EnsembleSampler(nwalkers, self.__dim, lnprob,
+        if self.__modelunct:
+            self.__lnprob = lnprob_gp
+        else:
+            self.__lnprob = lnprob
+        self.sampler = emcee.EnsembleSampler(nwalkers, self.__dim, self.__lnprob,
                        args=[self.__data, self.__model, self.__modelunct], **kwargs)
         self.__nwalkers = nwalkers
         self.__sampler = "EnsembleSampler"
-        self.__lnprob = lnprob
         return self.sampler
 
     def PTSampler(self, ntemps, nwalkers, **kwargs):
+        if self.__modelunct:
+            self.__lnlike = lnlike_gp
+        else:
+            self.__lnlike = lnlike
         self.sampler = emcee.PTSampler(ntemps, nwalkers, self.__dim,
-                       logl=log_likelihood, logp=lnprior,
+                       logl=self.__lnlike, logp=lnprior,
                        loglargs=[self.__data, self.__model],
                        logpargs=[self.__data, self.__model, self.__modelunct], **kwargs)
         self.__ntemps = ntemps
         self.__nwalkers = nwalkers
         self.__sampler = "PTSampler"
-        self.__lnlike = log_likelihood
         return self.sampler
 
     def p_ball(self, p0, ratio=5e-2, nwalkers=None):
@@ -125,7 +149,9 @@ class EmceeModel(object):
             nwalkers = self.__nwalkers
         pRange = self.__model.get_parVaryRanges()
         if self.__modelunct:
-            pRange.append([-15.0, 5.0])
+            pRange.append([-15.0, 5.0]) #For lnf
+            pRange.append([-5.0, 5.0])  #For lna
+            pRange.append([-5.0, 5.0])  #For lntau
         pRange = np.array(pRange)
         sampler = self.__sampler
         if sampler == "EnsembleSampler":
@@ -301,6 +327,8 @@ class EmceeModel(object):
         parRange = self.p_uncertainty(low, center, high, burnin)
         if self.__modelunct:
             nameList.append("lnf")
+            nameList.append("lna")
+            nameList.append("lntau")
         pMAP = self.p_logl_max()
         ttList = ["Name", "L ({0}%)".format(low),
                   "C ({0}%)".format(center),
@@ -334,7 +362,7 @@ class EmceeModel(object):
         samples = self.posterior_sample(burnin)
         np.savetxt(filename, samples, delimiter=",")
 
-    def plot_corner(self, filename=None, burnin=50, ps=None, **kwargs):
+    def plot_corner(self, filename=None, burnin=50, ps=None, nuisance=True, **kwargs):
         """
         Plot the corner diagram that illustrate the posterior probability distribution
         of each parameter.
@@ -344,7 +372,16 @@ class EmceeModel(object):
         parname = self.__model.get_parVaryNames()
         if self.__modelunct:
             parname.append(r"$\mathrm{ln}f$")
-        fig = corner.corner(ps, labels=parname, **kwargs)
+            parname.append(r"$\mathrm{ln}a$")
+            parname.append(r"$\mathrm{ln}\tau$")
+            nNui = 3 #The number of nuisance parameters
+        else:
+            nNui = 0
+        if nuisance:
+            dim = self.__dim
+        else:
+            dim = self.__dim - nNui
+        fig = corner.corner(ps[:, 0:dim], labels=parname[0:dim], **kwargs)
         if filename is None:
             return fig
         else:
@@ -409,6 +446,8 @@ class EmceeModel(object):
         nameList = self.__model.get_parVaryNames()
         if self.__modelunct:
             nameList.append(r"$\mathrm{ln}f$")
+            nameList.append(r"$\mathrm{ln}a$")
+            nameList.append(r"$\mathrm{ln}\tau$")
         if self.__sampler == "EnsembleSampler":
             chain = sampler.chain
         elif self.__sampler == "PTSampler":

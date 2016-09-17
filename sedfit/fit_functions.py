@@ -185,7 +185,7 @@ def logLFunc_gp(params, data, model):
     sPht = (ePht**2 + (yPhtModel * f)**2)**0.5
     sSpc = (eSpc**2 + (ySpcModel * f)**2)**0.5
     #lnlikelihood for spectral data using Gaussian process regression
-    a, tau = np.exp(params[nParVary:])
+    a, tau = np.exp(params[nParVary+1:])
     gp = george.GP(a * kernels.Matern32Kernel(tau))
     gp.compute(xSpc, sSpc)
     lnlSpc = gp.lnlikelihood(ySpc - ySpcModel)
