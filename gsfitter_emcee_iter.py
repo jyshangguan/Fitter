@@ -6,6 +6,7 @@ import types
 import corner
 import importlib
 import numpy as np
+import matplotlib.pyplot as plt
 from sedfit.fitter import basicclass as bc
 from sedfit import model_functions as sedmf
 from sedfit import fit_functions   as sedff
@@ -106,6 +107,10 @@ pos, lnprob, state = em.run_mcmc(p0, iterations=iStep, printFrac=printFrac, thin
 em.diagnose()
 pmax = em.p_logl_max()
 em.print_parameters(parAllList, burnin=50)
+lnprob = em.sampler.lnprobability[:, -1]
+plt.hist(lnprob, 20, histtype='step')
+plt.savefig("lnprob.png")
+plt.close()
 
 #Burn-in rest iteration
 for i in range(iteration-1):
@@ -118,6 +123,10 @@ for i in range(iteration-1):
     em.diagnose()
     pmax = em.p_logl_max()
     em.print_parameters(parAllList, burnin=50)
+    lnprob = em.sampler.lnprobability[:, -1]
+    plt.hist(lnprob, 20, histtype='step')
+    plt.savefig("lnprob.png")
+    plt.close()
 
 #Run MCMC
 print( "\n{:*^35}".format(" Final Sampling ") )
@@ -128,6 +137,10 @@ p1 = em.p_ball(pmax, ratio=ratio)
 em.run_mcmc(p1, iterations=rStep, printFrac=printFrac, thin=thin)
 em.diagnose()
 em.print_parameters(parAllList, burnin=burnIn, low=psLow, center=psCenter, high=psHigh)
+lnprob = em.sampler.lnprobability[:, -1]
+plt.hist(lnprob, 20, histtype='step')
+plt.savefig("lnprob.png")
+plt.close()
 
 #Post process
 targname = inputModule.targname

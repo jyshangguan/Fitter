@@ -315,6 +315,7 @@ class EmceeModel(object):
         elif self.__sampler == "PTSampler":
             chain = np.squeeze(sampler.chain[0, ...])
         if select:
+            """
             _, chainLen, _ = chain.shape
             tauParList = self.integrated_time()
             fltr = np.ones(nwalkers, dtype=bool)
@@ -322,6 +323,11 @@ class EmceeModel(object):
                 tauList = np.array(tauParList[npar])
                 fltr_p  = (chainLen/tauList) > 20
                 fltr = fltr & fltr_p
+            """
+            lnprob = sampler.lnprobability[:, -1]
+            print("ps:", max(lnprob), min(lnprob))
+            lnpLim = np.percentile(lnprob, 25)
+            fltr = lnprob > lnpLim
             print("ps: {0}/{1} walkers are selected.".format(np.sum(fltr), nwalkers))
             samples = chain[fltr, burnin:, :].reshape((-1, self.__dim))
         else:
