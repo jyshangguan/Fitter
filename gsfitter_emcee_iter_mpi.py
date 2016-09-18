@@ -60,11 +60,15 @@ fTrue = mockDict.get("f_add", None)
 logl_True = mockDict['logl_true']
 if fTrue is None:
     modelUnct = False
+    lnlike = mcmc.lnlike
 else:
     modelUnct = True #Whether to consider the model uncertainty in the fitting
     parAllList.append(np.log(fTrue))
+    parAllList.append(-np.inf)
+    parAllList.append(-5)
+    lnlike = mcmc.lnlike_gp
 print("True log likelihood: {0:.3f}".format(logl_True))
-print("Calculated log likelihood: {0:.3f}".format(mcmc.log_likelihood(parAllList, sedData, sedModel)))
+print("Calculated log likelihood: {0:.3f}".format(lnlike(parAllList, sedData, sedModel)))
 
 #Fit with MCMC#
 #---------------#
