@@ -444,7 +444,24 @@ tdl07 = Template(**tp_dl07)
 modelInfo = tdl07.get_modelInfo()
 qpahList = modelInfo["qpah"]
 mdust2mh = modelInfo["mdmh"]
-def DL07(umin, umax, qpah, gamma, logMd, DL, wave, t=tdl07):
+def DL07_bak(umin, umax, qpah, gamma, logMd, DL, wave, t=tdl07):
+    pmin = [umin, umin, qpah]
+    ppl  = [umin, umax, qpah]
+    jnu_min = t(wave, pmin)
+    jnu_pl  = t(wave, ppl)
+    qpah_min = t.get_nearestParameters(pmin)[2]
+    qpah_pl = t.get_nearestParameters(ppl)[2]
+    if qpah_min != qpah_pl:
+        raise RuntimeError("The DL07 model is inconsistent!")
+    mdmh = mdust2mh[qpahList.index(qpah_min)]
+    jnu = (1 - gamma) * jnu_min + gamma * jnu_pl
+    flux = 10**logMd * Msun/m_H * jnu/(DL * Mpc)**2 / mdmh * 1e3 #unit: mJy
+    return flux
+
+def DL07(logumin, logumax, logqpah, gamma, logMd, DL, wave, t=tdl07):
+    umin = 10**logumin
+    umax = 10**logumax
+    qpah = 10**logqpah
     pmin = [umin, umin, qpah]
     ppl  = [umin, umax, qpah]
     jnu_min = t(wave, pmin)
@@ -502,7 +519,7 @@ funcLib = {
     "DL07": {
         "function": DL07,
         "x_name": "wave",
-        "param_fit": ["umin", "umax", "qpah", "gamma", "logMd"],
+        "param_fit": ["logumin", "logumax", "logqpah", "gamma", "logMd"],
         "param_add": ["t", "DL"]
     },
     "Modified_BlackBody": {
