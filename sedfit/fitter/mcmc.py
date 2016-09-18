@@ -285,12 +285,18 @@ class EmceeModel(object):
             chain = self.sampler.chain[0, ...]
         else:
             raise ValueError("{0} is an unrecognised sampler!".format(sampler))
-        tauList = []
-        for np in range(self.__dim):
-            pchain = chain[:, :, np].mean(axis=0)
-            tau, mean, sigma = acor.acor(pchain)
-            tauList.append(tau)
-        return tauList
+        tauParList = []
+        for npar in range(self.__dim):
+            tauList = []
+            for nwal in range(self.__nwalkers):
+                pchain = chain[nwal, :, npar]
+                try:
+                    tau, mean, sigma = acor.acor(pchain)
+                except:
+                    tau = np.nan
+                tauList.append(tau)
+            tauParList.append(tauList)
+        return tauParList
 
     def accfrac_mean(self):
         """
@@ -298,16 +304,28 @@ class EmceeModel(object):
         """
         return np.mean(self.sampler.acceptance_fraction)
 
-    def posterior_sample(self, burnin=0):
+    def posterior_sample(self, burnin=0, select=False):
         """
         Return the samples merging from the chains of all the walkers.
         """
-        sampler = self.sampler
+        sampler  = self.sampler
+        nwalkers = self.__nwalkers
         if self.__sampler == "EnsembleSampler":
             chain = sampler.chain
         elif self.__sampler == "PTSampler":
             chain = np.squeeze(sampler.chain[0, ...])
-        samples = chain[:, burnin:, :].reshape((-1, self.__dim))
+        if select:
+            _, chainLen, _ = chain.shape
+            tauParList = self.integrated_time()
+            fltr = np.ones(nwalkers, dtype=bool)
+            for npar in range(self.__dim):
+                tauList = np.array(tauParList[npar])
+                fltr_p  = (chainLen/tauList) > 20
+                fltr = fltr & fltr_p
+            print("ps: {0}/{1} walkers are selected.".format(np.sum(fltr), nwalkers))
+            samples = chain[fltr, burnin:, :].reshape((-1, self.__dim))
+        else:
+            samples = chain[:, burnin:, :].reshape((-1, self.__dim))
         return samples
 
     def p_uncertainty(self, low=1, center=50, high=99, burnin=50):
@@ -355,20 +373,20 @@ class EmceeModel(object):
         p_logl_max = self.p_logl_max()
         print("lnL_max: {0:.3e}".format(self.get_logl(p_logl_max)))
 
-    def Save_Samples(self, filename, burnin=50):
+    def Save_Samples(self, filename, burnin=0):
         """
         Save the posterior samples.
         """
         samples = self.posterior_sample(burnin)
         np.savetxt(filename, samples, delimiter=",")
 
-    def plot_corner(self, filename=None, burnin=50, ps=None, nuisance=True, **kwargs):
+    def plot_corner(self, filename=None, burnin=0, select=True, ps=None, nuisance=True, **kwargs):
         """
         Plot the corner diagram that illustrate the posterior probability distribution
         of each parameter.
         """
         if ps is None:
-            ps = self.posterior_sample(burnin)
+            ps = self.posterior_sample(burnin, select)
         parname = self.__model.get_parVaryNames()
         if self.__modelunct:
             parname.append(r"$\mathrm{ln}f$")
@@ -474,10 +492,18 @@ class EmceeModel(object):
         """
         Diagnose whether the MCMC run is reliable.
         """
+        nameList = self.__model.get_parVaryNames(latex=False)
+        if self.__modelunct:
+            nameList.append("lnf")
+            nameList.append("lna")
+            nameList.append("lntau")
         print("---------------------------------")
         print("Mean acceptance fraction: {0:.3f}".format(self.accfrac_mean()))
-        print("PN: ACT")
-        print('\n'.join('{l[0]}: {l[1]:.3f}'.format(l=k) for k in enumerate(self.integrated_time())))
+        print("PN       : ACT (min-max)")
+        it = self.integrated_time()
+        for loop in range(self.__dim):
+            itPar = it[loop]
+            print("{0:9s}: {i[0]:.3f}-{i[1]:.3f}".format(nameList[loop], i=[min(itPar), max(itPar)]))
 
     def sampler_type(self):
         return self.__sampler
