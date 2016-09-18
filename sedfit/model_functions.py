@@ -458,10 +458,9 @@ def DL07_bak(umin, umax, qpah, gamma, logMd, DL, wave, t=tdl07):
     flux = 10**logMd * Msun/m_H * jnu/(DL * Mpc)**2 / mdmh * 1e3 #unit: mJy
     return flux
 
-def DL07(logumin, logumax, logqpah, gamma, logMd, DL, wave, t=tdl07):
+def DL07(logumin, logumax, qpah, gamma, logMd, DL, wave, t=tdl07):
     umin = 10**logumin
     umax = 10**logumax
-    qpah = 10**logqpah
     pmin = [umin, umin, qpah]
     ppl  = [umin, umax, qpah]
     jnu_min = t(wave, pmin)
@@ -519,7 +518,7 @@ funcLib = {
     "DL07": {
         "function": DL07,
         "x_name": "wave",
-        "param_fit": ["logumin", "logumax", "logqpah", "gamma", "logMd"],
+        "param_fit": ["logumin", "logumax", "qpah", "gamma", "logMd"],
         "param_add": ["t", "DL"]
     },
     "Modified_BlackBody": {
