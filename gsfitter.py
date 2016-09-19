@@ -2,8 +2,6 @@ from __future__ import print_function
 import matplotlib
 matplotlib.use("Agg")
 import sys
-import types
-import corner
 import importlib
 import numpy as np
 from sedfit.fitter import mcmc
@@ -23,6 +21,26 @@ parser.add_option("-m", "--mpi",
                   help="run the code with multiple cores")
 (options, args) = parser.parse_args()
 
+#Parallel computing setup#
+#------------------------#
+runMPI = options.runmpi
+if runMPI:
+    # Initialize the MPI-based pool used for parallelization.
+    pool = MPIPool(loadbalance=True)
+    if not pool.is_master():
+        # Wait for instructions from the master process.
+        pool.wait()
+        sys.exit(0)
+    print("**Running with MPI...")
+else:
+    print("**Running with multiple threads...")
+
+#The code starts#
+#---------------#
+print("############################")
+print("# Galaxy SED Fitter starts #")
+print("############################")
+
 #Load the input module#
 #---------------------#
 moduleName = options.filename
@@ -39,20 +57,6 @@ sedData = inputModule.sedData
 sedModel = inputModule.sedModel
 parAllList = inputModule.parAllList
 ndim = len(parAllList)
-
-#Parallel computing setup#
-#------------------------#
-runMPI = options.runmpi
-if runMPI:
-    # Initialize the MPI-based pool used for parallelization.
-    pool = MPIPool(loadbalance=True)
-    if not pool.is_master():
-        # Wait for instructions from the master process.
-        pool.wait()
-        sys.exit(0)
-    print("**Running with MPI...")
-else:
-    print("**Running with multiple threads...")
 
 #Fit with MCMC#
 #---------------#
