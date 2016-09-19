@@ -41,34 +41,11 @@ inputModule = importlib.import_module(moduleName)
 #--------------#
 sedData = inputModule.sedData
 
-#Build up the model#
-#------------------#
-
-parAddDict_all = {
-    "DL": sedData.dl,
-}
-funcLib    = sedmf.funcLib
-waveModel = inputModule.waveModel
-modelDict = inputModule.inputModelDict
-sedModel = bc.Model_Generator(modelDict, funcLib, waveModel, parAddDict_all)
-parAllList = sedModel.get_parVaryList()
-#print(sedModel.get_parVaryRanges())
-
-
-mockDict = inputModule.mockDict
-fTrue = mockDict.get("f_add", None)
-logl_True = mockDict['logl_true']
-if fTrue is None:
-    modelUnct = False
-    lnlike = mcmc.lnlike
-else:
-    modelUnct = True #Whether to consider the model uncertainty in the fitting
-    parAllList.append(np.log(fTrue))
-    parAllList.append(-np.inf)
-    parAllList.append(-5)
-    lnlike = mcmc.lnlike_gp
-print("True log likelihood: {0:.3f}".format(logl_True))
-print("Calculated log likelihood: {0:.3f}".format(lnlike(parAllList, sedData, sedModel)))
+#Input model#
+#-----------#
+sedModel = inputModule.sedModel
+parAllList = inputModule.parAllList
+ndim = len(parAllList)
 
 #Fit with MCMC#
 #---------------#
@@ -90,12 +67,12 @@ psLow    = ppDict["low"]
 psCenter = ppDict["center"]
 psHigh   = ppDict["high"]
 
-ndim = len(parAllList)
 print("#--------------------------------#")
 print("emcee Info:")
 for keys in emceeDict.keys():
     print("{0}: {1}".format(keys, emceeDict[keys]))
 print("#--------------------------------#")
+modelUnct = inputModule.modelUnct
 em = mcmc.EmceeModel(sedData, sedModel, modelUnct, imSampler)
 
 if imSampler == "PTSampler":
