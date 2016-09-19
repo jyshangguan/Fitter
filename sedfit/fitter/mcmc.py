@@ -488,6 +488,23 @@ class EmceeModel(object):
             plt.savefig(filename)
             plt.close()
 
+    def plot_lnlike(self, filename=None, iterList=[0.5, 0.8, 1.0], **kwargs):
+        lnprob = self.sampler.lnprobability
+        _, niter = lnprob.shape
+        iterList = np.around(niter * np.array(iterList)) - 1
+        fig = plt.figure()
+        for i in iterList:
+            l = lnprob[:, i]
+            print("plol_lnlike: ", min(l), max(l))
+            plt.hist(l, label="iter: {0}".format(i), **kwargs)
+        plt.legend(loc="upper left")
+        if filename is None:
+            ax = plt.gca()
+            return (fig, ax)
+        else:
+            plt.savefig(filename)
+            plt.close()
+
     def reset(self):
         """
         Reset the sampler, for completeness.
