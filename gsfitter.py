@@ -23,26 +23,6 @@ parser.add_option("-m", "--mpi",
                   help="run the code with multiple cores")
 (options, args) = parser.parse_args()
 
-#Parallel computing setup#
-#------------------------#
-runMPI = options.runmpi
-if runMPI:
-    # Initialize the MPI-based pool used for parallelization.
-    pool = MPIPool(loadbalance=True)
-    if not pool.is_master():
-        # Wait for instructions from the master process.
-        pool.wait()
-        sys.exit(0)
-    print("**Running with MPI...")
-else:
-    print("**Running with multiple threads...")
-
-#The code starts#
-#---------------#
-print("############################")
-print("# Galaxy SED Fitter starts #")
-print("############################")
-
 #Load the input module#
 #---------------------#
 moduleName = options.filename
@@ -60,6 +40,19 @@ sedModel = inputModule.sedModel
 parAllList = inputModule.parAllList
 ndim = len(parAllList)
 
+#Parallel computing setup#
+#------------------------#
+runMPI = options.runmpi
+if runMPI:
+    # Initialize the MPI-based pool used for parallelization.
+    pool = MPIPool(loadbalance=True)
+    if not pool.is_master():
+        # Wait for instructions from the master process.
+        pool.wait()
+        sys.exit(0)
+    print("**Running with MPI...")
+else:
+    print("**Running with multiple threads...")
 
 #Fit with MCMC#
 #---------------#
@@ -103,7 +96,7 @@ elif imSampler == "EnsembleSampler":
     if runMPI:
         sampler = em.EnsembleSampler(nwalkers, pool=pool)
     else:
-        sampler = em.EnsembleSampler(nwalkers, threads=threads, a=2.0)
+        sampler = em.EnsembleSampler(nwalkers, threads=threads)
 else:
     raise RuntimeError("Cannot recognise the sampler '{0}'!".format(imSampler))
 
