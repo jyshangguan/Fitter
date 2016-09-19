@@ -94,10 +94,16 @@ if imSampler == "PTSampler":
     for loop_t in range(ntemps):
         for loop_w in range(nwalkers):
             p0[loop_t, loop_w, :] = em.from_prior()
-    sampler = em.PTSampler(ntemps, nwalkers, threads=threads)
+    if runMPI:
+        sampler = em.PTSampler(ntemps, nwalkers, pool=pool)
+    else:
+        sampler = em.PTSampler(ntemps, nwalkers, threads=threads)
 elif imSampler == "EnsembleSampler":
     p0 = [em.from_prior() for i in range(nwalkers)]
-    sampler = em.EnsembleSampler(nwalkers, threads=threads, a=2.0)
+    if runMPI:
+        sampler = em.EnsembleSampler(nwalkers, pool=pool)
+    else:
+        sampler = em.EnsembleSampler(nwalkers, threads=threads, a=2.0)
 else:
     raise RuntimeError("Cannot recognise the sampler '{0}'!".format(imSampler))
 
