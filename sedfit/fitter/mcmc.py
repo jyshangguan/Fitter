@@ -495,7 +495,6 @@ class EmceeModel(object):
         fig = plt.figure()
         for i in iterList:
             l = lnprob[:, i]
-            print("plol_lnlike: ", min(l), max(l))
             plt.hist(l, label="iter: {0}".format(i), **kwargs)
         plt.legend(loc="upper left")
         if filename is None:
