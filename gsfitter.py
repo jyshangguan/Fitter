@@ -28,7 +28,7 @@ parser.add_option("-m", "--mpi",
 runMPI = options.runmpi
 if runMPI:
     # Initialize the MPI-based pool used for parallelization.
-    pool = MPIPool()
+    pool = MPIPool(loadbalance=True)
     if not pool.is_master():
         # Wait for instructions from the master process.
         pool.wait()
