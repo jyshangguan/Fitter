@@ -315,6 +315,7 @@ class EmceeModel(object):
         elif self.__sampler == "PTSampler":
             chain = np.squeeze(sampler.chain[0, ...])
         if select:
+            """
             _, chainLen, _ = chain.shape
             tauParList = self.integrated_time()
             fltr = np.ones(nwalkers, dtype=bool)
@@ -322,6 +323,11 @@ class EmceeModel(object):
                 tauList = np.array(tauParList[npar])
                 fltr_p  = (chainLen/tauList) > 20
                 fltr = fltr & fltr_p
+            """
+            lnprob = sampler.lnprobability[:, -1]
+            print("ps:", max(lnprob), min(lnprob))
+            lnpLim = np.percentile(lnprob, 25)
+            fltr = lnprob > lnpLim
             print("ps: {0}/{1} walkers are selected.".format(np.sum(fltr), nwalkers))
             samples = chain[fltr, burnin:, :].reshape((-1, self.__dim))
         else:
@@ -478,6 +484,23 @@ class EmceeModel(object):
             axes[loop].set_ylabel(nameList[loop], fontsize=24)
         if filename is None:
             return (fig, axes)
+        else:
+            plt.savefig(filename)
+            plt.close()
+
+    def plot_lnlike(self, filename=None, iterList=[0.5, 0.8, 1.0], **kwargs):
+        lnprob = self.sampler.lnprobability
+        _, niter = lnprob.shape
+        iterList = np.around(niter * np.array(iterList)) - 1
+        fig = plt.figure()
+        for i in iterList:
+            l = lnprob[:, i]
+            print("plol_lnlike: ", min(l), max(l))
+            plt.hist(l, label="iter: {0}".format(i), **kwargs)
+        plt.legend(loc="upper left")
+        if filename is None:
+            ax = plt.gca()
+            return (fig, ax)
         else:
             plt.savefig(filename)
             plt.close()
