@@ -6,6 +6,7 @@ import types
 import corner
 import importlib
 import numpy as np
+import matplotlib.pyplot as plt
 from sedfit.fitter import mcmc
 from optparse import OptionParser
 from emcee.utils import MPIPool
@@ -145,12 +146,20 @@ if runMPI:
     pool.close()
 
 #Post process
-em.Save_Samples("{0}_samples.txt".format(targname), burnin=0)
+em.Save_Samples("{0}_samples.txt".format(targname), burnin=burnIn, select=True, fraction=25)
 em.plot_chain(filename="{0}_chain.png".format(targname), truths=parTruth)
 em.plot_corner(filename="{0}_triangle.png".format(targname), burnin=burnIn,
                nuisance=nuisance, truths=parTruth,
                quantiles=[psLow/100., psCenter/100., psHigh/100.], show_titles=True,
                title_kwargs={"fontsize": 20})
-em.plot_fit(filename="{0}_result.png".format(targname), truths=parTruth, burnin=burnIn,
-            low=psLow, center=psCenter, high=psHigh)
+#em.plot_fit(filename="{0}_result.png".format(targname), truths=parTruth, burnin=burnIn,
+#            low=psLow, center=psCenter, high=psHigh)
+fig, axarr = plt.subplots(2, 1)
+fig.set_size_inches(10, 10)
+em.plot_fit_spec(truths=parTruth, FigAx=(fig, axarr[0]), burnin=burnIn,
+                 low=psLow, center=psCenter, high=psHigh, ps=ps)
+em.plot_fit(truths=parTruth, FigAx=(fig, axarr[1]), burnin=burnIn,
+            low=psLow, center=psCenter, high=psHigh, ps=ps)
+plt.savefig("{0}_result.png".format(targname), bbox_inches="tight")
+plt.close()
 print("Post-processed!")
