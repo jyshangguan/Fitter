@@ -7,22 +7,47 @@ import corner
 import importlib
 import numpy as np
 from sedfit.fitter import mcmc
+from optparse import OptionParser
+from emcee.utils import MPIPool
+
+#Parse the commands#
+#-------------------#
+parser = OptionParser()
+parser.add_option("-f", "--file", dest="filename", default="input_emcee.py",
+                  help="write report to FILE", metavar="FILE")
+parser.add_option("-q", "--quiet",
+                  action="store_false", dest="verbose", default=True,
+                  help="don't print status messages to stdout")
+parser.add_option("-m", "--mpi",
+                  action="store_true", dest="runmpi", default=False,
+                  help="run the code with multiple cores")
+(options, args) = parser.parse_args()
+
+#Parallel computing setup#
+#------------------------#
+runMPI = options.runmpi
+if runMPI:
+    # Initialize the MPI-based pool used for parallelization.
+    pool = MPIPool()
+    if not pool.is_master():
+        # Wait for instructions from the master process.
+        pool.wait()
+        sys.exit(0)
+    print("**Running with MPI...")
+else:
+    print("**Running with multiple threads...")
 
 #The code starts#
 #---------------#
 print("############################")
 print("# Galaxy SED Fitter starts #")
 print("############################")
-print("\n")
 
-#Load the input info#
-#-------------------#
-if len(sys.argv) > 1:
-    moduleName = sys.argv[1]
-else:
-    moduleName = "input_emcee"
+#Load the input module#
+#---------------------#
+moduleName = options.filename
 print("Input module: {0}".format(moduleName))
-inputModule = importlib.import_module(moduleName)
+inputModule = importlib.import_module(moduleName.split(".")[0])
 targname = inputModule.targname
 
 #Input SED data#
@@ -107,6 +132,10 @@ em.run_mcmc(p1, iterations=rStep, printFrac=printFrac, thin=thin)
 em.diagnose()
 em.print_parameters(parAllList, burnin=burnIn, low=psLow, center=psCenter, high=psHigh)
 em.plot_lnlike(filename="{0}_lnprob.png".format(targname), histtype="step")
+
+#Close the pools
+if runMPI:
+    pool.close()
 
 #Post process
 em.plot_chain(filename="{0}_chain.png".format(targname), truths=parAllList)
