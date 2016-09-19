@@ -421,6 +421,7 @@ class EmceeModel(object):
         parRange  = self.p_uncertainty(**kwargs)
         waveModel = sedModel.get_xList()
         plow = parRange[0, :]
+        pcnt = parRange[1, :]
         phgh = parRange[2, :]
         pmax = self.p_logl_max()
         sedModel.updateParList(pmax)
@@ -480,7 +481,8 @@ class EmceeModel(object):
         for loop in range(dim):
             axes[loop].plot(chain[:, :, loop].T, color="k", alpha=0.4)
             axes[loop].yaxis.set_major_locator(MaxNLocator(5))
-            axes[loop].axhline(truths[loop], color="r", lw=2)
+            if not truths is None:
+                axes[loop].axhline(truths[loop], color="r", lw=2)
             axes[loop].set_ylabel(nameList[loop], fontsize=24)
         if filename is None:
             return (fig, axes)

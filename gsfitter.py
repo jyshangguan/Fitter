@@ -23,6 +23,26 @@ parser.add_option("-m", "--mpi",
                   help="run the code with multiple cores")
 (options, args) = parser.parse_args()
 
+#Parallel computing setup#
+#------------------------#
+runMPI = options.runmpi
+if runMPI:
+    # Initialize the MPI-based pool used for parallelization.
+    pool = MPIPool(loadbalance=True)
+    if not pool.is_master():
+        # Wait for instructions from the master process.
+        pool.wait()
+        sys.exit(0)
+    print("**Running with MPI...")
+else:
+    print("**Running with multiple threads...")
+
+#The code starts#
+#---------------#
+print("############################")
+print("# Galaxy SED Fitter starts #")
+print("############################")
+
 #Load the input module#
 #---------------------#
 moduleName = options.filename
@@ -38,21 +58,8 @@ sedData = inputModule.sedData
 #-----------#
 sedModel = inputModule.sedModel
 parAllList = inputModule.parAllList
+parTruth   = inputModule.parTruth
 ndim = len(parAllList)
-
-#Parallel computing setup#
-#------------------------#
-runMPI = options.runmpi
-if runMPI:
-    # Initialize the MPI-based pool used for parallelization.
-    pool = MPIPool(loadbalance=True)
-    if not pool.is_master():
-        # Wait for instructions from the master process.
-        pool.wait()
-        sys.exit(0)
-    print("**Running with MPI...")
-else:
-    print("**Running with multiple threads...")
 
 #Fit with MCMC#
 #---------------#
@@ -73,6 +80,7 @@ ppDict   = inputModule.ppDict
 psLow    = ppDict["low"]
 psCenter = ppDict["center"]
 psHigh   = ppDict["high"]
+nuisance = ppDict["nuisance"]
 
 print("#--------------------------------#")
 print("emcee Info:")
@@ -105,7 +113,7 @@ print( "\n{:*^35}".format(" {0}th iteration ".format(0)) )
 em.run_mcmc(p0, iterations=iStep, printFrac=printFrac, thin=thin)
 em.diagnose()
 pmax = em.p_logl_max()
-em.print_parameters(parAllList, burnin=50)
+em.print_parameters(truths=parTruth, burnin=50)
 em.plot_lnlike(filename="{0}_lnprob.png".format(targname), histtype="step")
 
 #Burn-in rest iteration
@@ -118,7 +126,7 @@ for i in range(iteration-1):
     em.run_mcmc(p1, iterations=iStep, printFrac=printFrac, thin=thin)
     em.diagnose()
     pmax = em.p_logl_max()
-    em.print_parameters(parAllList, burnin=50)
+    em.print_parameters(truths=parTruth, burnin=50)
     em.plot_lnlike(filename="{0}_lnprob.png".format(targname), histtype="step")
 
 #Run MCMC
@@ -129,7 +137,7 @@ print("-- P1 ball radius ratio: {0:.3f}".format(ratio))
 p1 = em.p_ball(pmax, ratio=ratio)
 em.run_mcmc(p1, iterations=rStep, printFrac=printFrac, thin=thin)
 em.diagnose()
-em.print_parameters(parAllList, burnin=burnIn, low=psLow, center=psCenter, high=psHigh)
+em.print_parameters(truths=parTruth, burnin=burnIn, low=psLow, center=psCenter, high=psHigh)
 em.plot_lnlike(filename="{0}_lnprob.png".format(targname), histtype="step")
 
 #Close the pools
@@ -137,11 +145,12 @@ if runMPI:
     pool.close()
 
 #Post process
-em.plot_chain(filename="{0}_chain.png".format(targname), truths=parAllList)
-em.plot_corner(filename="{0}_triangle.png".format(targname), burnin=burnIn, truths=parAllList,
+em.Save_Samples("{0}_samples.txt".format(targname), burnin=0)
+em.plot_chain(filename="{0}_chain.png".format(targname), truths=parTruth)
+em.plot_corner(filename="{0}_triangle.png".format(targname), burnin=burnIn,
+               nuisance=nuisance, truths=parTruth,
                quantiles=[psLow/100., psCenter/100., psHigh/100.], show_titles=True,
                title_kwargs={"fontsize": 20})
-em.plot_fit(filename="{0}_result.png".format(targname), truths=parAllList, burnin=burnIn,
+em.plot_fit(filename="{0}_result.png".format(targname), truths=parTruth, burnin=burnIn,
             low=psLow, center=psCenter, high=psHigh)
-em.Save_Samples("{0}_samples.txt".format(targname), burnin=0)
 print("Post-processed!")

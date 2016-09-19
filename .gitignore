@@ -16,5 +16,6 @@ sv_*.py
 aux_*.py
 
 #SED data
+data/*
 *.sed
 *.tmplt
