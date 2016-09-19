@@ -6,6 +6,7 @@ import types
 import corner
 import importlib
 import numpy as np
+import matplotlib.pyplot as plt
 from sedfit.fitter import basicclass as bc
 from sedfit import model_functions as sedmf
 from sedfit import fit_functions   as sedff
@@ -26,6 +27,7 @@ else:
     moduleName = "input_emcee"
 print("Input module: {0}".format(moduleName))
 inputModule = importlib.import_module(moduleName)
+targname = inputModule.targname
 
 #Input SED data#
 #--------------#
@@ -102,10 +104,11 @@ else:
 
 #Burn-in 1st
 print( "\n{:*^35}".format(" {0}th iteration ".format(0)) )
-pos, lnprob, state = em.run_mcmc(p0, iterations=iStep, printFrac=printFrac, thin=thin)
+em.run_mcmc(p0, iterations=iStep, printFrac=printFrac, thin=thin)
 em.diagnose()
 pmax = em.p_logl_max()
 em.print_parameters(parAllList, burnin=50)
+em.plot_lnlike(filename="{0}_lnprob.png".format(targname), histtype="step")
 
 #Burn-in rest iteration
 for i in range(iteration-1):
@@ -118,6 +121,7 @@ for i in range(iteration-1):
     em.diagnose()
     pmax = em.p_logl_max()
     em.print_parameters(parAllList, burnin=50)
+    em.plot_lnlike(filename="{0}_lnprob.png".format(targname), histtype="step")
 
 #Run MCMC
 print( "\n{:*^35}".format(" Final Sampling ") )
@@ -128,9 +132,9 @@ p1 = em.p_ball(pmax, ratio=ratio)
 em.run_mcmc(p1, iterations=rStep, printFrac=printFrac, thin=thin)
 em.diagnose()
 em.print_parameters(parAllList, burnin=burnIn, low=psLow, center=psCenter, high=psHigh)
+em.plot_lnlike(filename="{0}_lnprob.png".format(targname), histtype="step")
 
 #Post process
-targname = inputModule.targname
 em.plot_chain(filename="{0}_chain.png".format(targname), truths=parAllList)
 em.plot_corner(filename="{0}_triangle.png".format(targname), burnin=burnIn, truths=parAllList,
                quantiles=[psLow/100., psCenter/100., psHigh/100.], show_titles=True,
