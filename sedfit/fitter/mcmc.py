@@ -494,7 +494,7 @@ class EmceeModel(object):
         iterList = np.around(niter * np.array(iterList)) - 1
         fig = plt.figure()
         for i in iterList:
-            l = lnprob[:, i]
+            l = lnprob[:, int(i)]
             plt.hist(l, label="iter: {0}".format(i), **kwargs)
         plt.legend(loc="upper left")
         if filename is None:
