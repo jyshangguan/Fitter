@@ -157,9 +157,9 @@ em.plot_corner(filename="{0}_triangle.png".format(targname), burnin=burnIn,
 fig, axarr = plt.subplots(2, 1)
 fig.set_size_inches(10, 10)
 em.plot_fit_spec(truths=parTruth, FigAx=(fig, axarr[0]), burnin=burnIn,
-                 low=psLow, center=psCenter, high=psHigh, ps=ps)
+                 low=psLow, center=psCenter, high=psHigh)
 em.plot_fit(truths=parTruth, FigAx=(fig, axarr[1]), burnin=burnIn,
-            low=psLow, center=psCenter, high=psHigh, ps=ps)
+            low=psLow, center=psCenter, high=psHigh)
 plt.savefig("{0}_result.png".format(targname), bbox_inches="tight")
 plt.close()
 print("Post-processed!")

@@ -76,13 +76,11 @@ em = mcmc.EmceeModel(sedData, sedModel, modelUnct, imSampler)
 ps = np.loadtxt("{0}_samples.txt".format(targname), delimiter=",")
 
 #Plot the corner diagram
-"""
 em.plot_corner(filename="{0}_triangle.png".format(targname), burnin=burnIn,
                ps=ps, nuisance=nuisance, truths=parTruth,
                quantiles=[psLow/100., psCenter/100., psHigh/100.], show_titles=True,
                title_kwargs={"fontsize": 20})
 print("Triangle plot finished!")
-"""
 
 #Plot the SED data and fit
 fig, axarr = plt.subplots(2, 1)

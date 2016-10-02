@@ -485,9 +485,9 @@ class EmceeModel(object):
         fig, ax = sedData.plot_sed(FigAx=FigAx)
         cList = ["r", "g", "b", "m", "y", "c"]
         ncolor = len(cList)
-        ax.plot(waveModel, ycnt, color="brown", linewidth=1.5, linestyle="--", alpha=0.5, label="Total")
+        ax.plot(waveModel, ycnt, color="brown", linewidth=1.5, linestyle="--", label="Total")
         ax.fill_between(waveModel, ylow, yhgh, color="brown", alpha=0.1)
-        ax.set_xlabel(r"Wavelength ($\mu m$)", fontsize=24)
+        ax.set_xlabel("")
         ax.set_ylabel(r"$f_\nu$ (mJy)", fontsize=24)
         modelList = sedModel._modelList
         counter = 0
