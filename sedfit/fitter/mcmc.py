@@ -304,7 +304,7 @@ class EmceeModel(object):
         """
         return np.mean(self.sampler.acceptance_fraction)
 
-    def posterior_sample(self, burnin=0, select=False):
+    def posterior_sample(self, burnin=0, select=False, fraction=25):
         """
         Return the samples merging from the chains of all the walkers.
         """
@@ -315,18 +315,8 @@ class EmceeModel(object):
         elif self.__sampler == "PTSampler":
             chain = np.squeeze(sampler.chain[0, ...])
         if select:
-            """
-            _, chainLen, _ = chain.shape
-            tauParList = self.integrated_time()
-            fltr = np.ones(nwalkers, dtype=bool)
-            for npar in range(self.__dim):
-                tauList = np.array(tauParList[npar])
-                fltr_p  = (chainLen/tauList) > 20
-                fltr = fltr & fltr_p
-            """
             lnprob = sampler.lnprobability[:, -1]
-            print("ps:", max(lnprob), min(lnprob))
-            lnpLim = np.percentile(lnprob, 25)
+            lnpLim = np.percentile(lnprob, fraction)
             fltr = lnprob > lnpLim
             print("ps: {0}/{1} walkers are selected.".format(np.sum(fltr), nwalkers))
             samples = chain[fltr, burnin:, :].reshape((-1, self.__dim))
@@ -334,11 +324,14 @@ class EmceeModel(object):
             samples = chain[:, burnin:, :].reshape((-1, self.__dim))
         return samples
 
-    def p_uncertainty(self, low=1, center=50, high=99, burnin=50):
+    def p_uncertainty(self, low=1, center=50, high=99, burnin=50, ps=None, **kwargs):
         """
         Return the uncertainty of each parameter according to its posterior sample.
         """
-        ps = self.posterior_sample(burnin)
+        if ps is None:
+            ps = self.posterior_sample(burnin=burnin, **kwargs)
+        else:
+            pass
         parRange = np.percentile(ps, [low, center, high], axis=0)
         return parRange
 
@@ -379,11 +372,11 @@ class EmceeModel(object):
         p_logl_max = self.p_logl_max()
         print("lnL_max: {0:.3e}".format(self.get_logl(p_logl_max)))
 
-    def Save_Samples(self, filename, burnin=0):
+    def Save_Samples(self, filename, **kwargs):
         """
         Save the posterior samples.
         """
-        samples = self.posterior_sample(burnin)
+        samples = self.posterior_sample(**kwargs)
         np.savetxt(filename, samples, delimiter=",")
 
     def plot_corner(self, filename=None, burnin=0, select=True, ps=None, nuisance=True, **kwargs):
@@ -421,11 +414,12 @@ class EmceeModel(object):
         parRange  = self.p_uncertainty(**kwargs)
         waveModel = sedModel.get_xList()
         plow = parRange[0, :]
+        pcnt = parRange[1, :]
         phgh = parRange[2, :]
-        pmax = self.p_logl_max()
-        sedModel.updateParList(pmax)
-        ymax = sedModel.combineResult()
-        ymax_cmp = sedModel.componentResult()
+        #pmax = self.p_logl_max()
+        sedModel.updateParList(pcnt)
+        ycnt = sedModel.combineResult()
+        ycnt_cmp = sedModel.componentResult()
         sedModel.updateParList(phgh)
         yhgh = sedModel.combineResult()
         yhgh_cmp = sedModel.componentResult()
@@ -435,14 +429,14 @@ class EmceeModel(object):
         fig, ax = sedData.plot_sed(FigAx=FigAx)
         cList = ["r", "g", "b", "m", "y", "c"]
         ncolor = len(cList)
-        ax.plot(waveModel, ymax, color="brown", linewidth=3.0, linestyle="--", label="Total")
+        ax.plot(waveModel, ycnt, color="brown", linewidth=3.0, linestyle="--", label="Total")
         ax.fill_between(waveModel, ylow, yhgh, color="brown", alpha=0.1)
         ax.set_xlabel(r"Wavelength ($\mu m$)", fontsize=24)
         ax.set_ylabel(r"$f_\nu$ (mJy)", fontsize=24)
         modelList = sedModel._modelList
         counter = 0
         for modelName in modelList:
-            ax.plot(waveModel, ymax_cmp[modelName], color=cList[counter%ncolor],
+            ax.plot(waveModel, ycnt_cmp[modelName], color=cList[counter%ncolor],
                     linestyle="--", label=modelName)
             ax.fill_between(waveModel, ylow_cmp[modelName], yhgh_cmp[modelName],
                              color=cList[counter], alpha=0.1)
@@ -456,11 +450,73 @@ class EmceeModel(object):
             for modelName in modelList:
                 ax.plot(waveModel, ytrue_cmp[modelName], color=cList[counter%ncolor])
                 counter += 1
+        yData = sedData.get_List("y")
+        ymin = 10**(np.floor(np.log10(min(yData))) - 1)
+        ymax = 10**np.ceil(np.log10(max(yData)))
+        ax.set_ylim([ymin, ymax])
+        ax.legend(loc="lower right", framealpha=0.3, fontsize=20)
         if filename is None:
             return (fig, ax)
         else:
-            plt.ylim([1e-2, 1e4])
-            plt.legend(loc="lower right")
+            plt.savefig(filename, bbox_inches="tight")
+            plt.close()
+
+    def plot_fit_spec(self, filename=None, truths=None, FigAx=None, **kwargs):
+        """
+        Plot the best-fit model and the data.
+        """
+        sedData   = self.__data
+        sedModel  = self.__model
+        parRange  = self.p_uncertainty(**kwargs)
+        waveModel = sedModel.get_xList()
+        plow = parRange[0, :]
+        pcnt = parRange[1, :]
+        phgh = parRange[2, :]
+        #pmax = self.p_logl_max()
+        sedModel.updateParList(pcnt)
+        ycnt = sedModel.combineResult()
+        ycnt_cmp = sedModel.componentResult()
+        sedModel.updateParList(phgh)
+        yhgh = sedModel.combineResult()
+        yhgh_cmp = sedModel.componentResult()
+        sedModel.updateParList(plow)
+        ylow = sedModel.combineResult()
+        ylow_cmp = sedModel.componentResult()
+        fig, ax = sedData.plot_sed(FigAx=FigAx)
+        cList = ["r", "g", "b", "m", "y", "c"]
+        ncolor = len(cList)
+        ax.plot(waveModel, ycnt, color="brown", linewidth=1.5, linestyle="--", label="Total")
+        ax.fill_between(waveModel, ylow, yhgh, color="brown", alpha=0.1)
+        ax.set_xlabel("")
+        ax.set_ylabel(r"$f_\nu$ (mJy)", fontsize=24)
+        modelList = sedModel._modelList
+        counter = 0
+        for modelName in modelList:
+            ax.plot(waveModel, ycnt_cmp[modelName], color=cList[counter%ncolor],
+                    linestyle="--", label=modelName)
+            ax.fill_between(waveModel, ylow_cmp[modelName], yhgh_cmp[modelName],
+                             color=cList[counter], alpha=0.1)
+            counter += 1
+        if not truths is None:
+            sedModel.updateParList(truths)
+            ytrue = sedModel.combineResult()
+            ytrue_cmp = sedModel.componentResult()
+            ax.plot(waveModel, ytrue, color="k", linestyle="-")
+            counter = 0
+            for modelName in modelList:
+                ax.plot(waveModel, ytrue_cmp[modelName], color=cList[counter%ncolor])
+                counter += 1
+        xData = sedData.get_csList("x")
+        yData = sedData.get_csList("y")
+        xmin = min(xData)*0.8
+        xmax = max(xData)*1.2
+        ymin = min(yData)*0.5
+        ymax = max(yData)*2.0
+        ax.set_xlim([xmin, xmax])
+        ax.set_ylim([ymin, ymax])
+        if filename is None:
+            return (fig, ax)
+        else:
             plt.savefig(filename, bbox_inches="tight")
             plt.close()
 
@@ -480,7 +536,8 @@ class EmceeModel(object):
         for loop in range(dim):
             axes[loop].plot(chain[:, :, loop].T, color="k", alpha=0.4)
             axes[loop].yaxis.set_major_locator(MaxNLocator(5))
-            axes[loop].axhline(truths[loop], color="r", lw=2)
+            if not truths is None:
+                axes[loop].axhline(truths[loop], color="r", lw=2)
             axes[loop].set_ylabel(nameList[loop], fontsize=24)
         if filename is None:
             return (fig, axes)
