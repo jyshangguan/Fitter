@@ -2,8 +2,6 @@ from __future__ import print_function
 import matplotlib
 matplotlib.use("Agg")
 import sys
-import types
-import corner
 import importlib
 import numpy as np
 import matplotlib.pyplot as plt
