@@ -14,6 +14,41 @@ m_H = 1.6726219e-24 #unit: gram
 Msun = 1.9891e33 #unit: gram
 Mpc = 3.08567758e24 #unit: cm
 
+fp = open("/Users/jinyi/Work/mcmc/Fitter/template/bc03_kdt.tmplt")
+tp_bc03 = pickle.load(fp)
+fp.close()
+bc03 = Template(**tp_bc03)
+def BC03(logMs, age, DL, wave, t=bc03):
+    """
+    This function call the interpolated BC03 template to generate the stellar
+    emission SED with the given parameters.
+
+    Parameters
+    ----------
+    logMs : float
+        The log10 of stellar mass with the unit solar mass.
+    age : float
+        The age of the stellar population with the unit Gyr.
+    DL : float
+        The luminosity distance with the unit Mpc.
+    wave : float array
+        The wavelength of the SED.
+    t : Template class
+        The interpolated BC03 template.
+
+    Returns
+    -------
+    fnu : float array
+        The flux density of the calculated SED with the unit erg/s/cm^2/Hz.
+
+    Notes
+    -----
+    None.
+    """
+    flux = t(wave, [age])
+    fnu = flux * 10**logMs / (4 * np.pi * (DL * Mpc)**2)
+    return fnu
+
 #Func_bgn:
 #-------------------------------------#
 #   Created by SGJY, May. 3, 2016     #
@@ -484,6 +519,12 @@ funcLib = {
         "x_name": "x",
         "param_fit": ["a", "b"],
         "param_add": []
+    },
+    "BC03":{
+        "function": BC03,
+        "x_name": "wave",
+        "param_fit": ["logMs", "age"],
+        "param_add": ["DL", "t"],
     },
     "Stellar_SED":{
         "function": Stellar_SED,
