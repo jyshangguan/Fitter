@@ -13,6 +13,7 @@ template_dir = "/Users/jinyi/Work/PG_QSO/templates/"
 m_H = 1.6726219e-24 #unit: gram
 Msun = 1.9891e33 #unit: gram
 Mpc = 3.08567758e24 #unit: cm
+mJy = 1e26 #unit: erg/s/cm^2/Hz
 
 fp = open("/Users/jinyi/Work/mcmc/Fitter/template/bc03_kdt.tmplt")
 tp_bc03 = pickle.load(fp)
@@ -46,7 +47,7 @@ def BC03(logMs, age, DL, wave, t=bc03):
     None.
     """
     flux = t(wave, [age])
-    fnu = flux * 10**logMs / (4 * np.pi * (DL * Mpc)**2)
+    fnu = flux * 10**logMs / (4 * np.pi * (DL * Mpc)**2) * mJy
     return fnu
 
 #Func_bgn:
