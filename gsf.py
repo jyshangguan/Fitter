@@ -7,7 +7,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sedfit.fitter import mcmc
 from optparse import OptionParser
-from emcee.utils import MPIPool
 
 #Parse the commands#
 #-------------------#
@@ -17,24 +16,7 @@ parser.add_option("-f", "--file", dest="filename", default="input_emcee.py",
 parser.add_option("-q", "--quiet",
                   action="store_false", dest="verbose", default=True,
                   help="don't print status messages to stdout")
-parser.add_option("-m", "--mpi",
-                  action="store_true", dest="runmpi", default=False,
-                  help="run the code with multiple cores")
 (options, args) = parser.parse_args()
-
-#Parallel computing setup#
-#------------------------#
-runMPI = options.runmpi
-if runMPI:
-    # Initialize the MPI-based pool used for parallelization.
-    pool = MPIPool(loadbalance=True)
-    if not pool.is_master():
-        # Wait for instructions from the master process.
-        pool.wait()
-        sys.exit(0)
-    print("**Running with MPI...")
-else:
-    print("**Running with multiple threads...")
 
 #The code starts#
 #---------------#
@@ -87,32 +69,17 @@ for keys in emceeDict.keys():
     print("{0}: {1}".format(keys, emceeDict[keys]))
 print("#--------------------------------#")
 modelUnct = inputModule.modelUnct
-em = mcmc.EmceeModel(sedData, sedModel, modelUnct, imSampler)
-
-if imSampler == "PTSampler":
-    p0 = np.zeros((ntemps, nwalkers, ndim))
-    for loop_t in range(ntemps):
-        for loop_w in range(nwalkers):
-            p0[loop_t, loop_w, :] = em.from_prior()
-    if runMPI:
-        sampler = em.PTSampler(ntemps, nwalkers, pool=pool)
-    else:
-        sampler = em.PTSampler(ntemps, nwalkers, threads=threads)
-elif imSampler == "EnsembleSampler":
-    p0 = [em.from_prior() for i in range(nwalkers)]
-    if runMPI:
-        sampler = em.EnsembleSampler(nwalkers, pool=pool)
-    else:
-        sampler = em.EnsembleSampler(nwalkers, threads=threads)
-else:
-    raise RuntimeError("Cannot recognise the sampler '{0}'!".format(imSampler))
+#em = mcmc.EmceeModel(sedData, sedModel, modelUnct, imSampler)
+em = mcmc.EmceeModel(sedData, sedModel, modelUnct)
+p0 = [em.from_prior() for i in range(nwalkers)]
+sampler = em.EnsembleSampler(nwalkers, threads=threads)
 
 #Burn-in 1st
 print( "\n{:*^35}".format(" {0}th iteration ".format(0)) )
-em.run_mcmc(p0, iterations=iStep, printFrac=printFrac)
+em.run_mcmc(p0, iterations=iStep, printFrac=printFrac, thin=thin)
 em.diagnose()
 pmax = em.p_logl_max()
-em.print_parameters(truths=parTruth, burnin=50)
+em.print_parameters(truths=parTruth, burnin=0)
 em.plot_lnlike(filename="{0}_lnprob.png".format(targname), histtype="step")
 
 #Burn-in rest iteration
@@ -138,10 +105,6 @@ em.run_mcmc(p1, iterations=rStep, printFrac=printFrac, thin=thin)
 em.diagnose()
 em.print_parameters(truths=parTruth, burnin=burnIn, low=psLow, center=psCenter, high=psHigh)
 em.plot_lnlike(filename="{0}_lnprob.png".format(targname), histtype="step")
-
-#Close the pools
-if runMPI:
-    pool.close()
 
 #Post process
 em.Save_Samples("{0}_samples.txt".format(targname), burnin=burnIn, select=True, fraction=25)

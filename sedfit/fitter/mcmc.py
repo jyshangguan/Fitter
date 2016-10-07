@@ -379,13 +379,13 @@ class EmceeModel(object):
         samples = self.posterior_sample(**kwargs)
         np.savetxt(filename, samples, delimiter=",")
 
-    def plot_corner(self, filename=None, burnin=0, select=True, ps=None, nuisance=True, **kwargs):
+    def plot_corner(self, filename=None, burnin=0, select=True, fraction=25, ps=None, nuisance=True, **kwargs):
         """
         Plot the corner diagram that illustrate the posterior probability distribution
         of each parameter.
         """
         if ps is None:
-            ps = self.posterior_sample(burnin, select)
+            ps = self.posterior_sample(burnin, select, fraction)
         parname = self.__model.get_parVaryNames()
         if self.__modelunct:
             parname.append(r"$\mathrm{ln}f$")
