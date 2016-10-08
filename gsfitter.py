@@ -109,7 +109,7 @@ else:
 
 #Burn-in 1st
 print( "\n{:*^35}".format(" {0}th iteration ".format(0)) )
-em.run_mcmc(p0, iterations=iStep, printFrac=printFrac, thin=thin)
+em.run_mcmc(p0, iterations=iStep, printFrac=printFrac)
 em.diagnose()
 pmax = em.p_logl_max()
 em.print_parameters(truths=parTruth, burnin=50)
@@ -122,7 +122,7 @@ for i in range(iteration-1):
     ratio = ballR * ballT**i
     print("-- P1 ball radius ratio: {0:.3f}".format(ratio))
     p1 = em.p_ball(pmax, ratio=ratio)
-    em.run_mcmc(p1, iterations=iStep, printFrac=printFrac, thin=thin)
+    em.run_mcmc(p1, iterations=iStep, printFrac=printFrac)
     em.diagnose()
     pmax = em.p_logl_max()
     em.print_parameters(truths=parTruth, burnin=50)
