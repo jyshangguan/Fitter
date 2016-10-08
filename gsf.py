@@ -144,7 +144,6 @@ psCenter = ppDict["center"]
 psHigh   = ppDict["high"]
 nuisance = ppDict["nuisance"]
 
-print("#--------------------------------#")
 print("emcee Info:")
 for keys in emceeDict.keys():
     print("{0}: {1}".format(keys, emceeDict[keys]))
