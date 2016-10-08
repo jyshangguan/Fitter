@@ -134,15 +134,8 @@ def logLFunc(params, data, model):
     y = np.array(data.get_List('y'))
     e = np.array(data.get_List('e'))
     ym = np.array(Model2Data(model, data))
-    if len(params) == nParVary:
-        s = e
-    elif len(params) == (nParVary+1):
-        f = np.exp(params[nParVary]) #The last par is lnf.
-        s = (e**2 + (ym * f)**2)**0.5
-    else:
-        raise ValueError("The length of params is incorrect!")
     #Calculate the log_likelihood
-    logL = -0.5 * (ChiSq(y, ym, s) + np.sum( np.log(2 * np.pi * s**2) ))
+    logL = -0.5 * (ChiSq(y, ym, e) + np.sum( np.log(2 * np.pi * e**2) ))
     return logL
 
 #The log_likelihood function: for SED fitting using Gaussian process regression
@@ -179,17 +172,23 @@ def logLFunc_gp(params, data, model):
     yDict = Model2Data_gp(model, data)
     yPhtModel = np.array(yDict["pht"])
     ySpcModel = np.array(yDict["spc"])
-    #Additional systematic uncertainties
     nParVary = len(model.get_parVaryList())
-    f = np.exp(params[nParVary]) #The last par is lnf.
-    sPht = (ePht**2 + (yPhtModel * f)**2)**0.5
-    sSpc = (eSpc**2 + (ySpcModel * f)**2)**0.5
-    #lnlikelihood for spectral data using Gaussian process regression
-    a, tau = np.exp(params[nParVary+1:])
-    gp = george.GP(a * kernels.Matern32Kernel(tau))
-    gp.compute(xSpc, sSpc)
-    lnlSpc = gp.lnlikelihood(ySpc - ySpcModel)
     #lnlikelihood for photometric data
-    lnlPht = -0.5 * (ChiSq(yPht, yPhtModel, sPht) + np.sum( np.log(2 * np.pi * sPht**2) ))
+    if len(yPhtModel):
+        f = np.exp(params[nParVary]) #The last par is lnf.
+        sPht = (ePht**2 + (yPhtModel * f)**2)**0.5
+        lnlPht = -0.5 * (ChiSq(yPht, yPhtModel, sPht) + np.sum( np.log(2 * np.pi * sPht**2) ))
+    else:
+        lnlPht = 0
+    #lnlikelihood for spectral data using Gaussian process regression
+    if len(ySpcModel):
+        a, tau = np.exp(params[nParVary+1:])
+        gp = george.GP(a * kernels.Matern32Kernel(tau))
+        #sSpc = (eSpc**2 + (ySpcModel * f)**2)**0.5
+        #gp.compute(xSpc, sSpc)
+        gp.compute(xSpc, eSpc)
+        lnlSpc = gp.lnlikelihood(ySpc - ySpcModel)
+    else:
+        lnlSpc = 0
     lnL = lnlPht + lnlSpc
     return lnL

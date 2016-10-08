@@ -9,7 +9,6 @@ import matplotlib.pyplot as plt
 import cPickle as pickle
 import rel_SED_Toolkit as sedt
 from sedfit.fitter import basicclass as bc
-from sedfit.fitter import bandfunc   as bf
 from sedfit.fitter import mcmc
 from sedfit import sedclass as sedsc
 from sedfit import model_functions as sedmf
@@ -64,61 +63,23 @@ print("SED file: {0}".format(sedFile))
 print("#--------------------------------#")
 
 ## Put into the sedData
-bandList = ["j", "h", "ks", "w1", "w2", "w3", "w4", "PACS_70", "PACS_100", "PACS_160", "SPIRE_250", "SPIRE_350", "SPIRE_500"]
-sedDataType = ["name", "wavelength", "flux", "error", "flag"]
-sedflag = np.ones_like(sedwave)
-phtData = {"2M&W&H": bc.DiscreteSet(bandList, sedwave, sedflux, sedsigma, sedflag, sedDataType)}
-spcflag = np.ones_like(spcwave)
-spcDataType = ["wavelength", "flux", "error", "flag"]
-spcData = {"IRS": bc.ContinueSet(spcwave, spcflux, spcsigma, spcflag, spcDataType)}
+bandList = im.bandList
+sedName  = im.sedName
+spcName  = im.spcName
+if not sedName is None:
+    sedflag = np.ones_like(sedwave)
+    sedDataType = ["name", "wavelength", "flux", "error", "flag"]
+    phtData = {sedName: bc.DiscreteSet(bandList, sedwave, sedflux, sedsigma, sedflag, sedDataType)}
+else:
+    phtData = {}
+if not spcName is None:
+    spcflag = np.ones_like(spcwave)
+    spcDataType = ["wavelength", "flux", "error", "flag"]
+    spcData = {"IRS": bc.ContinueSet(spcwave, spcflux, spcsigma, spcflag, spcDataType)}
+else:
+    spcData = {}
 sedData = sedsc.SedClass(targname, im.redshift, phtDict=phtData, spcDict=spcData)
-
-# Load the bandpass
-## Load 2MASS bandpass
-bandpass_dir = im.bandpass_dir
-massPath = bandpass_dir+"2mass/"
-massBandDict = OrderedDict()
-bandNameList = ["j", "h", "ks"]
-bandCenterList = [1.235, 1.662, 2.159] #Isophotal wavelength
-for n in range(3):
-    bandName = bandNameList[n]
-    bandFile = "{0}.dat".format(bandName)
-    bandPck = np.genfromtxt(massPath+bandFile, skip_header=1)
-    bandWave = bandPck[:, 0]
-    bandRsr = bandPck[:, 1]
-    bandCenter = bandCenterList[n]
-    massBandDict[bandName] = sedsc.BandPass(bandWave, bandRsr, bandCenter, bandName=bandName)
-sedData.add_bandpass(massBandDict)
-## Load WISE bandpass
-wisePath = bandpass_dir+"wise/"
-wiseBandDict = OrderedDict()
-bandCenterList = [3.353, 4.603, 11.561, 22.088] #Isophotal wavelength
-for n in range(4):
-    bandName = "w{0}".format(n+1)
-    bandFile = "{0}.dat".format(bandName)
-    bandPck = np.genfromtxt(wisePath+bandFile)
-    bandWave = bandPck[:, 0]
-    bandRsr = bandPck[:, 1]
-    bandCenter = bandCenterList[n]
-    wiseBandDict[bandName] = sedsc.BandPass(bandWave, bandRsr, bandCenter, bandName=bandName)
-sedData.add_bandpass(wiseBandDict)
-## Load Herschel bandpass
-fp = open(bandpass_dir+"herschel/herschel_bandpass.dict", "r")
-herschelBands = pickle.load(fp)
-fp.close()
-herschelBandList = herschelBands.keys()
-herschelBandList.remove("README")
-#print herschelBandList
-herschelBandDict = OrderedDict()
-for bandName in herschelBandList:
-    #Be careful with the sequence!
-    bandWave = ls_mic / herschelBands[bandName]["bandpass"][0][::-1]
-    bandRsr = herschelBands[bandName]["bandpass"][1][::-1]
-    bandCenter = herschelBands[bandName]["wave0"]
-    herschelBandDict[bandName] = sedsc.BandPass(bandWave, bandRsr, bandCenter,
-                                             bandFunc=bf.BandFunc_Herschel,
-                                             bandName=bandName)
-sedData.add_bandpass(herschelBandDict)
+sedData.set_bandpass(bandList)
 
 
 ################################################################################
