@@ -1,20 +1,16 @@
 from __future__ import print_function
 import matplotlib
 matplotlib.use("Agg")
-import sys
 import types
 import importlib
 import numpy as np
 import matplotlib.pyplot as plt
-import cPickle as pickle
 import rel_SED_Toolkit as sedt
 from sedfit.fitter import basicclass as bc
 from sedfit.fitter import mcmc
 from sedfit import sedclass as sedsc
 from sedfit import model_functions as sedmf
-from collections import OrderedDict
 from optparse import OptionParser
-ls_mic = 2.99792458e14 #micron/s
 
 #Parse the commands#
 #-------------------#
