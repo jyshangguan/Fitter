@@ -1,11 +1,12 @@
 #This code is from: Composite_Model_Fit/dl07/dev_SEDClass.ipynb
 
+import types
 import numpy as np
 import matplotlib.pyplot as plt
 from fitter import basicclass as bc
+from . import bandfunc as bf
 from scipy.interpolate import splrep, splev
-import types
-
+from collections import OrderedDict
 
 class BandPass(object):
     """
@@ -240,18 +241,34 @@ class SedClass(bc.DataSet):
         FigAx = self.plot_spc(FigAx=FigAx, **kwargs)
         return FigAx
 
-    def set_bandpass(self, bandDict):
-        for bn in bandDict.keys():
-            if not isinstance(bandDict[bn], BandPass):
-                raise ValueError('The bandpass {0} has incorrect type!'.format(bn))
-        self.__bandDict = bandDict
-
     def add_bandpass(self, bandDict):
         for bn in bandDict.keys():
             if isinstance(bandDict[bn], BandPass):
                 self.__bandDict[bn] = bandDict[bn]
             else:
                 raise ValueError('The bandpass {0} has incorrect type!'.format(bn))
+
+    def set_bandpass(self, bandList):
+        ls_mic = 2.99792458e14 #micron/s
+        herschelBands = bf.herschelBands
+        bandDict = OrderedDict()
+        for bn in bandList:
+            if not bn in bf.herschelFilters:
+                bandFile = "/{0}.dat".format(bn)
+                bandPck = np.genfromtxt(bf.bandPath+bandFile)
+                bandWave = bandPck[:, 0]
+                bandRsr = bandPck[:, 1]
+                bandCenter = bf.filterDict[bn]
+                bandDict[bn] = BandPass(bandWave, bandRsr, bandCenter, bandName=bn)
+            else:
+                bandWave = ls_mic / herschelBands[bn]["bandpass"][0][::-1]
+                bandRsr = herschelBands[bn]["bandpass"][1][::-1]
+                bandCenter = herschelBands[bn]["wave0"]
+                bandDict[bn] = BandPass(bandWave, bandRsr, bandCenter,
+                                        bandFunc=bf.BandFunc_Herschel,
+                                        bandName=bn)
+        self.add_bandpass(bandDict)
+
 
     def get_bandpass(self):
         return self.__bandDict
