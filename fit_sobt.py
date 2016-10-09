@@ -29,5 +29,5 @@ sedPath = "/Users/jinyi/Work/PG_QSO/catalog/Data_SG/SEDs/"
 for loop in range(len(targList)):
     targname = targList[loop]
     redshift = zList[loop]
-    sedFile = sedPath+"{0}_rest.csed".format(targname)
+    sedFile = sedPath+"{0}_rest.nsed".format(targname)
     gsf.gsf_run(targname, redshift, sedFile, cfg)
