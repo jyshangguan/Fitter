@@ -4,6 +4,7 @@ matplotlib.use("Agg")
 import types
 import numpy as np
 import matplotlib.pyplot as plt
+import cPickle as pickle
 import rel_SED_Toolkit as sedt
 from sedfit.fitter import basicclass as bc
 from sedfit.fitter import mcmc
@@ -46,10 +47,6 @@ def gsf_run(targname, redshift, sedFile, config):
     sedRng = config.sedRng
     sedPck = sedt.Load_SED(sedFile, sedRng, config.spcRng, config.spcRebin)
     sed = sedPck["sed_cb"]
-    nsed = sedRng[1] - sedRng[0]
-    wave = sed[0]
-    flux = sed[1]
-    sigma = sed[2]
     sedwave = sedPck["sed"][0]
     sedflux = sedPck["sed"][1]
     sedsigma = sedPck["sed"][2]
@@ -110,13 +107,13 @@ def gsf_run(targname, redshift, sedFile, config):
     funcLib    = sedmf.funcLib
     waveModel = 10**np.linspace(0.0, 3.0, 1000)
     sedModel = bc.Model_Generator(modelDict, funcLib, waveModel, parAddDict_all)
-    parAllList = sedModel.get_parVaryList()
-    parAllList.append(np.log(-np.inf))
-    parAllList.append(-np.inf)
-    parAllList.append(-5)
     parTruth = config.parTruth   #Whether to provide the truth of the model
     modelUnct = config.modelUnct #Whether to consider the model uncertainty in the fitting
-    ndim = len(parAllList)
+    parAllList = sedModel.get_parVaryList()
+    if modelUnct:
+        parAllList.append(np.log(-np.inf))
+        parAllList.append(-np.inf)
+        parAllList.append(-5)
 
 
     ################################################################################
@@ -183,8 +180,36 @@ def gsf_run(targname, redshift, sedFile, config):
     em.print_parameters(truths=parTruth, burnin=burnIn, low=psLow, center=psCenter, high=psHigh)
     em.plot_lnlike(filename="{0}_lnprob.png".format(targname), histtype="step")
 
-    #Post process
-    em.Save_Samples("{0}_samples.txt".format(targname), burnin=burnIn, select=True, fraction=25)
+
+    ################################################################################
+    #                                  Post process                                #
+    ################################################################################
+    dataPck = {
+        "targname": targname,
+        "redshift": redshift,
+        "sedFile": sedFile,
+        "sedPck": sedPck,
+        "bandList": bandList,
+        "sedName": sedName,
+        "spcName": spcName,
+    }
+    modelPck = {
+        "modelDict": modelDict,
+        "waveModel": waveModel,
+        "parAddDict_all": parAddDict_all,
+        "parTruth": parTruth,
+        "modelUnct": modelUnct
+    }
+    fitrs = {
+        "dataPck": dataPck,
+        "modelPck": modelPck,
+        "ppDict": ppDict,
+        "posterior_sample": em.posterior_sample(burnin=burnIn, select=True, fraction=25)
+    }
+    fp = open("{0}.fitrs".format(targname), "w")
+    pickle.dump(fitrs, fp)
+    fp.close()
+    #em.Save_Samples("{0}_samples.txt".format(targname), burnin=burnIn, select=True, fraction=25)
     em.Save_BestFit("{0}_bestfit.txt".format(targname), burnin=burnIn, select=True, fraction=25)
     em.plot_chain(filename="{0}_chain.png".format(targname), truths=parTruth)
     em.plot_corner(filename="{0}_triangle.png".format(targname), burnin=burnIn,
