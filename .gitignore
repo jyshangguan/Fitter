@@ -4,6 +4,7 @@
 *.dict
 *.pdf
 *.png
+*.fitrs
 results/*
 
 #Python auxillary files
