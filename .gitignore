@@ -1,4 +1,5 @@
-#The out put files
+#The data files
+*.ipac
 *.txt
 *.dict
 *.pdf
@@ -14,6 +15,7 @@ test_*.py
 bak_*.py
 sv_*.py
 aux_*.py
+config_*.py
 
 #SED data
 data/*

@@ -1,6 +1,7 @@
 import gsf
 import importlib
 from optparse import OptionParser
+from astropy.table import Table
 
 #Parse the commands#
 #-------------------#
@@ -19,8 +20,14 @@ print("Config file: {0}".format(configName))
 cfg = importlib.import_module(configName.split(".")[0])
 
 #Target information
-targname = "PG0050+124"
-redshift = 0.061
+#targname = "PG0050+124"
+#redshift = 0.061
+targTable = Table.read("pg_info_sobt.ipac", format="ascii.ipac")
+targList  = targTable["Name"]
+zList     = targTable["z"]
 sedPath = "/Users/jinyi/Work/PG_QSO/catalog/Data_SG/SEDs/"
-sedFile = sedPath+"{0}_rest.csed".format(targname)
-gsf.gsf_run(targname, redshift, sedFile, cfg)
+for loop in range(len(targList)):
+    targname = targList[loop]
+    redshift = zList[loop]
+    sedFile = sedPath+"{0}_rest.csed".format(targname)
+    gsf.gsf_run(targname, redshift, sedFile, cfg)
