@@ -1,4 +1,5 @@
-#The out put files
+#The data files
+*.ipac
 *.txt
 *.dict
 *.pdf
