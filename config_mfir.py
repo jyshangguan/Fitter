@@ -153,9 +153,9 @@ emceeDict = OrderedDict(
         ("iter-step" , 200),
         ("ball-r"    , 0.1),
         ("ball-t"    , 1.0),
-        ("run-step"  , 400),
-        ("burn-in"   , 50),
-        ("thin"      , 4),
+        ("run-step"  , 500),
+        ("burn-in"   , 100),
+        ("thin"      , 1),
         ("threads"   , 4),
         ("printfrac" , 0.1),
     )
