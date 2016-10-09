@@ -138,6 +138,8 @@ def gsf_run(targname, redshift, sedFile, config):
     psCenter = ppDict["center"]
     psHigh   = ppDict["high"]
     nuisance = ppDict["nuisance"]
+    fraction = ppDict["fraction"]
+
 
     print("emcee Info:")
     for keys in emceeDict.keys():
@@ -204,25 +206,24 @@ def gsf_run(targname, redshift, sedFile, config):
         "dataPck": dataPck,
         "modelPck": modelPck,
         "ppDict": ppDict,
-        "posterior_sample": em.posterior_sample(burnin=burnIn, select=True, fraction=25)
+        "posterior_sample": em.posterior_sample(burnin=burnIn, select=True, fraction=fraction)
     }
     fp = open("{0}.fitrs".format(targname), "w")
     pickle.dump(fitrs, fp)
     fp.close()
-    #em.Save_Samples("{0}_samples.txt".format(targname), burnin=burnIn, select=True, fraction=25)
-    em.Save_BestFit("{0}_bestfit.txt".format(targname), burnin=burnIn, select=True, fraction=25)
+    em.Save_BestFit("{0}_bestfit.txt".format(targname), burnin=burnIn, select=True, fraction=fraction)
     em.plot_chain(filename="{0}_chain.png".format(targname), truths=parTruth)
     em.plot_corner(filename="{0}_triangle.png".format(targname), burnin=burnIn,
-                   nuisance=nuisance, truths=parTruth,
+                   nuisance=nuisance, truths=parTruth, select=True, fraction=fraction,
                    quantiles=[psLow/100., psCenter/100., psHigh/100.], show_titles=True,
                    title_kwargs={"fontsize": 20})
     fig, axarr = plt.subplots(2, 1)
     fig.set_size_inches(10, 10)
     em.plot_fit_spec(truths=parTruth, FigAx=(fig, axarr[0]),
-                     burnin=burnIn, select=True, fraction=25,
+                     burnin=burnIn, select=True, fraction=fraction,
                      low=psLow, center=psCenter, high=psHigh)
     em.plot_fit(truths=parTruth, FigAx=(fig, axarr[1]),
-                burnin=burnIn, select=True, fraction=25,
+                burnin=burnIn, select=True, fraction=fraction,
                 low=psLow, center=psCenter, high=psHigh)
     plt.savefig("{0}_result.png".format(targname), bbox_inches="tight")
     plt.close()

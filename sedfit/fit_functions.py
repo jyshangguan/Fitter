@@ -184,9 +184,9 @@ def logLFunc_gp(params, data, model):
     if len(ySpcModel):
         a, tau = np.exp(params[nParVary+1:])
         gp = george.GP(a * kernels.Matern32Kernel(tau))
-        #sSpc = (eSpc**2 + (ySpcModel * f)**2)**0.5
-        #gp.compute(xSpc, sSpc)
-        gp.compute(xSpc, eSpc)
+        sSpc = (eSpc**2 + (ySpcModel * f)**2)**0.5
+        gp.compute(xSpc, sSpc)
+        #gp.compute(xSpc, eSpc)
         lnlSpc = gp.lnlikelihood(ySpc - ySpcModel)
     else:
         lnlSpc = 0
