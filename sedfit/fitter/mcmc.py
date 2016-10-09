@@ -335,13 +335,13 @@ class EmceeModel(object):
         parRange = np.percentile(ps, [low, center, high], axis=0)
         return parRange
 
-    def print_parameters(self, truths=None, low=1, center=50, high=99, burnin=50):
+    def print_parameters(self, truths=None, low=1, center=50, high=99, **kwargs):
         """
         Print the ranges of the parameters according to their posterior samples
         and the values of the maximum a posterior (MAP).
         """
         nameList = self.__model.get_parVaryNames(latex=False)
-        parRange = self.p_uncertainty(low, center, high, burnin)
+        parRange = self.p_uncertainty(low, center, high, **kwargs)
         if self.__modelunct:
             nameList.append("lnf")
             nameList.append("lna")
@@ -379,13 +379,39 @@ class EmceeModel(object):
         samples = self.posterior_sample(**kwargs)
         np.savetxt(filename, samples, delimiter=",")
 
-    def plot_corner(self, filename=None, burnin=0, select=True, ps=None, nuisance=True, **kwargs):
+    def Save_BestFit(self, filename, low=1, center=50, high=99, **kwargs):
+        nameList = self.__model.get_parVaryNames(latex=False)
+        parRange = self.p_uncertainty(low, center, high, **kwargs)
+        if self.__modelunct:
+            nameList.append("lnf")
+            nameList.append("lna")
+            nameList.append("lntau")
+        pMAP = self.p_logl_max()
+        ttList = ["Name", "L ({0}%)".format(low),
+                  "C ({0}%)".format(center),
+                  "H ({0}%)".format(high), "MAP"]
+        tt = " ".join(["{0:12s}".format(i) for i in ttList])
+        fp = open(filename, "w")
+        fp.write(tt+"\n")
+        for d in range(self.__dim):
+            plow = parRange[0, d]
+            pcen = parRange[1, d]
+            phgh = parRange[2, d]
+            pmax = pMAP[d]
+            name = nameList[d]
+            pl = [plow, pcen, phgh]
+            info = "{0:12s} {1[0]:<12.3e} {1[1]:<12.3e} {1[2]:<12.3e} {2:<12.3e}".format(name, pl, pmax)
+            fp.write(info+"\n")
+        p_logl_max = self.p_logl_max()
+        fp.write("#lnL_max: {0:.3e}".format(self.get_logl(p_logl_max)))
+
+    def plot_corner(self, filename=None, burnin=0, select=True, fraction=25, ps=None, nuisance=True, **kwargs):
         """
         Plot the corner diagram that illustrate the posterior probability distribution
         of each parameter.
         """
         if ps is None:
-            ps = self.posterior_sample(burnin, select)
+            ps = self.posterior_sample(burnin, select, fraction)
         parname = self.__model.get_parVaryNames()
         if self.__modelunct:
             parname.append(r"$\mathrm{ln}f$")
