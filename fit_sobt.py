@@ -30,5 +30,4 @@ for loop in range(len(targList)):
     targname = targList[loop]
     redshift = zList[loop]
     sedFile = sedPath+"{0}_rest.csed".format(targname)
-    print(sedFile)
-    #gsf.gsf_run(targname, redshift, sedFile, cfg)
+    gsf.gsf_run(targname, redshift, sedFile, cfg)
