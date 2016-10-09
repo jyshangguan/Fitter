@@ -133,6 +133,12 @@ def gsf_run(targname, redshift, sedFile, config):
     thin      = emceeDict["thin"]
     threads   = emceeDict["threads"]
     printFrac = emceeDict["printfrac"]
+    ppDict   = config.ppDict
+    psLow    = ppDict["low"]
+    psCenter = ppDict["center"]
+    psHigh   = ppDict["high"]
+    nuisance = ppDict["nuisance"]
+    fraction = ppDict["fraction"]
 
 
     print("emcee Info:")
@@ -180,12 +186,6 @@ def gsf_run(targname, redshift, sedFile, config):
     ################################################################################
     #                                  Post process                                #
     ################################################################################
-    ppDict   = config.ppDict
-    psLow    = ppDict["low"]
-    psCenter = ppDict["center"]
-    psHigh   = ppDict["high"]
-    nuisance = ppDict["nuisance"]
-    fraction = ppDict["fraction"]
     dataPck = {
         "targname": targname,
         "redshift": redshift,
