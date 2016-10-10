@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 from scipy.stats import truncnorm
+from time import time
 
 from .. import fit_functions as sedff
 
@@ -248,6 +249,7 @@ class EmceeModel(object):
         sampler = self.__sampler
         if not quiet:
             print("MCMC ({0}) is running...".format(sampler))
+            t0 = time()
         #Notice that the third parameters yielded by EnsembleSampler and PTSampler are different.
         for i, (pos, lnprob, logl) in enumerate(self.sampler.sample(pos, iterations=iterations, **kwargs)):
             if not (i + 1) % int(printFrac * iterations):
@@ -268,6 +270,7 @@ class EmceeModel(object):
                     print("[{0:<4.1f}%] lnL_max: {1:.3e}, lnL_min: {2:.3e}".format(progress, lmax, lmin))
                     for p, name in enumerate(pname):
                         print("{0:18s} {1:10.3e}".format(name, pmax[p]))
+                    print( "**MCMC time elapsed: {0:.3f} min".format( (time()-t0)/60. ) )
         if not quiet:
             print("MCMC finishes!")
         return pos, lnprob, logl

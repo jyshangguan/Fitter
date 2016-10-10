@@ -4,6 +4,7 @@ matplotlib.use("Agg")
 import types
 import numpy as np
 import matplotlib.pyplot as plt
+from time import time
 import cPickle as pickle
 import rel_SED_Toolkit as sedt
 from sedfit.fitter import basicclass as bc
@@ -151,12 +152,14 @@ def gsf_run(targname, redshift, sedFile, config):
     sampler = em.EnsembleSampler(nwalkers, threads=threads)
 
     #Burn-in 1st
+    t0 = time()
     print( "\n{:*^35}".format(" {0}th iteration ".format(0)) )
     em.run_mcmc(p0, iterations=iStep, printFrac=printFrac, thin=thin)
     em.diagnose()
     pmax = em.p_logl_max()
     em.print_parameters(truths=parTruth, burnin=0)
-    em.plot_lnlike(filename="{0}_lnprob.png".format(targname), histtype="step")
+    #em.plot_lnlike(filename="{0}_lnprob.png".format(targname), histtype="step")
+    print( "**Burn-in time ellapse: {0:.3f} hour".format( (time() - t0)/3600. ) )
 
     #Burn-in rest iteration
     for i in range(iteration-1):
@@ -169,9 +172,11 @@ def gsf_run(targname, redshift, sedFile, config):
         em.diagnose()
         pmax = em.p_logl_max()
         em.print_parameters(truths=parTruth, burnin=50)
-        em.plot_lnlike(filename="{0}_lnprob.png".format(targname), histtype="step")
+        #em.plot_lnlike(filename="{0}_lnprob.png".format(targname), histtype="step")
+        print( "**Burn-in time ellapse: {0:.3f} hour".format( (time() - t0)/3600. ) )
 
     #Run MCMC
+    t0 = time()
     print( "\n{:*^35}".format(" Final Sampling ") )
     em.reset()
     ratio = ballR * ballT**i
@@ -180,7 +185,8 @@ def gsf_run(targname, redshift, sedFile, config):
     em.run_mcmc(p1, iterations=rStep, printFrac=printFrac, thin=thin)
     em.diagnose()
     em.print_parameters(truths=parTruth, burnin=burnIn, low=psLow, center=psCenter, high=psHigh)
-    em.plot_lnlike(filename="{0}_lnprob.png".format(targname), histtype="step")
+    #em.plot_lnlike(filename="{0}_lnprob.png".format(targname), histtype="step")
+    print( "**Fit time ellapse: {0:.3f} hour".format( (time() - t0)/3600. ) )
 
 
     ################################################################################
