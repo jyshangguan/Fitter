@@ -179,7 +179,8 @@ def logLFunc_gp(params, data, model):
         fltr_non = ePht < 0 #Find those non-detections
         sPht = (ePht**2 + (yPhtModel * f)**2)**0.5
         sPht[fltr_non] = -1
-        lnlPht = -0.5 * (ChiSq(yPht, yPhtModel, sPht) #+ np.sum( np.log(2 * np.pi * sPht**2) ))
+        #lnlPht = -0.5 * (ChiSq(yPht, yPhtModel, sPht) + np.sum( np.log(2 * np.pi * sPht**2) ))
+        lnlPht = -0.5 * ChiSq(yPht, yPhtModel, sPht)
     else:
         lnlPht = 0
     #lnlikelihood for spectral data using Gaussian process regression
