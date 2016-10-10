@@ -38,8 +38,8 @@ def ChiSq(data, model, unct=None):
         chsq_dtc = 0.
     if sum(fltr_non)>0:
         unct_non = data[fltr_non]/3.0 #The nondetections are 3 sigma upper limits.
-        wrsd_non = (data[fltr_non] - model[fltr_non])/unct_non
-        chsq_non = sum(-2.* np.log(1 + erf(wrsd_non/2**0.5)))
+        wrsd_non = (data[fltr_non] - model[fltr_non])/(unct_non * 2**0.5)
+        chsq_non = sum( -2.* np.log( 0.5 * (1 + erf(wrsd_non)) ) )
     else:
         chsq_non = 0.
     chsq = chsq_dtc + chsq_non
@@ -176,8 +176,10 @@ def logLFunc_gp(params, data, model):
     #lnlikelihood for photometric data
     if len(yPhtModel):
         f = np.exp(params[nParVary]) #The last par is lnf.
+        fltr_non = ePht < 0 #Find those non-detections
         sPht = (ePht**2 + (yPhtModel * f)**2)**0.5
-        lnlPht = -0.5 * (ChiSq(yPht, yPhtModel, sPht) + np.sum( np.log(2 * np.pi * sPht**2) ))
+        sPht[fltr_non] = -1
+        lnlPht = -0.5 * (ChiSq(yPht, yPhtModel, sPht) #+ np.sum( np.log(2 * np.pi * sPht**2) ))
     else:
         lnlPht = 0
     #lnlikelihood for spectral data using Gaussian process regression
