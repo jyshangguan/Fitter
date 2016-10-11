@@ -1,3 +1,4 @@
+import os
 import gsf
 import importlib
 from optparse import OptionParser
@@ -26,8 +27,13 @@ targTable = Table.read("pg_info_sobt.ipac", format="ascii.ipac")
 targList  = targTable["Name"]
 zList     = targTable["z"]
 sedPath = "/Users/jinyi/Work/PG_QSO/catalog/Data_SG/SEDs/"
+fileList = os.listdir(".")
 for loop in range(len(targList)):
     targname = targList[loop]
     redshift = zList[loop]
+    #Check existing results
+    if "{0}_bestfit.txt".format(targname) in fileList:
+        print("\n***{0} has been fitted!\n".format(targname))
+        continue
     sedFile = sedPath+"{0}_rest.nsed".format(targname)
     gsf.gsf_run(targname, redshift, sedFile, cfg)
