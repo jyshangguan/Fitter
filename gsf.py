@@ -158,7 +158,7 @@ def gsf_run(targname, redshift, sedFile, config):
     em.diagnose()
     pmax = em.p_logl_max()
     em.print_parameters(truths=parTruth, burnin=0)
-    #em.plot_lnlike(filename="{0}_lnprob.png".format(targname), histtype="step")
+    em.plot_lnlike(filename="{0}_lnprob.png".format(targname), histtype="step")
     print( "**Burn-in time ellapse: {0:.3f} hour".format( (time() - t0)/3600. ) )
 
     #Burn-in rest iteration
@@ -172,7 +172,7 @@ def gsf_run(targname, redshift, sedFile, config):
         em.diagnose()
         pmax = em.p_logl_max()
         em.print_parameters(truths=parTruth, burnin=50)
-        #em.plot_lnlike(filename="{0}_lnprob.png".format(targname), histtype="step")
+        em.plot_lnlike(filename="{0}_lnprob.png".format(targname), histtype="step")
         print( "**Burn-in time ellapse: {0:.3f} hour".format( (time() - t0)/3600. ) )
 
     #Run MCMC
@@ -185,7 +185,7 @@ def gsf_run(targname, redshift, sedFile, config):
     em.run_mcmc(p1, iterations=rStep, printFrac=printFrac, thin=thin)
     em.diagnose()
     em.print_parameters(truths=parTruth, burnin=burnIn, low=psLow, center=psCenter, high=psHigh)
-    #em.plot_lnlike(filename="{0}_lnprob.png".format(targname), histtype="step")
+    em.plot_lnlike(filename="{0}_lnprob.png".format(targname), histtype="step")
     print( "**Fit time ellapse: {0:.3f} hour".format( (time() - t0)/3600. ) )
 
 

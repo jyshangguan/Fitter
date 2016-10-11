@@ -35,9 +35,9 @@ def lnprior(params, data, model, ModelUnct):
     #If the model uncertainty is concerned.
     if ModelUnct:
         lnf, lna, lntau =  params[parIndex:]
-        if (lnf < -15.0) or (lnf > 5.0):
+        if (lnf < -10.0) or (lnf > 10.0):
             lnprior -= np.inf
-        if (lna < -5.0) or (lna > 5.0):
+        if (lna < -10.0) or (lna > 10.0):
             lnprior -= np.inf
         if (lntau < -5.0) or (lntau > 5.0):
             lnprior -= np.inf
@@ -105,9 +105,9 @@ class EmceeModel(object):
                     pass
         #If the model uncertainty is concerned.
         if self.__modelunct:
-            lnf =  -15.0 * np.random.rand() + 5.0
-            lna =  -5.0 * np.random.rand() + 5.0
-            lntau =  -5.0 * np.random.rand() + 5.0
+            lnf =  -20.0 * np.random.rand() + 10.0
+            lna =  -20.0 * np.random.rand() + 10.0
+            lntau =  -10.0 * np.random.rand() + 5.0
             parList.append(lnf)
             parList.append(lna)
             parList.append(lntau)
@@ -581,7 +581,7 @@ class EmceeModel(object):
         fig = plt.figure()
         for i in iterList:
             l = lnprob[:, int(i)]
-            plt.hist(l, label="iter: {0}".format(i), **kwargs)
+            plt.hist(l[~np.isinf(l)], label="iter: {0}".format(i), **kwargs)
         plt.legend(loc="upper left")
         if filename is None:
             ax = plt.gca()
