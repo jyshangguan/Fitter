@@ -212,7 +212,9 @@ def gsf_run(targname, redshift, sedFile, config):
         "dataPck": dataPck,
         "modelPck": modelPck,
         "ppDict": ppDict,
-        "posterior_sample": em.posterior_sample(burnin=burnIn, select=True, fraction=fraction)
+        "posterior_sample": em.posterior_sample(burnin=burnIn, select=True, fraction=fraction),
+        "chain": sampler.chain,
+        "lnprobability": sampler.lnprobability
     }
     fp = open("{0}.fitrs".format(targname), "w")
     pickle.dump(fitrs, fp)
