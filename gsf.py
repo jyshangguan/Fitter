@@ -219,7 +219,8 @@ def gsf_run(targname, redshift, sedFile, config):
     fp = open("{0}.fitrs".format(targname), "w")
     pickle.dump(fitrs, fp)
     fp.close()
-    em.Save_BestFit("{0}_bestfit.txt".format(targname), burnin=burnIn, select=True, fraction=fraction)
+    em.Save_BestFit("{0}_bestfit.txt".format(targname), low=psLow, center=psCenter, high=psHigh,
+                    burnin=burnIn, select=True, fraction=fraction)
     em.plot_chain(filename="{0}_chain.png".format(targname), truths=parTruth)
     em.plot_corner(filename="{0}_triangle.png".format(targname), burnin=burnIn,
                    nuisance=nuisance, truths=parTruth, select=True, fraction=fraction,
