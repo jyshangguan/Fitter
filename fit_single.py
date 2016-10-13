@@ -20,8 +20,8 @@ print("Config file: {0}".format(configName))
 cfg = importlib.import_module(configName.split(".")[0])
 
 #Target information
-targname = "PG1119+120" #"PG0052+251"
-redshift = 0.049 #0.155
+targname = "PG0844+349" #"PG1119+120" #"PG0052+251"
+redshift = 0.064 #0.049 #0.155
 sedPath = "/Users/jinyi/Work/PG_QSO/catalog/Data_SG/SEDs/"
 sedFile = sedPath+"{0}_rest.nsed".format(targname)
 gsf.gsf_run(targname, redshift, sedFile, cfg)
