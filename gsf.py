@@ -112,7 +112,7 @@ def gsf_run(targname, redshift, sedFile, config):
     modelUnct = config.modelUnct #Whether to consider the model uncertainty in the fitting
     parAllList = sedModel.get_parVaryList()
     if modelUnct:
-        parAllList.append(np.log(-np.inf))
+        parAllList.append(-np.inf)
         parAllList.append(-np.inf)
         parAllList.append(-5)
 

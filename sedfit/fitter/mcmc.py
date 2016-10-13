@@ -35,11 +35,12 @@ def lnprior(params, data, model, ModelUnct):
     #If the model uncertainty is concerned.
     if ModelUnct:
         lnf, lna, lntau =  params[parIndex:]
+        #lnf, lntau =  params[parIndex:]
         if (lnf < -10.0) or (lnf > 10.0):
             lnprior -= np.inf
         if (lna < -10.0) or (lna > 10.0):
             lnprior -= np.inf
-        if (lntau < -5.0) or (lntau > 5.0):
+        if (lntau < -5.0) or (lntau > 2.5):
             lnprior -= np.inf
     return lnprior
 
@@ -74,6 +75,7 @@ class EmceeModel(object):
         print("[EmceeModel]: {0}".format(sampler))
         if ModelUnct:
             self.__dim = len(model.get_parVaryList()) + 3
+            #self.__dim = len(model.get_parVaryList()) + 2
             print("[EmceeModel]: ModelUnct is on!")
         else:
             self.__dim = len(model.get_parVaryList())
@@ -107,7 +109,7 @@ class EmceeModel(object):
         if self.__modelunct:
             lnf =  -20.0 * np.random.rand() + 10.0
             lna =  -20.0 * np.random.rand() + 10.0
-            lntau =  -10.0 * np.random.rand() + 5.0
+            lntau =  -7.5 * np.random.rand() + 2.5
             parList.append(lnf)
             parList.append(lna)
             parList.append(lntau)
@@ -150,9 +152,9 @@ class EmceeModel(object):
             nwalkers = self.__nwalkers
         pRange = self.__model.get_parVaryRanges()
         if self.__modelunct:
-            pRange.append([-15.0, 5.0]) #For lnf
+            pRange.append([-10.0, 10.0]) #For lnf
             pRange.append([-5.0, 5.0])  #For lna
-            pRange.append([-5.0, 5.0])  #For lntau
+            pRange.append([-5.0, 2.5])  #For lntau
         pRange = np.array(pRange)
         sampler = self.__sampler
         if sampler == "EnsembleSampler":
