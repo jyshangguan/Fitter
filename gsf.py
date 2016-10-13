@@ -134,6 +134,7 @@ def gsf_run(targname, redshift, sedFile, config):
     thin      = emceeDict["thin"]
     threads   = emceeDict["threads"]
     printFrac = emceeDict["printfrac"]
+    unctDict = config.unctDict
     ppDict   = config.ppDict
     psLow    = ppDict["low"]
     psCenter = ppDict["center"]
@@ -147,7 +148,7 @@ def gsf_run(targname, redshift, sedFile, config):
         print("{0}: {1}".format(keys, emceeDict[keys]))
     print("#--------------------------------#")
     #em = mcmc.EmceeModel(sedData, sedModel, modelUnct, imSampler)
-    em = mcmc.EmceeModel(sedData, sedModel, modelUnct)
+    em = mcmc.EmceeModel(sedData, sedModel, modelUnct, unctDict)
     p0 = [em.from_prior() for i in range(nwalkers)]
     sampler = em.EnsembleSampler(nwalkers, threads=threads)
 
