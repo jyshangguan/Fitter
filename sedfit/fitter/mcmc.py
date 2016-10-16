@@ -14,7 +14,7 @@ lnlike = sedff.logLFunc
 #The log_likelihood function using Gaussian process regression
 lnlike_gp = sedff.logLFunc_gp
 
-def lnprior(params, data, model, ModelUnct):
+def lnprior(params, data, model, ModelUnct, unctDict=None):
     """
     Calculate the ln prior probability.
     """
@@ -35,29 +35,30 @@ def lnprior(params, data, model, ModelUnct):
     #If the model uncertainty is concerned.
     if ModelUnct:
         lnf, lna, lntau =  params[parIndex:]
-        if (lnf < -10.0) or (lnf > 10.0):
+        #lnf, lntau =  params[parIndex:]
+        if (lnf < unctDict["lnf"][0]) or (lnf > unctDict["lnf"][1]):
             lnprior -= np.inf
-        if (lna < -10.0) or (lna > 10.0):
+        if (lna < unctDict["lna"][0]) or (lna > unctDict["lna"][1]):
             lnprior -= np.inf
-        if (lntau < -5.0) or (lntau > 5.0):
+        if (lntau < unctDict["lntau"][0]) or (lntau > unctDict["lntau"][1]):
             lnprior -= np.inf
     return lnprior
 
-def lnprob(params, data, model, ModelUnct):
+def lnprob(params, data, model, ModelUnct, unctDict):
     """
     Calculate the probability at the parameter spacial position.
     """
-    lp = lnprior(params, data, model, ModelUnct)
+    lp = lnprior(params, data, model, ModelUnct, unctDict)
     if not np.isfinite(lp):
         return -np.inf
     return lp + lnlike(params, data, model)
 
-def lnprob_gp(params, data, model, ModelUnct):
+def lnprob_gp(params, data, model, ModelUnct, unctDict):
     """
     Calculate the probability at the parameter spacial position.
     The likelihood function consider the Gaussian process regression.
     """
-    lp = lnprior(params, data, model, ModelUnct)
+    lp = lnprior(params, data, model, ModelUnct, unctDict)
     if not np.isfinite(lp):
         return -np.inf
     return lp + lnlike_gp(params, data, model)
@@ -66,14 +67,16 @@ class EmceeModel(object):
     """
     The MCMC model for emcee.
     """
-    def __init__(self, data, model, ModelUnct=False, sampler=None):
+    def __init__(self, data, model, ModelUnct=False, unctDict=None, sampler=None):
         self.__data = data
         self.__model = model
         self.__modelunct = ModelUnct
+        self.__unctDict = unctDict
         self.__sampler = sampler
         print("[EmceeModel]: {0}".format(sampler))
         if ModelUnct:
             self.__dim = len(model.get_parVaryList()) + 3
+            #self.__dim = len(model.get_parVaryList()) + 2
             print("[EmceeModel]: ModelUnct is on!")
         else:
             self.__dim = len(model.get_parVaryList())
@@ -85,6 +88,7 @@ class EmceeModel(object):
         """
         parList = []
         parDict = self.__model.get_modelParDict()
+        unctDict = self.__unctDict
         for modelName in self.__model._modelList:
             parFitDict = parDict[modelName]
             for parName in parFitDict.keys():
@@ -105,9 +109,14 @@ class EmceeModel(object):
                     pass
         #If the model uncertainty is concerned.
         if self.__modelunct:
-            lnf =  -20.0 * np.random.rand() + 10.0
-            lna =  -20.0 * np.random.rand() + 10.0
-            lntau =  -10.0 * np.random.rand() + 5.0
+            if unctDict is None:
+                raise Error("No uncertainty model parameter range is provided!")
+            rf1, rf2 = unctDict["lnf"]
+            ra1, ra2 = unctDict["lna"]
+            rt1, rt2 = unctDict["lntau"]
+            lnf =  (rf1 - rf2) * np.random.rand() + rf2
+            lna =  (ra1 - ra2) * np.random.rand() + ra2
+            lntau =  (rt1 - rt2) * np.random.rand() + rt2
             parList.append(lnf)
             parList.append(lna)
             parList.append(lntau)
@@ -120,7 +129,8 @@ class EmceeModel(object):
         else:
             self.__lnprob = lnprob
         self.sampler = emcee.EnsembleSampler(nwalkers, self.__dim, self.__lnprob,
-                       args=[self.__data, self.__model, self.__modelunct], **kwargs)
+                       args=[self.__data, self.__model, self.__modelunct, self.__unctDict],
+                       **kwargs)
         self.__nwalkers = nwalkers
         self.__sampler = "EnsembleSampler"
         return self.sampler
@@ -149,10 +159,13 @@ class EmceeModel(object):
         if nwalkers is None:
             nwalkers = self.__nwalkers
         pRange = self.__model.get_parVaryRanges()
+        unctDict = self.__unctDict
         if self.__modelunct:
-            pRange.append([-15.0, 5.0]) #For lnf
-            pRange.append([-5.0, 5.0])  #For lna
-            pRange.append([-5.0, 5.0])  #For lntau
+            if unctDict is None:
+                raise Error("No uncertainty model parameter range is provided!")
+            pRange.append(unctDict["lnf"]) #For lnf
+            pRange.append(unctDict["lna"])  #For lna
+            pRange.append(unctDict["lntau"])  #For lntau
         pRange = np.array(pRange)
         sampler = self.__sampler
         if sampler == "EnsembleSampler":
@@ -234,7 +247,8 @@ class EmceeModel(object):
         """
         sampler = self.__sampler
         if sampler == "EnsembleSampler":
-            return self.__lnprob(p, self.__data, self.__model, self.__modelunct)
+            return self.__lnprob(p, self.__data, self.__model, self.__modelunct,
+                                 self.__unctDict)
         elif sampler == "PTSampler":
             return self.__lnlike(p, self.__data, self.__model)
         else:
