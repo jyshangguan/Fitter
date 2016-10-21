@@ -42,6 +42,10 @@ def gsf_run(targname, redshift, sedFile, config):
     -----
     None.
     """
+    print("#--------------------------------#")
+    print("Target: {0}".format(targname))
+    print("SED file: {0}".format(sedFile))
+    print("#--------------------------------#")
     ################################################################################
     #                                    Data                                      #
     ################################################################################
@@ -54,10 +58,13 @@ def gsf_run(targname, redshift, sedFile, config):
     spcwave = sedPck["spc"][0]
     spcflux = sedPck["spc"][1]
     spcsigma = sedPck["spc"][2]
-    print("#--------------------------------#")
-    print("Target: {0}".format(targname))
-    print("SED file: {0}".format(sedFile))
-    print("#--------------------------------#")
+    ##Check data
+    chck_sed = np.sum(np.isnan(sedflux)) + np.sum(np.isnan(sedsigma))
+    chck_spc = np.sum(np.isnan(spcflux)) + np.sum(np.isnan(spcsigma))
+    if chck_sed:
+        raise ValueError("The photometry contains bad data!")
+    if chck_spc:
+        raise ValueError("The spectrum contains bad data!")
 
     ## Put into the sedData
     bandList = config.bandList
