@@ -35,5 +35,5 @@ for loop in range(len(targList)):
     if "{0}_bestfit.txt".format(targname) in fileList:
         print("\n***{0} has been fitted!\n".format(targname))
         continue
-    sedFile = sedPath+"{0}_rest.nsed".format(targname)
+    sedFile = sedPath+"{0}_rest.tsed".format(targname)
     gsf.gsf_run(targname, redshift, sedFile, cfg)
