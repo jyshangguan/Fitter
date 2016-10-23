@@ -16,12 +16,10 @@ parser.add_option("-q", "--quiet",
 #Load the input module#
 #---------------------#
 configName = options.config
-print("Config file: {0}".format(configName))
-cfg = importlib.import_module(configName.split(".")[0])
 
 #Target information
 targname = "PG1229+204" #"PG1351+640" #"PG0844+349" #"PG1119+120" #"PG0052+251"
 redshift = 0.064 #0.087 #0.064 #0.049 #0.155
 sedPath = "/Users/jinyi/Work/PG_QSO/catalog/Data_SG/SEDs/"
 sedFile = sedPath+"{0}_rest.tsed".format(targname)
-gsf.gsf_run(targname, redshift, sedFile, cfg)
+gsf.gsf_run(targname, redshift, sedFile, configName)
