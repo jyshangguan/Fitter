@@ -3,8 +3,9 @@ import matplotlib
 matplotlib.use("Agg")
 import types
 import numpy as np
-import matplotlib.pyplot as plt
+import importlib
 from time import time
+import matplotlib.pyplot as plt
 import cPickle as pickle
 import rel_SED_Toolkit as sedt
 from sedfit.fitter import basicclass as bc
@@ -18,7 +19,7 @@ print("############################")
 print("# Galaxy SED Fitter starts #")
 print("############################")
 
-def gsf_run(targname, redshift, sedFile, config):
+def gsf_run(targname, redshift, sedFile, configName):
     """
     This function is the main routine to do the SED fitting. The code will
     produce the final fitting results.
@@ -31,7 +32,7 @@ def gsf_run(targname, redshift, sedFile, config):
         The redshift of the target.
     sedFile : str
         The full path of the SED data file.
-    config : module or class
+    configName : module or class
         The configuration information for the fitting.
 
     Returns
@@ -45,7 +46,9 @@ def gsf_run(targname, redshift, sedFile, config):
     print("#--------------------------------#")
     print("Target: {0}".format(targname))
     print("SED file: {0}".format(sedFile))
+    print("Config file: {0}".format(configName))
     print("#--------------------------------#")
+    config = importlib.import_module(configName.split(".")[0])
     ################################################################################
     #                                    Data                                      #
     ################################################################################

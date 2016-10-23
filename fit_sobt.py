@@ -1,24 +1,29 @@
 import os
 import gsf
-import importlib
+import numpy as np
 from optparse import OptionParser
 from astropy.table import Table
 
 #Parse the commands#
 #-------------------#
 parser = OptionParser()
-parser.add_option("-c", "--config", dest="config", default="config.py",
-                  help="Provide the configure file", metavar="FILE")
-parser.add_option("-q", "--quiet",
-                  action="store_false", dest="verbose", default=True,
-                  help="don't print status messages to stdout")
+parser.add_option("-c", "--config", dest="config", default="None",
+                  help="Provide the configure file.", metavar="FILE")
+parser.add_option("-l", "--list", dest="list", default="None",
+                  help="Provide a list of configure file.")
 (options, args) = parser.parse_args()
 
 #Load the input module#
 #---------------------#
 configName = options.config
-print("Config file: {0}".format(configName))
-cfg = importlib.import_module(configName.split(".")[0])
+listName   = options.list
+if listName != "None":
+    configList = np.loadtxt(listName, dtype="string")
+    configType = 1
+else:
+    if configName == "None":
+        raise ValueError("The config file is not specified!")
+    configType = 0
 
 #Target information
 #targname = "PG0050+124"
@@ -35,5 +40,7 @@ for loop in range(len(targList)):
     if "{0}_bestfit.txt".format(targname) in fileList:
         print("\n***{0} has been fitted!\n".format(targname))
         continue
+    if configType:
+        configName = configList[loop]
     sedFile = sedPath+"{0}_rest.tsed".format(targname)
-    gsf.gsf_run(targname, redshift, sedFile, cfg)
+    gsf.gsf_run(targname, redshift, sedFile, configName)
