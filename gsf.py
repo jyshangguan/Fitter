@@ -3,8 +3,9 @@ import matplotlib
 matplotlib.use("Agg")
 import types
 import numpy as np
-import matplotlib.pyplot as plt
+import importlib
 from time import time
+import matplotlib.pyplot as plt
 import cPickle as pickle
 import rel_SED_Toolkit as sedt
 from sedfit.fitter import basicclass as bc
@@ -18,7 +19,7 @@ print("############################")
 print("# Galaxy SED Fitter starts #")
 print("############################")
 
-def gsf_run(targname, redshift, sedFile, config):
+def fitter(targname, redshift, sedPck, config):
     """
     This function is the main routine to do the SED fitting. The code will
     produce the final fitting results.
@@ -29,8 +30,13 @@ def gsf_run(targname, redshift, sedFile, config):
         The name of the target.
     redshift : float
         The redshift of the target.
-    sedFile : str
-        The full path of the SED data file.
+    sedPck: dict
+        {
+            sed : tuple
+                (wave, flux, sigma) of SED photometric data.
+            spc : tuple
+                (wave, flux, sigma) of SED spectral data.
+        }
     config : module or class
         The configuration information for the fitting.
 
@@ -42,16 +48,9 @@ def gsf_run(targname, redshift, sedFile, config):
     -----
     None.
     """
-    print("#--------------------------------#")
-    print("Target: {0}".format(targname))
-    print("SED file: {0}".format(sedFile))
-    print("#--------------------------------#")
     ################################################################################
     #                                    Data                                      #
     ################################################################################
-    sedRng = config.sedRng
-    sedPck = sedt.Load_SED(sedFile, sedRng, config.spcRng, config.spcRebin)
-    sed = sedPck["sed_cb"]
     sedwave = sedPck["sed"][0]
     sedflux = sedPck["sed"][1]
     sedsigma = sedPck["sed"][2]
@@ -203,7 +202,6 @@ def gsf_run(targname, redshift, sedFile, config):
     dataPck = {
         "targname": targname,
         "redshift": redshift,
-        "sedFile": sedFile,
         "sedPck": sedPck,
         "bandList": bandList,
         "sedName": sedName,
@@ -245,3 +243,47 @@ def gsf_run(targname, redshift, sedFile, config):
     plt.savefig("{0}_result.png".format(targname), bbox_inches="tight")
     plt.close()
     print("Post-processed!")
+
+def gsf_fitter(configName, targname=None, redshift=None, sedFile=None):
+    """
+    The wrapper of fitter() function. If the targname, redshift and sedFile are
+    provided as arguments, they will be used overriding the values in the config
+    file saved in configName. If they are not provided, then, the values in the
+    config file will be used.
+
+    Parameters
+    ----------
+    configName : str
+        The full path of the config file.
+    targname : str or None by default
+        The name of the target.
+    redshift : float or None by default
+        The redshift of the target.
+    sedFile : str or None by default
+        The full path of the sed data file.
+
+    Returns
+    -------
+    None.
+
+    Notes
+    -----
+    None.
+    """
+    config = importlib.import_module(configName.split(".")[0])
+    if targname is None:
+        assert redshift is None
+        assert sedFile is None
+        targname = config.targname
+        redshift = config.redshift
+        sedFile  = config.sedFile
+    else:
+        assert not redshift is None
+        assert not sedFile is None
+    print("#--------------------------------#")
+    print("Target: {0}".format(targname))
+    print("SED file: {0}".format(sedFile))
+    print("Config file: {0}".format(configName))
+    print("#--------------------------------#")
+    sedPck = sedt.Load_SED(sedFile, config.sedRng, config.spcRng, config.spcRebin)
+    fitter(targname, redshift, sedPck, config)
