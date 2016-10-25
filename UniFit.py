@@ -1,5 +1,6 @@
 import os
 import gsf
+import traceback
 import numpy as np
 from optparse import OptionParser
 from astropy.table import Table
@@ -50,4 +51,10 @@ else: #If the target list is provided, fit the targets one by one.
             if configTry in fileList:
                 configName = configTry
         sedFile = sedPath + sedname
-        gsf.gsf_fitter(configName, targname, redshift, sedFile)
+        try:
+            gsf.gsf_fitter(configName, targname, redshift, sedFile)
+        except:
+            print("\n---------------------------")
+            print("***Fitting {0} is failed!".format(targname))
+            traceback.print_exc()
+            print("---------------------------")
