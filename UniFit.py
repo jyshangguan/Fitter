@@ -45,13 +45,12 @@ else: #If the target list is provided, fit the targets one by one.
         targname = nameList[loop]
         redshift = zList[loop]
         sedname  = sedList[loop]
-        #Check existing results
-        if not options.refit:
+        if not options.refit: #Omit the target if there is a fitting result.
             fileList = os.listdir(".")
             if "{0}_bestfit.txt".format(targname) in fileList:
                 print("\n***{0} has been fitted!\n".format(targname))
                 continue
-        if options.usename:
+        if options.usename: #Try to use the config file of the target itself.
             fileList = os.listdir(".")
             configTry = "config_{0}.py".format(targname)
             if configTry in fileList:
