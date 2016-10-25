@@ -1,9 +1,15 @@
 import os
+import sys
 import gsf
 import traceback
 import numpy as np
 from optparse import OptionParser
 from astropy.table import Table
+
+#Include the config directory#
+#----------------------------#
+if os.path.isdir("configs"):
+    sys.path.append("configs/")
 
 #Parse the commands#
 #-------------------#
