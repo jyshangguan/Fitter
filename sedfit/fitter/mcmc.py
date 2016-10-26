@@ -635,3 +635,13 @@ class EmceeModel(object):
 
     def __setstate__(self, dict):
         self.__dict__ = dict
+
+    def __del__(self):
+        del self.__data
+        del self.__model
+        del self.__modelunct
+        del self.__unctDict
+        del self.__sampler
+        parList = self.__dict__.keys()
+        if "sampler" in parList:
+            del self.sampler
