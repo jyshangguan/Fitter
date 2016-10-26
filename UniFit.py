@@ -1,4 +1,5 @@
 import os
+import gc
 import sys
 import gsf
 import traceback
@@ -63,3 +64,4 @@ else: #If the target list is provided, fit the targets one by one.
             print("***Fitting {0} is failed!".format(targname))
             traceback.print_exc()
             print("---------------------------")
+        gc.collect()
