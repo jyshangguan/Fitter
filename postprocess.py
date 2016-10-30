@@ -98,7 +98,7 @@ parTruth = modelPck["parTruth"]   #Whether to provide the truth of the model
 modelUnct = modelPck["modelUnct"] #Whether to consider the model uncertainty in the fitting
 parAllList = sedModel.get_parVaryList()
 if modelUnct:
-    parAllList.append(np.log(-np.inf))
+    parAllList.append(-np.inf)
     parAllList.append(-np.inf)
     parAllList.append(-5)
 
