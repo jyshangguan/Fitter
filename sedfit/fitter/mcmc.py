@@ -461,21 +461,29 @@ class EmceeModel(object):
         phgh = parRange[2, :]
         #pmax = self.p_logl_max()
         sedModel.updateParList(pcnt)
-        ycnt = sedModel.combineResult()
-        ycnt_cmp = sedModel.componentResult()
+        ycnt = sedModel.combineResult() #The best-fit model
+        ycnt_cmp = sedModel.componentResult() #The best-fit components
+        yPhtC = np.array(sedData.model_pht(waveModel, ycnt)) #The best-fit band average flux density
         sedModel.updateParList(phgh)
-        yhgh = sedModel.combineResult()
-        yhgh_cmp = sedModel.componentResult()
+        yhgh = sedModel.combineResult() #The upperlimit model
+        yhgh_cmp = sedModel.componentResult() #The upperlimit components
+        yPhtH = np.array(sedData.model_pht(waveModel, yhgh)) #The upperlimit band average flux density
         sedModel.updateParList(plow)
-        ylow = sedModel.combineResult()
-        ylow_cmp = sedModel.componentResult()
+        ylow = sedModel.combineResult() #The lowerlimit model
+        ylow_cmp = sedModel.componentResult() #The lowerlimit components
+        yPhtL = np.array(sedData.model_pht(waveModel, ylow)) #The lowerlimit band average flux density
+        #Plot the SED data
         fig, ax = sedData.plot_sed(FigAx=FigAx)
         cList = ["r", "g", "b", "m", "y", "c"]
         ncolor = len(cList)
+        #Plot the best-fit model
         ax.plot(waveModel, ycnt, color="brown", linewidth=3.0, linestyle="--", label="Total")
-        ax.fill_between(waveModel, ylow, yhgh, color="brown", alpha=0.1)
-        ax.set_xlabel(r"Wavelength ($\mu m$)", fontsize=24)
-        ax.set_ylabel(r"$f_\nu$ (mJy)", fontsize=24)
+        #Plot the upper- and lower- boundary
+        ax.fill_between(waveModel, ylow, yhgh, color="brown", alpha=0.3)
+        #Plot the band average photometric data with uncertainties
+        ax.errorbar(sedData.get_dsList("x"), yPhtC, yerr=[yPhtC-yPhtL, yPhtH-yPhtC], marker="s",
+                    color="r", mfc="none", mec="r", linestyle="none", label="Model")
+        #Plot the different components of the model
         modelList = sedModel._modelList
         counter = 0
         for modelName in modelList:
@@ -484,6 +492,7 @@ class EmceeModel(object):
             ax.fill_between(waveModel, ylow_cmp[modelName], yhgh_cmp[modelName],
                              color=cList[counter], alpha=0.1)
             counter += 1
+        #Plot the truth model if provided
         if not truths is None:
             sedModel.updateParList(truths)
             ytrue = sedModel.combineResult()
@@ -493,11 +502,20 @@ class EmceeModel(object):
             for modelName in modelList:
                 ax.plot(waveModel, ytrue_cmp[modelName], color=cList[counter%ncolor])
                 counter += 1
+        #Setup the figure
+        ax.set_xlabel(r"Wavelength ($\mu m$)", fontsize=24)
+        ax.set_ylabel(r"$f_\nu$ (mJy)", fontsize=24)
         yData = sedData.get_List("y")
-        ymin = 10**(np.floor(np.log10(min(yData))) - 1)
-        ymax = 10**np.ceil(np.log10(max(yData)))
+        ymin = 10**(np.floor(np.log10(min(yData))) - 2)
+        ymax = 10**np.ceil(np.log10( max([max(yData), max(ycnt)]) ))
         ax.set_ylim([ymin, ymax])
-        ax.legend(loc="lower right", framealpha=0.3, fontsize=20)
+        #Set the yaxis tick range
+        yTickRange = ax.yaxis.get_majorticklocs()
+        yTickRange = yTickRange[(yTickRange >= ymin) & (yTickRange <= ymax)]
+        ax.yaxis.set_ticks(yTickRange[1:-1])
+        ax.xaxis.set_tick_params(which="major", labelsize=18)
+        ax.yaxis.set_tick_params(which="major", labelsize=18)
+        ax.legend(loc="lower right", framealpha=0.3, fontsize=16)
         if filename is None:
             return (fig, ax)
         else:
@@ -557,6 +575,8 @@ class EmceeModel(object):
         ymax = max(yData)*2.0
         ax.set_xlim([xmin, xmax])
         ax.set_ylim([ymin, ymax])
+        ax.xaxis.set_tick_params(which="major", labelsize=18)
+        ax.yaxis.set_tick_params(which="major", labelsize=18)
         if filename is None:
             return (fig, ax)
         else:
