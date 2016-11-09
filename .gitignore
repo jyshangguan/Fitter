@@ -10,6 +10,7 @@ results/*
 #Python auxillary files
 bak/*
 *.pyc
+*.hdf5
 input_*.py
 bak_*.py
 sv_*.py

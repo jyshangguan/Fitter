@@ -1,5 +1,6 @@
 import numpy as np
 from sklearn.neighbors import KDTree
+from sklearn.decomposition import PCA
 from scipy.interpolate import splev
 
 class Template(object):
@@ -49,3 +50,43 @@ class Template(object):
 
     def readme(self):
         return self._readMe
+
+def PCA_decompose(X, n_components):
+    """
+    Use PCA to decompose the input templates.
+
+    Parameters
+    ----------
+    X : array-like, shape (n_samples, n_features)
+        The input templates to decompose.
+    n_components : float
+        The number of components kept.
+
+    Returns
+    -------
+    results : dict
+        X_t : array-like, shape (n_samples, n_components)
+            The decomposed array of the input array.
+        cmp : array-like, shape (n_components, n_features)
+            The components decomposed by PCA.
+
+    Notes
+    -----
+    None.
+    """
+    pca = PCA(n_components=n_components)
+    X_t = pca.fit_transform(X)
+    cmp = pca.components_
+    results = {
+        "X_t": X_t,
+        "components": cmp
+    }
+    return results
+
+if __name__ == "__main__":
+    X = np.array([[-1, -1, -1], [-2, -1, 1], [-1, -2, 0], [1, 1, 2], [2, 1, 0], [1, 2, -1]])
+    results = PCA_decompose(X, 3)
+    X_t = results["X_t"]
+    cmp = results["components"]
+    print X_t
+    print cmp
