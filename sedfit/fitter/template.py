@@ -74,7 +74,7 @@ def PCA_decompose(X, n_components):
     -----
     None.
     """
-    pca = PCA(n_components=n_components)
+    pca = PCA(n_components=n_components, svd_solver="full")
     X_t = pca.fit_transform(X)
     cmp = pca.components_
     results = {
@@ -82,6 +82,38 @@ def PCA_decompose(X, n_components):
         "components": cmp
     }
     return results
+
+def PCA_recover(idx, encoder, decoder):
+    """
+    Recover the PCA decomposed array.
+
+    Parameters
+    ----------
+    idx : float
+        The index of the template to be recovered.
+    encoder : HDF5 dataset
+        The decomposed results of the original data.
+    decoder : HDF5 dataset
+        The principle components of the original data.
+
+    Returns
+    -------
+    results : float array
+        The recovered data array.
+
+    Notes
+    -----
+    None.
+    """
+    nSamples    = encoder.attrs["nSamples"]
+    nComponents = encoder.attrs["nComponents"]
+    nFeatures   = decoder.attrs["nFeatures"]
+    weight = encoder.value[idx, :]
+    components = decoder.value
+    result = np.zeros(nFeatures)
+    for loop in range(nComponents):
+        result += weight[loop] * components[loop, :]
+    return result
 
 if __name__ == "__main__":
     X = np.array([[-1, -1, -1], [-2, -1, 1], [-1, -2, 0], [1, 1, 2], [2, 1, 0], [1, 2, -1]])
