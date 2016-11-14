@@ -74,7 +74,7 @@ def PCA_decompose(X, n_components):
     -----
     None.
     """
-    pca = PCA(n_components=n_components)
+    pca = PCA(n_components=n_components, svd_solver="full")
     X_t = pca.fit_transform(X)
     cmp = pca.components_
     results = {
