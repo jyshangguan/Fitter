@@ -51,7 +51,7 @@ class Template(object):
     def readme(self):
         return self._readMe
 
-def PCA_decompose(X, n_components):
+def PCA_decompose(X, n_components, **kwargs):
     """
     Use PCA to decompose the input templates.
 
@@ -61,6 +61,8 @@ def PCA_decompose(X, n_components):
         The input templates to decompose.
     n_components : float
         The number of components kept.
+    **kwargs : dict
+        The arguments of PCA function.
 
     Returns
     -------
@@ -74,7 +76,7 @@ def PCA_decompose(X, n_components):
     -----
     None.
     """
-    pca = PCA(n_components=n_components, svd_solver="full")
+    pca = PCA(n_components=n_components, **kwargs)
     X_t = pca.fit_transform(X)
     cmp = pca.components_
     results = {
