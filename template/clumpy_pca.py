@@ -40,8 +40,8 @@ for nf in range(nFeatures):
 #plt.xscale("log")
 #plt.show()
 
-nComponents = 20
-pcaResults = PCA_decompose(ipList, nComponents)
+nComponents = 16
+pcaResults = PCA_decompose(ipList, nComponents, svd_solver="full")
 X_t = pcaResults["X_t"]
 cmp = pcaResults["components"]
 
