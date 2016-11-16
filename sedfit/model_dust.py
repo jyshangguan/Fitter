@@ -49,7 +49,7 @@ tSil = Template(**silDict)
 tGra = Template(**graDict)
 
 def Torus_Emission(typeSil, sizeSil, T1Sil, T2Sil, logM1Sil, logM2Sil,
-                   typeGra, sizeGra, T1Gra, T2Gra, logM1Gra, logM2Gra,
+                   typeGra, sizeGra, T1Gra, T2Gra, R1G2S, R2G2S,
                    wave, DL, TemplateSil=tSil, TemplateGra=tGra):
     """
     Calculate the emission of the dust torus using the dust opacity and assuming
@@ -65,8 +65,8 @@ def Torus_Emission(typeSil, sizeSil, T1Sil, T2Sil, logM1Sil, logM2Sil,
     #Calculate the dust emission SEDs
     M1Sil = 10**logM1Sil
     M2Sil = 10**logM2Sil
-    M1Gra = 10**logM1Gra
-    M2Gra = 10**logM2Gra
+    M1Gra = R1G2S * M1Sil
+    M2Gra = R2G2S * M2Sil
     de1Sil   = Dust_Emission(T1Sil, M1Sil, kappaSil, wave, DL)
     de2Sil   = Dust_Emission(T2Sil, M2Sil, kappaSil, wave, DL)
     de1Gra   = Dust_Emission(T1Gra, M1Gra, kappaGra, wave, DL)
@@ -80,18 +80,22 @@ if __name__ == "__main__":
     typeGra = 0
     sizeSil = 0.5
     sizeGra = 0.5
-    T1Sil   = 1000.0
+    T1Sil   = 800.0
     T2Sil   = 300.0
     T1Gra   = 500.0
     T2Gra   = 200.0
-    M1Sil   = 1e3
-    M2Sil   = 1e5
-    M1Gra   = 1e5
-    M2Gra   = 1e7
+    logM1Sil = 3
+    logM2Sil = 5
+    R1G2S = 1.5
+    R2G2S = 1.5
+    M1Sil = 10**logM1Sil
+    M2Sil = 10**logM2Sil
+    M1Gra = R1G2S * M1Sil
+    M2Gra = R2G2S * M2Sil
     wave = 10**np.linspace(0, 3, 1000)
     DL = 500.0
-    deTorus = Torus_Emission(typeSil, sizeSil, T1Sil, T2Sil, M1Sil, M2Sil,
-                             typeGra, sizeGra, T1Gra, T2Gra, M1Gra, M2Gra,
+    deTorus = Torus_Emission(typeSil, sizeSil, T1Sil, T2Sil, logM1Sil, logM2Sil,
+                             typeGra, sizeGra, T1Gra, T2Gra, R1G2S, R2G2S,
                              wave, DL)
     parSil   = [typeSil, sizeSil]
     parGra   = [typeGra, sizeGra]
@@ -108,5 +112,5 @@ if __name__ == "__main__":
     plt.plot(wave, de2Gra, color="b", linestyle=":")
     plt.xscale("log")
     plt.yscale("log")
-    plt.ylim([1e4, 1e6])
+    plt.ylim([1e2, 3e5])
     plt.show()
