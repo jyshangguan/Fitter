@@ -1,9 +1,11 @@
 import numpy as np
 from collections import OrderedDict
 from model_bc03 import BC03
-from model_clumpy import CLUMPY_intp
 from model_dl07 import DL07
 from model_analyticals import Linear, Modified_BlackBody, Power_Law, Line_Gaussian_L
+from model_dust import Torus_Emission
+#from model_clumpy import CLUMPY_intp
+CLUMPY_intp = None
 
 """
 ls_mic = 2.99792458e14 #unit: micron/s
@@ -12,6 +14,7 @@ Msun = 1.9891e33 #unit: gram
 Mpc = 3.08567758e24 #unit: cm
 mJy = 1e26 #unit: erg/s/cm^2/Hz
 """
+
 
 #Dict of the supporting functions
 funcLib = {
@@ -32,6 +35,13 @@ funcLib = {
         "x_name": "wave",
         "param_fit": ["logL", "i", "tv", "q", "N0", "sigma", "Y"],
         "param_add": ["DL", "t"]
+    },
+    "Torus_Emission": {
+        "function": Torus_Emission,
+        "x_name": "wave",
+        "param_fit": ["typeSil", "sizeSil", "T1Sil", "T2Sil", "logM1Sil", "logM2Sil",
+                      "typeGra", "sizeGra", "T1Gra", "T2Gra", "logM1Gra", "logM2Gra"],
+        "param_add": ["DL", "TemplateSil", "TemplateGra"]
     },
     "DL07": {
         "function": DL07,

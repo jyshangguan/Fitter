@@ -103,8 +103,13 @@ for sz in sizeList:
     par = [0, sz-0.01]
     kappa = t(wave0, par)
     print max(abs(kappa-kappa0))
-    plt.plot(wave0, kappa)
+    plt.plot(wave0, kappa, label="{0:.1f}".format(sz))
     plt.plot(wave0, kappa0, ":r")
+plt.xscale("log")
+plt.yscale("log")
+plt.legend(loc="best", fontsize=6)
+plt.savefig("dust_sil.png")
+plt.show()
 #For the graphite
 for sz in sizeList:
     modelGra = np.loadtxt(tmplDir+"gra/qsohst_grap_a{0}_dat".format(sz))
@@ -114,8 +119,10 @@ for sz in sizeList:
     par = [0, sz-0.01]
     kappa = t(wave0, par)
     print max(abs(kappa-kappa0))
-    plt.plot(wave0, kappa)
+    plt.plot(wave0, kappa, label="{0:.1f}".format(sz))
     plt.plot(wave0, kappa0, ":r")
 plt.xscale("log")
 plt.yscale("log")
+plt.legend(loc="best", fontsize=6)
+plt.savefig("dust_gra.png")
 plt.show()
