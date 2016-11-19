@@ -6,6 +6,7 @@
 *.png
 *.fitrs
 results/*
+template/grain_models/*
 
 #Python auxillary files
 bak/*
