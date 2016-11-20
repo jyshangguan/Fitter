@@ -79,9 +79,11 @@ def PCA_decompose(X, n_components, **kwargs):
     pca = PCA(n_components=n_components, **kwargs)
     X_t = pca.fit_transform(X)
     cmp = pca.components_
+    evr = pca.explained_variance_ratio_
     results = {
         "X_t": X_t,
-        "components": cmp
+        "components": cmp,
+        "evr": evr
     }
     return results
 
