@@ -1,9 +1,19 @@
+#This script use the PCA method to decompose the CLUMPY templates. It is found
+#that the normalised templates are not very well recovered. Therefore, we
+#decompose the original ones from "clumpy_models_201410_tvavg.hdf5".
+#The aim of this decomposition is to reduce the data file size while keeping the
+#accuracy of the templates.
+#We first take the log10 of the templates and then subtract the mean of the
+#logarithm fluxes from each of the template. The PCA decomposition is applied to
+#the results. The steps come from Han&Han ApJ, 749, 123, 2012.
+
 import h5py
 import numpy as np
 import matplotlib.pyplot as plt
 from sedfit.fitter.template import PCA_decompose
 
-h = h5py.File('/Users/jinyi/Work/PG_QSO/templates/clumpy_fnu_norm.hdf5')
+#h = h5py.File('/Users/jinyi/Work/PG_QSO/templates/clumpy_fnu_norm.hdf5')
+h = h5py.File('/Users/jinyi/Work/PG_QSO/templates/clumpy_models_201410_tvavg.hdf5')
 h_q = h['q'].value
 h_N0 = h['N0'].value
 h_tv = h['tv'].value
@@ -44,8 +54,12 @@ nComponents = 16
 pcaResults = PCA_decompose(ipList, nComponents, svd_solver="full")
 X_t = pcaResults["X_t"]
 cmp = pcaResults["components"]
+evr = pcaResults["evr"]
+sEvr = sum(evr)
+print "PCA finish! {0} components explain {1} of the variance.".format(nComponents, sEvr)
 
-f = h5py.File("template/clumpy_pca.hdf5", "w")
+#f = h5py.File("template/clumpy_pca.hdf5", "w")
+f = h5py.File("template/clumpy_unnorm_pca.hdf5", "w")
 wave_f = f.create_dataset("wave", (nFeatures,), dtype="float")
 fnu_mean = f.create_dataset("fnu_mean", (nFeatures,), dtype="float")
 encoder = f.create_dataset("encoder", (nSamples, nComponents), dtype="float")
@@ -55,6 +69,7 @@ fnu_mean[...] = fnuMean
 encoder[...] = X_t
 #encoder[0:102, :] = X_t
 decoder[...] = cmp
+'''
 f.attrs["README"] = """
     This file saves the PCA decomposed CLUMPY model. The recovered data is
     the mean subtracted log10(fnu) of the model. The integrated flux is
@@ -62,13 +77,26 @@ f.attrs["README"] = """
     To recover the fnu, one should first recover the input array with the
     PCA encoder and decoder. Add the mean SED and then use it as the
     exponent of 10.
-    """
+    There are {0} principle components used.
+    """.format(nComponents)
+'''
+f.attrs["README"] = """
+    This file saves the PCA decomposed CLUMPY model. The recovered data is
+    the mean subtracted log10(fnu) of the model. The templates are not normalised.
+    To recover the fnu, one should first recover the input array with the
+    PCA encoder and decoder. Add the mean SED and then use it as the
+    exponent of 10.
+    There are {0} principle components used.
+    """.format(nComponents)
 wave_f.attrs["README"] = "The corresponding wavelength array."
 fnu_mean.attrs["README"] = "The mean SED of log10(fnu)."
 encoder.attrs["README"] = "The decomposed templates."
 encoder.attrs["nSamples"] = nSamples
 encoder.attrs["nComponents"] = nComponents
-decoder.attrs["README"] = "The PCA components of the model."
+decoder.attrs["README"] = """
+    The PCA components of the model. The total {0} components explain {1} of
+    the variance .
+    """.format(nComponents, sEvr)
 decoder.attrs["nComponents"] = nComponents
 decoder.attrs["nFeatures"] = nFeatures
 
