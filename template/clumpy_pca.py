@@ -10,8 +10,11 @@
 import h5py
 import numpy as np
 import matplotlib.pyplot as plt
+import cPickle as pickle
+from sklearn.neighbors import KDTree
 from sedfit.fitter.template import PCA_decompose
 
+##Load the data for PCA and KDTree
 #h = h5py.File('/Users/jinyi/Work/PG_QSO/templates/clumpy_fnu_norm.hdf5')
 h = h5py.File('/Users/jinyi/Work/PG_QSO/templates/clumpy_models_201410_tvavg.hdf5')
 h_q = h['q'].value
@@ -35,21 +38,17 @@ for counter in range(nSamples):
     sig = h_sig[counter]
     Y   = h_Y[counter]
     i   = h_i[counter]
-    logfnu = np.log10(flux_tor[counter])
+    logfnu = np.log10(flux_tor[counter]) #For better behaviour of PCA decomposition.
     parList.append([q, N0, tv, sig, Y, i])
     fnuList.append(logfnu)
-    #if counter > 100:
-    #    break
 
 fnuList = np.array(fnuList)
 fnuMean = np.mean(fnuList, axis=0)
 ipList = np.zeros_like(fnuList)
 for nf in range(nFeatures):
-    ipList[:, nf] = fnuList[:, nf] - fnuMean[nf]
-#plt.plot(wave, fnuMean)
-#plt.xscale("log")
-#plt.show()
+    ipList[:, nf] = fnuList[:, nf] - fnuMean[nf] #For better behaviour of PCA decomposition.
 
+##PCA decomposition
 nComponents = 16
 pcaResults = PCA_decompose(ipList, nComponents, svd_solver="full")
 X_t = pcaResults["X_t"]
@@ -58,8 +57,9 @@ evr = pcaResults["evr"]
 sEvr = sum(evr)
 print "PCA finish! {0} components explain {1} of the variance.".format(nComponents, sEvr)
 
+##Save the PCA decomposed results
 #f = h5py.File("template/clumpy_pca.hdf5", "w")
-f = h5py.File("template/clumpy_unnorm_pca.hdf5", "w")
+f = h5py.File("template/clumpy_pca.hdf5", "w")
 wave_f = f.create_dataset("wave", (nFeatures,), dtype="float")
 fnu_mean = f.create_dataset("fnu_mean", (nFeatures,), dtype="float")
 encoder = f.create_dataset("encoder", (nSamples, nComponents), dtype="float")
@@ -67,7 +67,6 @@ decoder = f.create_dataset("decoder", (nComponents, nFeatures), dtype="float")
 wave_f[...] = wave
 fnu_mean[...] = fnuMean
 encoder[...] = X_t
-#encoder[0:102, :] = X_t
 decoder[...] = cmp
 '''
 f.attrs["README"] = """
@@ -102,3 +101,34 @@ decoder.attrs["nFeatures"] = nFeatures
 
 f.flush()
 f.close()
+
+##Build up the KDTree
+kdt = KDTree(parList)
+print "The KDTree is built up!"
+modelInfo = {
+    "q": np.unique(h_q),
+    "N0": np.unique(h_N0),
+    "tv": np.unique(h_tv),
+    "sigma": np.unique(h_sig),
+    "Y": np.unique(h_Y),
+    "i": np.unique(h_i),
+    "wavelength": wave,
+}
+
+parFormat = ["q", "N0", "tv", "sigma", "Y", "i"]
+readMe = '''
+    This template is from: http://www.pa.uky.edu/clumpy/
+    The interpolation is tested well!
+    '''
+templateDict = {
+    "pcaFile": "clumpy_unnorm_pca.hdf5",
+    "kdTree": kdt,
+    "parList": parList,
+    "modelInfo": modelInfo,
+    "parFormat": parFormat,
+    "readMe": readMe
+}
+
+fp = open("clumpy_kdt.tmplt", "w")
+pickle.dump(templateDict, fp)
+fp.close()
