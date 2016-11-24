@@ -18,6 +18,7 @@ sv_*.py
 aux_*.py
 test*
 config*
+result_*.py
 
 #SED data
 data/*
