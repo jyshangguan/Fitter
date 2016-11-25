@@ -1,11 +1,11 @@
 import numpy as np
 from collections import OrderedDict
 from model_bc03 import BC03
-from model_dl07 import DL07
+from model_dl07 import DL07, DL07_PosPar
 from model_analyticals import Linear, Modified_BlackBody, Power_Law, Line_Gaussian_L
 from model_dust import Torus_Emission
-#from model_clumpy import CLUMPY_intp
-CLUMPY_intp = None
+from model_clumpy import CLUMPY_intp
+#CLUMPY_intp = None
 
 """
 ls_mic = 2.99792458e14 #unit: micron/s
