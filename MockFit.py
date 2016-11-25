@@ -3,7 +3,9 @@ import gc
 import sys
 import gsf
 import traceback
+import importlib
 import numpy as np
+import rel_SED_Toolkit as sedt
 from optparse import OptionParser
 from astropy.table import Table
 
@@ -27,12 +29,23 @@ parser.add_option("-r", "--refit", dest="refit",
 if len(args) == 0:
     raise AssertionError("The config file is not specified!")
 
+
+configName = args[0]
+config = importlib.import_module(configName.split(".")[0])
 targetList = options.list
-if targetList is None: #If the target list is not provided, only fit one target according to the config file.
-    configName = args[0]
-    gsf.gsf_fitter(configName)
-else: #If the target list is provided, fit the targets one by one.
-    configName = args[0]
+if targetList is None: #->If the target list is not provided, only fit one target according to the config file.
+    targname = config.targname
+    redshift = config.redshift
+    sedFile  = config.sedFile
+    sedPck = sedt.Load_SED(sedFile, config.sedRng, config.spcRng, config.spcRebin)
+    with open(sedFile, "r") as f:
+        linesT = f.readlines()
+        exec linesT[-1][1:]
+        config.parTruth = inputPars
+        #print "parTruth:"
+        #print config.parTruth
+    gsf.fitter(targname, redshift, sedPck, config)
+else: #->If the target list is provided, fit the targets one by one.
     if len(args) == 2:
         sedPath = args[1]
     else:
@@ -57,8 +70,15 @@ else: #If the target list is provided, fit the targets one by one.
             if configTry in fileList:
                 configName = configTry
         sedFile = sedPath + sedname
+        sedPck = sedt.Load_SED(sedFile, config.sedRng, config.spcRng, config.spcRebin)
+        with open(sedFile, "r") as f:
+            linesT = f.readlines()
+            exec linesT[-1][1:]
+            config.parTruth = inputPars
+            #print "parTruth:"
+            #print config.parTruth
         try:
-            gsf.gsf_fitter(configName, targname, redshift, sedFile)
+            gsf.fitter(targname, redshift, sedPck, config)
         except:
             print("\n---------------------------")
             print("***Fitting {0} is failed!".format(targname))
