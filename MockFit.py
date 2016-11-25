@@ -38,6 +38,11 @@ if targetList is None: #->If the target list is not provided, only fit one targe
     redshift = config.redshift
     sedFile  = config.sedFile
     sedPck = sedt.Load_SED(sedFile, config.sedRng, config.spcRng, config.spcRebin)
+    print("#--------------------------------#")
+    print("Target: {0}".format(targname))
+    print("SED file: {0}".format(sedFile))
+    print("Config file: {0}".format(configName))
+    print("#--------------------------------#")
     with open(sedFile, "r") as f:
         linesT = f.readlines()
         exec linesT[-1][1:]
@@ -71,6 +76,11 @@ else: #->If the target list is provided, fit the targets one by one.
                 configName = configTry
         sedFile = sedPath + sedname
         sedPck = sedt.Load_SED(sedFile, config.sedRng, config.spcRng, config.spcRebin)
+        print("#--------------------------------#")
+        print("Target: {0}".format(targname))
+        print("SED file: {0}".format(sedFile))
+        print("Config file: {0}".format(configName))
+        print("#--------------------------------#")
         with open(sedFile, "r") as f:
             linesT = f.readlines()
             exec linesT[-1][1:]
