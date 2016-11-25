@@ -116,11 +116,16 @@ def fitter(targname, redshift, sedPck, config):
     sedModel = bc.Model_Generator(modelDict, funcLib, waveModel, parAddDict_all)
     parTruth = config.parTruth   #Whether to provide the truth of the model
     modelUnct = config.modelUnct #Whether to consider the model uncertainty in the fitting
-    parAllList = sedModel.get_parVaryList()
-    if modelUnct:
-        parAllList.append(-np.inf)
-        parAllList.append(-np.inf)
-        parAllList.append(-5)
+    #parAllList = sedModel.get_parVaryList()
+    #if modelUnct:
+    if(modelUnct) & (len(parTruth) == len(sedModel.get_parVaryList())):
+        #parAllList.append(-20)
+        #parAllList.append(-20)
+        #parAllList.append(-20)
+        #if len(parTruth) < len(parAllList):
+        parTruth.append(-20)
+        parTruth.append(-20)
+        parTruth.append(-20)
 
 
     ################################################################################
