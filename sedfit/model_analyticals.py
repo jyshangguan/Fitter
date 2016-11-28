@@ -3,6 +3,33 @@ import rel_Radiation_Model_Toolkit as rmt
 
 ls_mic = 2.99792458e14 #unit: micron/s
 Mpc = 3.08567758e24 #unit: cm
+mJy = 1e-26 #1 mJy in erg/s/cm^2/Hz
+
+def BlackBody(logOmega, T, wave):
+    """
+    Calculate the flux density of a blackbody emitter.
+
+    Parameters
+    ----------
+    logOmega : float
+        The log10 of the solid angle subtended by the emitter.
+    T : float
+        The temperature of the emitter, unit: Kelvin.
+    wave : float array
+        The wavelength to be calculated.
+
+    Returns
+    -------
+    flux : float array
+        The flux density of corresponding to the input wavelength, unit: mJy.
+
+    Notes
+    -----
+    None.
+    """
+    nu   = ls_mic / wave
+    flux = rmt.BlackBody(nu, logOmega=logOmega, T=T) / mJy #unit: mJy
+    return flux
 
 def Modified_BlackBody(logM, T, beta, wave, DL, kappa0=16.2, lambda0=140):
     """

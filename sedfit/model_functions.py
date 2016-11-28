@@ -2,10 +2,16 @@ import numpy as np
 from collections import OrderedDict
 from model_bc03 import BC03
 from model_dl07 import DL07, DL07_PosPar
-from model_analyticals import Linear, Modified_BlackBody, Power_Law, Line_Gaussian_L
+import model_analyticals as ma
 from model_dust import Torus_Emission
 from model_clumpy import CLUMPY_intp
 #CLUMPY_intp = None
+
+Linear = ma.Linear
+BlackBody = ma.BlackBody
+Modified_BlackBody = ma.Modified_BlackBody
+Power_Law = ma.Power_Law
+Line_Gaussian_L = ma.Line_Gaussian_L
 
 """
 ls_mic = 2.99792458e14 #unit: micron/s
@@ -48,6 +54,12 @@ funcLib = {
         "x_name": "wave",
         "param_fit": ["logumin", "logumax", "qpah", "gamma", "logMd"],
         "param_add": ["t", "DL"]
+    },
+    "BlackBody": {
+        "function": BlackBody,
+        "x_name": "wave",
+        "param_fit": ["logOmega", "T"],
+        "param_add": []
     },
     "Modified_BlackBody": {
         "function": Modified_BlackBody,
