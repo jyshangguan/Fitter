@@ -3,7 +3,7 @@ from collections import OrderedDict
 from model_bc03 import BC03
 from model_dl07 import DL07, DL07_PosPar
 import model_analyticals as ma
-from model_dust import Torus_Emission
+from model_dust import Torus_Emission, Torus_Emission_PosPar
 from model_clumpy import CLUMPY_intp
 #CLUMPY_intp = None
 
