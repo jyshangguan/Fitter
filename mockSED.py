@@ -258,7 +258,7 @@ def gsm_mocker(configName, targname=None, redshift=None, sedFile=None,
 
 #-->Generate Mock Data
 parTable = Table.read("/Volumes/Transcend/Work/PG_MCMC/pg_sil/compile_pg_sil.ipac", format="ascii.ipac")
-infoTable = Table.read("targlist_rq.ipac", format="ascii.ipac")
+infoTable = Table.read("targlist/targlist_rq.ipac", format="ascii.ipac")
 #print parTable.colnames
 if os.path.isdir("configs"):
     sys.path.append("configs/")
@@ -272,7 +272,8 @@ comments = """
 #This mock SED is created from {0} at redshift {1}.
 #The uncertainties of the data are the real uncertainties of the sources.
 #The config file in use is {2}.
-#inputPars = {3}
+#parNames = {3}
+#inputPars = {4}
 """
 #->WISE (Jarrett2011), PACS(Balog2014), SPIRE(Pearson2013), Spitzer(MIPS handbook)
 sysUnc = {
@@ -303,5 +304,5 @@ for loop_T in range(nRuns):
     f = open("mock/{0}_{1}.msed".format(mockName, mockSub), "w")
     f.writelines("wavelength\tflux\tsigma\n")
     np.savetxt(f, data, fmt="%.2f", delimiter="\t")
-    f.writelines(comments.format(targname, redshift, configName, mockPars))
+    f.writelines(comments.format(targname, redshift, configName, parNameList, mockPars))
     f.close()
