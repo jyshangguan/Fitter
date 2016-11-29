@@ -74,6 +74,39 @@ def Torus_Emission(typeSil, sizeSil, T1Sil, T2Sil, logM1Sil, logM2Sil,
     deTorus  = de1Sil + de2Sil + de1Gra + de2Gra
     return deTorus
 
+def Torus_Emission_PosPar(typeSil, sizeSil, T1Sil, T2Sil, logM1Sil, logM2Sil,
+                          typeGra, sizeGra, T1Gra, T2Gra, R1G2S, R2G2S,
+                          TemplateSil=tSil, TemplateGra=tGra):
+    """
+    Position the parameters in the grid. Specifically, discretize the sizeSil and
+    sizeGra.
+
+    Parameters
+    ----------
+    Same as the Torus_Emission() function.
+
+    Returns
+    -------
+    parDict : dict
+        A dict of parameters with discrete parameters positioned on the grid.
+
+    Notes
+    -----
+    None.
+    """
+    parSil   = [typeSil, sizeSil]
+    parGra   = [typeGra, sizeGra]
+    nParSil = TemplateSil.get_nearestParameters(parSil)
+    nParGra = TemplateGra.get_nearestParameters(parGra)
+    parDict = {
+        "typeSil": nParSil[0],
+        "sizeSil": nParSil[1],
+        "typeGra": nParGra[0],
+        "sizeGra": nParGra[1]
+    }
+    return parDict
+
+
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
     typeSil = 0
@@ -92,6 +125,7 @@ if __name__ == "__main__":
     M2Sil = 10**logM2Sil
     M1Gra = R1G2S * M1Sil
     M2Gra = R2G2S * M2Sil
+    """
     wave = 10**np.linspace(0, 3, 1000)
     DL = 500.0
     deTorus = Torus_Emission(typeSil, sizeSil, T1Sil, T2Sil, logM1Sil, logM2Sil,
@@ -114,3 +148,20 @@ if __name__ == "__main__":
     plt.yscale("log")
     plt.ylim([1e2, 3e5])
     plt.show()
+    """
+    parKws = {
+        "typeSil": 0.50001,
+        "sizeSil": 1.22324,
+        "T1Sil": T1Sil,
+        "T2Sil": T2Sil,
+        "logM1Sil": logM1Sil,
+        "logM2Sil": logM2Sil,
+        "typeGra": 0.902934,
+        "sizeGra": 0.45325,
+        "T1Gra": T1Gra,
+        "T2Gra": T2Gra,
+        "R1G2S": R1G2S,
+        "R2G2S": R2G2S
+    }
+    parDict = Torus_Emission_PosPar(**parKws)
+    print parDict
