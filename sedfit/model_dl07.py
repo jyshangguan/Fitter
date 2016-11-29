@@ -98,7 +98,7 @@ def DL07_PosPar(logumin, logumax, qpah, gamma, logMd, t=tdl07):
     umax = 10**logumax
     pmin = [umin, umin, qpah]
     ppl  = [umin, umax, qpah]
-    parMin  = t.get_nearestParameters(pmin)
+    parMin = t.get_nearestParameters(pmin)
     parPl  = t.get_nearestParameters(ppl)
     if parMin[2] != parPl[2]:
         raise RuntimeError("The DL07 model is inconsistent!")
