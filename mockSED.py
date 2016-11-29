@@ -9,6 +9,7 @@ from astropy.table import Table
 from sedfit.fitter import basicclass as bc
 from sedfit import sedclass as sedsc
 from sedfit import model_functions as sedmf
+from sedfit.fit_functions import logLFunc_gp
 
 def dataPerturb(x, sigma):
     """
@@ -44,7 +45,7 @@ def randomRange(low, high):
     -----
     None.
     """
-    assert high > low
+    assert high >= low
     rg = high - low
     r = low + rg * np.random.rand()
     return r
@@ -76,7 +77,9 @@ def mocker(targname, redshift, sedPck, mockPars, config, sysUnc=None):
 
     Returns
     -------
-    None.
+    (mock, lnlike) : (dict, float)
+        mock : The dict of mock data, with wave, flux and sigma inside.
+        lnlike : The likelihood calculated with the input model and the mock data.
 
     Notes
     -----
@@ -191,6 +194,12 @@ def mocker(targname, redshift, sedPck, mockPars, config, sysUnc=None):
         "wave": mockWav,
         "sigma": mockSig
     }
+    #->Calculate the lnprob
+    phtData = {sedName: bc.DiscreteSet(bandList, sedwave, mockPht, sedsigma, sedflag, sedDataType)}
+    spcData = {"IRS": bc.ContinueSet(spcwave, mockSpc, spcsigma, spcflag, spcDataType)}
+    mckData = sedsc.SedClass(targname, redshift, phtDict=phtData, spcDict=spcData)
+    mckData.set_bandpass(bandList)
+    lnlike = logLFunc_gp(list(mockPars)+[-20, -20, -20], mckData, sedModel)
     """
     ymin = min([min(spcflux), min(sedflux)]) / 10.0
     ymax = max([max(spcflux), max(spcflux)]) * 10.0
@@ -202,7 +211,7 @@ def mocker(targname, redshift, sedPck, mockPars, config, sysUnc=None):
     fig, ax = FigAx
     ax.set_ylim([ymin, ymax])
     #"""
-    return mock
+    return (mock, lnlike)
 
     #sedModel.plot()
 
@@ -257,7 +266,7 @@ def gsm_mocker(configName, targname=None, redshift=None, sedFile=None,
     return mock
 
 #-->Generate Mock Data
-parTable = Table.read("/Volumes/Transcend/Work/PG_MCMC/pg_sil/compile_pg_sil.ipac", format="ascii.ipac")
+parTable = Table.read("/Volumes/Transcend/Work/PG_MCMC/pg_sil/compile_sil.ipac", format="ascii.ipac")
 infoTable = Table.read("targlist/targlist_rq.ipac", format="ascii.ipac")
 #print parTable.colnames
 if os.path.isdir("configs"):
@@ -271,14 +280,18 @@ parNameList = ['sizeSil', 'T1Sil', 'T2Sil', 'logM1Sil', 'logM2Sil', 'sizeGra',
 comments = """
 #This mock SED is created from {0} at redshift {1}.
 #The uncertainties of the data are the real uncertainties of the sources.
+#The systematics: WISE:{S[0]}, PACS:{S[1]}, SPIRE:{S[2]}, MIPS:{S[3]}.
 #The config file in use is {2}.
-#parNames = {3}
-#inputPars = {4}
+#lnlikelihood = {3}
+#parNames = {4}
+#inputPars = {5}
 """
 #->WISE (Jarrett2011), PACS(Balog2014), SPIRE(Pearson2013), Spitzer(MIPS handbook)
 sysUnc = {
-    "spc": 0.05,
-    "pht": [([0, 2], 0.03), ([2, 5], 0.05), ([5, 8], 0.05)]
+    #"spc": 0.05,
+    "spc": 0.00,
+    #"pht": [([0, 2], 0.03), ([2, 5], 0.05), ([5, 8], 0.05)]
+    "pht": [([0, 2], 0.00), ([2, 5], 0.00), ([5, 8], 0.00)] #Check for the accurate case
 }
 #loop_T = 0
 nRuns = len(parTable)
@@ -292,7 +305,7 @@ for loop_T in range(nRuns):
     for parName in parNameList:
         mockPars.append(parTable["{0}_C".format(parName)][loop_T])
     #print parTable[loop_T]
-    mock = gsm_mocker(configName, targname, redshift, sedFile, mockPars, sysUnc=sysUnc)
+    mock, lnlike = gsm_mocker(configName, targname, redshift, sedFile, mockPars, sysUnc=sysUnc)
     #plt.show()
     wave = mock["wave"]
     flux = mock["sed"]
@@ -301,8 +314,11 @@ for loop_T in range(nRuns):
 
     #->Save mock file
     mockName = targname
-    f = open("mock/{0}_{1}.msed".format(mockName, mockSub), "w")
+    #f = open("mock/{0}_{1}.msed".format(mockName, mockSub), "w")
+    f = open("mock/{0}_{1}_ac.msed".format(mockName, mockSub), "w")
     f.writelines("wavelength\tflux\tsigma\n")
     np.savetxt(f, data, fmt="%.2f", delimiter="\t")
-    f.writelines(comments.format(targname, redshift, configName, parNameList, mockPars))
+    suList = [sysUnc["pht"][0][1], sysUnc["pht"][1][1], sysUnc["pht"][2][1], sysUnc["spc"]]
+    cmnt = comments.format(targname, redshift, configName, lnlike, parNameList, mockPars, S=suList)
+    f.writelines(cmnt)
     f.close()

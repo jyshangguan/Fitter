@@ -126,7 +126,7 @@ def fitter(targname, redshift, sedPck, config):
     if parTruth is None:
         pass
     elif (len(parVary) - len(parTruth)) == nAddPars:
-        print("**Parameter truths are given!")
+        print("\n**Parameter truths are given!\n")
         for loop in range(nAddPars):
             parTruth.append(-20) #Supplement the truth values for additional parameters.
     else:
