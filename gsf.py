@@ -114,15 +114,18 @@ def fitter(targname, redshift, sedPck, config):
     funcLib    = sedmf.funcLib
     waveModel = 10**np.linspace(0.0, 3.0, 1000)
     sedModel = bc.Model_Generator(modelDict, funcLib, waveModel, parAddDict_all)
+    parVary  = sedModel.get_parVaryList()
     parTruth = config.parTruth   #Whether to provide the truth of the model
     modelUnct = config.modelUnct #Whether to consider the model uncertainty in the fitting
     if modelUnct:
         nAddPars = 3 #If model the uncertainty, there are 3 additional parameters.
+        for loop in range(nAddPars):
+            parVary.append(-20) #Supplement the truth values for additional parameters.
     else:
         nAddPars = 0 #Else, there is not additional parameters.
     if parTruth is None:
         pass
-    elif (len(sedModel.get_parVaryList()) - len(parTruth)) == nAddPars:
+    elif (len(parVary) - len(parTruth)) == nAddPars:
         print("**Parameter truths are given!")
         for loop in range(nAddPars):
             parTruth.append(-20) #Supplement the truth values for additional parameters.
@@ -165,38 +168,25 @@ def fitter(targname, redshift, sedPck, config):
     p0 = [em.from_prior() for i in range(nwalkers)]
     sampler = em.EnsembleSampler(nwalkers, threads=threads)
 
-    #Burn-in 1st
     t0 = time()
-    print( "\n{:*^35}".format(" {0}th iteration ".format(0)) )
-    em.run_mcmc(p0, iterations=iStep, printFrac=printFrac, thin=thin)
-    em.diagnose()
-    pmax = em.p_logl_max()
-    em.print_parameters(truths=parTruth, burnin=0)
-    em.plot_lnlike(filename="{0}_lnprob.png".format(targname), histtype="step")
-    print( "**Burn-in time ellapse: {0:.3f} hour".format( (time() - t0)/3600. ) )
-
-    #Burn-in rest iteration
-    for i in range(iteration-1):
-        print( "\n{:*^35}".format(" {0}th iteration ".format(i+1)) )
-        em.reset()
-        ratio = ballR * ballT**i
-        print("-- P1 ball radius ratio: {0:.3f}".format(ratio))
-        p1 = em.p_ball(pmax, ratio=ratio)
-        em.run_mcmc(p1, iterations=iStep, printFrac=printFrac)
+    #Burn-in iterations
+    for i in range(iteration):
+        print( "\n{:*^35}".format(" {0}th iteration ".format(i)) )
+        em.run_mcmc(p0, iterations=iStep, printFrac=printFrac, thin=thin)
         em.diagnose()
         pmax = em.p_logl_max()
-        em.print_parameters(truths=parTruth, burnin=50)
+        em.print_parameters(truths=parTruth, burnin=0)
         em.plot_lnlike(filename="{0}_lnprob.png".format(targname), histtype="step")
         print( "**Burn-in time ellapse: {0:.3f} hour".format( (time() - t0)/3600. ) )
+        em.reset()
+        ratio = ballR * ballT**i
+        print("-- P0 ball radius ratio: {0:.3f}".format(ratio))
+        p0 = em.p_ball(pmax, ratio=ratio)
 
     #Run MCMC
-    t0 = time()
+    #t0 = time()
     print( "\n{:*^35}".format(" Final Sampling ") )
-    em.reset()
-    ratio = ballR * ballT**i
-    print("-- P1 ball radius ratio: {0:.3f}".format(ratio))
-    p1 = em.p_ball(pmax, ratio=ratio)
-    em.run_mcmc(p1, iterations=rStep, printFrac=printFrac, thin=thin)
+    em.run_mcmc(p0, iterations=rStep, printFrac=printFrac, thin=thin)
     em.diagnose()
     em.print_parameters(truths=parTruth, burnin=burnIn, low=psLow, center=psCenter, high=psHigh)
     em.plot_lnlike(filename="{0}_lnprob.png".format(targname), histtype="step")
