@@ -136,6 +136,7 @@ def logLFunc(params, data, model):
     ym = np.array(Model2Data(model, data))
     #Calculate the log_likelihood
     logL = -0.5 * (ChiSq(y, ym, e) + np.sum( np.log(2 * np.pi * e**2) ))
+    #print logL
     return logL
 
 #The log_likelihood function: for SED fitting using Gaussian process regression
@@ -194,4 +195,5 @@ def logLFunc_gp(params, data, model):
     else:
         lnlSpc = 0
     lnL = lnlPht + lnlSpc
+    print lnL
     return lnL
