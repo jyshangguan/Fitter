@@ -195,5 +195,5 @@ def logLFunc_gp(params, data, model):
     else:
         lnlSpc = 0
     lnL = lnlPht + lnlSpc
-    print lnL
+    #print lnL
     return lnL
