@@ -20,6 +20,7 @@ aux_*.py
 test*
 config*
 result_*.py
+mock_*.py
 
 #SED data
 data/*

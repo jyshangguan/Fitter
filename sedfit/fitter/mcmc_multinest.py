@@ -1,5 +1,8 @@
+import os
+from sys import platform
 import numpy as np
 import pymultinest
+import threading, subprocess
 
 from .. import fit_functions as sedff
 
@@ -7,6 +10,15 @@ from .. import fit_functions as sedff
 lnlike = sedff.logLFunc
 #The log_likelihood function using Gaussian process regression
 lnlike_gp = sedff.logLFunc_gp
+
+#->Auxillary functions
+def show(filepath):
+    """
+    Open the output (pdf) file for the user. Provided by PyMultiNest demo.
+    """
+    if os.name == 'mac' or platform == 'darwin': subprocess.call(('open', filepath))
+    elif os.name == 'nt' or platform == 'win32': os.startfile(filepath)
+    elif platform.startswith('linux') : subprocess.call(('xdg-open', filepath))
 
 #->The object to run PyMultiNest
 class MultiNestModel(object):
@@ -64,3 +76,29 @@ class MultiNestModel(object):
 
     def run(self, **kwargs):
         pymultinest.run(self.loglike, self.prior, self.__dim, self.__dim, **kwargs)
+
+    def watch(self, interal, *args, **kwargs):
+        return threading.Timer(interal, show, *args, **kwargs)
+
+    def ProgressPlotter(self, *args, **kwargs):
+        """
+        Generate the ProgressPlotter object which is the son of ProgressWatcher
+        whose parameters are:
+            n_params,
+            interval_ms=200,
+            outputfiles_basename="chains/1-"
+        """
+        return pymultinest.ProgressPlotter(self.__dim, *args, **kwargs)
+
+    def Analyzer(self, outputfiles_basename="chains/1-"):
+        """
+        Generate the Analyser object.
+        """
+        self.analyzer = pymultinest.Analyzer(self.__dim, outputfiles_basename)
+        return self.analyzer
+
+    def PlotMarginalModes(self):
+        """
+        Generate the PlotMarginalModes object.
+        """
+        return pymultinest.PlotMarginalModes(self.analyzer)

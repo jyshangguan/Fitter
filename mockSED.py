@@ -9,20 +9,23 @@ from astropy.table import Table
 from sedfit.fitter import basicclass as bc
 from sedfit import sedclass as sedsc
 from sedfit import model_functions as sedmf
-from sedfit.fit_functions import logLFunc_gp
+from sedfit.fit_functions import logLFunc_gp, logLFunc
 
-def dataPerturb(x, sigma):
+def dataPerturb(x, sigma, pert=True):
     """
     Perturb the data assuming it is a Gaussian distribution around the detected
     values with standard deviation as the uncertainties.
     """
-    xp = sigma * np.random.randn(len(np.atleast_1d(x))) + x
-    counter = 0
-    while np.any(xp<=0):
+    if pert:
         xp = sigma * np.random.randn(len(np.atleast_1d(x))) + x
-        counter += 1
-        if counter > 10:
-            raise ValueError("The data is too noisy...")
+        counter = 0
+        while np.any(xp<=0):
+            xp = sigma * np.random.randn(len(np.atleast_1d(x))) + x
+            counter += 1
+            if counter > 10:
+                raise ValueError("The data is too noisy...")
+    else:
+        xp = x
     return xp
 
 def randomRange(low, high):
@@ -50,7 +53,8 @@ def randomRange(low, high):
     r = low + rg * np.random.rand()
     return r
 
-def mocker(targname, redshift, sedPck, mockPars, config, sysUnc=None):
+def mocker(targname, redshift, sedPck, mockPars, config,
+           sysUnc=None, uncModel=[-20, -20, -20], pert=True, plot=False):
     """
     This function is to generate a mock SED according to a given observed SED.
 
@@ -74,6 +78,10 @@ def mocker(targname, redshift, sedPck, mockPars, config, sysUnc=None):
             "pht": [([nBgn, nEnd], frac), ([nBgn, nEnd], frac), ...],
             "spc": frac
         }
+    pert : bool, default: True
+        Perturb the data according to the uncertainty if True.
+    plot : bool, default: False
+        Plot the SED to visually check if True.
 
     Returns
     -------
@@ -162,16 +170,16 @@ def mocker(targname, redshift, sedPck, mockPars, config, sysUnc=None):
     if np.any(fltr_sigma):
         mockSigma = sedsigma.copy()
         mockSigma[fltr_sigma] = mockPht0[fltr_sigma] / 3.0
-        mockPht = dataPerturb(mockPht0, mockSigma)
+        mockPht = dataPerturb(mockPht0, mockSigma, pert)
     else:
-        mockPht = dataPerturb(mockPht0, sedsigma)
+        mockPht = dataPerturb(mockPht0, sedsigma, pert)
     fltr_sigma = mockSpc0 < 3.0*spcsigma
     if np.any(fltr_sigma):
         mockSigma = spcsigma.copy()
         mockSigma[fltr_sigma] = mockSpc0[fltr_sigma] / 3.0
-        mockSpc = dataPerturb(mockSpc0, mockSigma)
+        mockSpc = dataPerturb(mockSpc0, mockSigma, pert)
     else:
-        mockSpc = dataPerturb(mockSpc0, spcsigma)
+        mockSpc = dataPerturb(mockSpc0, spcsigma, pert)
     #->Systematic uncertainties
     if not sysUnc is None:
         sysSpc = sysUnc["spc"]
@@ -199,18 +207,19 @@ def mocker(targname, redshift, sedPck, mockPars, config, sysUnc=None):
     spcData = {"IRS": bc.ContinueSet(spcwave, mockSpc, spcsigma, spcflag, spcDataType)}
     mckData = sedsc.SedClass(targname, redshift, phtDict=phtData, spcDict=spcData)
     mckData.set_bandpass(bandList)
-    lnlike = logLFunc_gp(list(mockPars)+[-20, -20, -20], mckData, sedModel)
-    """
-    ymin = min([min(spcflux), min(sedflux)]) / 10.0
-    ymax = max([max(spcflux), max(spcflux)]) * 10.0
-    #FigAx = sedModel.plot()
-    FigAx = sedData.plot_sed()
-    plt.errorbar(sedwave, mockPht, yerr=sedsigma, linestyle="none", marker="s",
-                 mfc="none", mec="r", color="r", alpha=0.5)
-    plt.errorbar(spcwave, mockSpc, yerr=spcsigma, linestyle="-", color="r", alpha=0.5)
-    fig, ax = FigAx
-    ax.set_ylim([ymin, ymax])
-    #"""
+    #lnlike = logLFunc_gp(list(mockPars)+uncModel, mckData, sedModel)
+    lnlike = logLFunc(mockPars, mckData, sedModel)
+
+    if plot:
+        ymin = min([min(spcflux), min(sedflux)]) / 10.0
+        ymax = max([max(spcflux), max(spcflux)]) * 10.0
+        FigAx = sedData.plot_sed()
+        FigAx = sedModel.plot(FigAx=FigAx)
+        plt.errorbar(sedwave, mockPht, yerr=sedsigma, linestyle="none", marker="s",
+                     mfc="none", mec="r", color="r", alpha=0.5)
+        plt.errorbar(spcwave, mockSpc, yerr=spcsigma, linestyle="-", color="r", alpha=0.5)
+        fig, ax = FigAx
+        ax.set_ylim([ymin, ymax])
     return (mock, lnlike)
 
     #sedModel.plot()
@@ -265,19 +274,20 @@ def gsm_mocker(configName, targname=None, redshift=None, sedFile=None,
     mock = mocker(targname, redshift, sedPck, mockPars, config, **kwargs)
     return mock
 
-#-->Generate Mock Data
-parTable = Table.read("/Volumes/Transcend/Work/PG_MCMC/pg_sil/compile_sil.ipac", format="ascii.ipac")
-infoTable = Table.read("targlist/targlist_rq.ipac", format="ascii.ipac")
-#print parTable.colnames
-if os.path.isdir("configs"):
-    sys.path.append("configs/")
-configName = "config_sil"
-mockSub = "sil"
+if __name__ == "__main__":
+    #-->Generate Mock Data
+    parTable = Table.read("/Volumes/Transcend/Work/PG_MCMC/pg_sil/compile_sil.ipac", format="ascii.ipac")
+    infoTable = Table.read("targlist/targlist_rq.ipac", format="ascii.ipac")
+    #print parTable.colnames
+    if os.path.isdir("configs"):
+        sys.path.append("configs/")
+    configName = "config_sil"
+    mockSub = "sil"
 
-parNameList = ['sizeSil', 'T1Sil', 'T2Sil', 'logM1Sil', 'logM2Sil', 'sizeGra',
-               'T1Gra', 'T2Gra', 'R1G2S', 'R2G2S', 'logumin', 'qpah', 'gamma',
-               'logMd']
-comments = """
+    parNameList = ['sizeSil', 'T1Sil', 'T2Sil', 'logM1Sil', 'logM2Sil', 'sizeGra',
+                   'T1Gra', 'T2Gra', 'R1G2S', 'R2G2S', 'logumin', 'qpah', 'gamma',
+                   'logMd']
+    comments = """
 #This mock SED is created from {0} at redshift {1}.
 #The uncertainties of the data are the real uncertainties of the sources.
 #The systematics: WISE:{S[0]}, PACS:{S[1]}, SPIRE:{S[2]}, MIPS:{S[3]}.
@@ -285,40 +295,44 @@ comments = """
 #lnlikelihood = {3}
 #parNames = {4}
 #inputPars = {5}
-"""
-#->WISE (Jarrett2011), PACS(Balog2014), SPIRE(Pearson2013), Spitzer(MIPS handbook)
-sysUnc = {
-    #"spc": 0.05,
-    "spc": 0.00,
-    #"pht": [([0, 2], 0.03), ([2, 5], 0.05), ([5, 8], 0.05)]
-    "pht": [([0, 2], 0.00), ([2, 5], 0.00), ([5, 8], 0.00)] #Check for the accurate case
-}
-#loop_T = 0
-nRuns = len(parTable)
-for loop_T in range(nRuns):
-    targname = parTable["Name"][loop_T]
-    fltr_Target = infoTable["Name"]==targname
-    redshift = infoTable["z"][fltr_Target][0]
-    sedFile = infoTable["sed"][fltr_Target][0]
-    #Load the mock parameters
-    mockPars = []
-    for parName in parNameList:
-        mockPars.append(parTable["{0}_C".format(parName)][loop_T])
-    #print parTable[loop_T]
-    mock, lnlike = gsm_mocker(configName, targname, redshift, sedFile, mockPars, sysUnc=sysUnc)
-    #plt.show()
-    wave = mock["wave"]
-    flux = mock["sed"]
-    sigma = mock["sigma"]
-    data = np.transpose(np.array([wave, flux, sigma]))
+    """
+    #->WISE (Jarrett2011), PACS(Balog2014), SPIRE(Pearson2013), Spitzer(MIPS handbook)
+    sysUnc = {
+        #"spc": 0.05,
+        "spc": 0.00,
+        #"pht": [([0, 2], 0.03), ([2, 5], 0.05), ([5, 8], 0.05)]
+        "pht": [([0, 2], 0.00), ([2, 5], 0.00), ([5, 8], 0.00)] #Check for the accurate case
+    }
+    #loop_T = 0
+    nRuns = len(parTable)
+    for loop_T in range(nRuns):
+        targname = parTable["Name"][loop_T]
+        fltr_Target = infoTable["Name"]==targname
+        redshift = infoTable["z"][fltr_Target][0]
+        sedFile = infoTable["sed"][fltr_Target][0]
+        #Load the mock parameters
+        mockPars = []
+        for parName in parNameList:
+            mockPars.append(parTable["{0}_C".format(parName)][loop_T])
+        #print parTable[loop_T]
+        mock, lnlike = gsm_mocker(configName, targname, redshift, sedFile, mockPars,
+                        sysUnc=sysUnc, uncModel=[-np.inf, -np.inf, -np.inf],
+                        pert=False, plot=True)
+        print("--------lnlike={0:.5f}".format(lnlike))
+        plt.savefig("mock/{0}_mock.png".format(targname))
+        plt.close()
 
-    #->Save mock file
-    mockName = targname
-    #f = open("mock/{0}_{1}.msed".format(mockName, mockSub), "w")
-    f = open("mock/{0}_{1}_ac.msed".format(mockName, mockSub), "w")
-    f.writelines("wavelength\tflux\tsigma\n")
-    np.savetxt(f, data, fmt="%.2f", delimiter="\t")
-    suList = [sysUnc["pht"][0][1], sysUnc["pht"][1][1], sysUnc["pht"][2][1], sysUnc["spc"]]
-    cmnt = comments.format(targname, redshift, configName, lnlike, parNameList, mockPars, S=suList)
-    f.writelines(cmnt)
-    f.close()
+        #->Save mock file
+        wave = mock["wave"]
+        flux = mock["sed"]
+        sigma = mock["sigma"]
+        data = np.transpose(np.array([wave, flux, sigma]))
+        mockName = targname
+        #f = open("mock/{0}_{1}.msed".format(mockName, mockSub), "w")
+        f = open("mock/{0}_{1}_ex.msed".format(mockName, mockSub), "w")
+        f.writelines("wavelength\tflux\tsigma\n")
+        np.savetxt(f, data, fmt="%.2f", delimiter="\t")
+        suList = [sysUnc["pht"][0][1], sysUnc["pht"][1][1], sysUnc["pht"][2][1], sysUnc["spc"]]
+        cmnt = comments.format(targname, redshift, configName, lnlike, parNameList, mockPars, S=suList)
+        f.writelines(cmnt)
+        f.close()

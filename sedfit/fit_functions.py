@@ -135,7 +135,7 @@ def logLFunc(params, data, model):
     e = np.array(data.get_List('e'))
     ym = np.array(Model2Data(model, data))
     #Calculate the log_likelihood
-    logL = -0.5 * (ChiSq(y, ym, e) + np.sum( np.log(2 * np.pi * e**2) ))
+    logL = -0.5 * (ChiSq(y, ym, e) )#+ np.sum( np.log(2 * np.pi * e**2) ))
     #print logL
     return logL
 
