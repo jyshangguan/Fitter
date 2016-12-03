@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import cPickle as pickle
 import rel_SED_Toolkit as sedt
 from sedfit.fitter import basicclass as bc
-from sedfit.fitter import mcmc
+from sedfit.fitter import mcmc_emcee as mcmc
 from sedfit import sedclass as sedsc
 from sedfit import model_functions as sedmf
 

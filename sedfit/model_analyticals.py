@@ -93,7 +93,7 @@ def Power_Law(PL_alpha, PL_logsf, wave):
     return flux
 
 def Linear(a, b, x):
-    return a * x + b
+    return a * np.atleast_1d(x) + b
 
 def Line_Gaussian_L(wavelength, logLum, lambda0, FWHM, DL):
     """
