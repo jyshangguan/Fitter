@@ -6,6 +6,7 @@
 *.png
 *.fitrs
 results/*
+chains*/*
 template/grain_models/*
 
 #Python auxillary files
@@ -19,6 +20,7 @@ aux_*.py
 test*
 config*
 result_*.py
+mock_*.py
 
 #SED data
 data/*
