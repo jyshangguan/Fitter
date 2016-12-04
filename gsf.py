@@ -164,9 +164,16 @@ def fitter(targname, redshift, sedPck, config):
         print("{0}: {1}".format(keys, emceeDict[keys]))
     print("#--------------------------------#")
     #em = mcmc.EmceeModel(sedData, sedModel, modelUnct, imSampler)
-    em = mcmc.EmceeModel(sedData, sedModel, modelUnct, unctDict)
-    p0 = [em.from_prior() for i in range(nwalkers)]
-    sampler = em.EnsembleSampler(nwalkers, threads=threads)
+    em = mcmc.EmceeModel(sedData, sedModel, modelUnct, unctDict, imSampler)
+    if imSampler == "EnsembleSampler":
+        p0 = [em.from_prior() for i in range(nwalkers)]
+        sampler = em.EnsembleSampler(nwalkers, threads=threads)
+    elif imSampler == "PTSampler":
+        ntemps = emceeDict["ntemps"]
+        p0 = []
+        for i in range(ntemps):
+            p0.append([em.from_prior() for i in range(nwalkers)])
+        sampler = em.PTSampler(ntemps, nwalkers, threads=threads)
 
     t0 = time()
     #Burn-in iterations
@@ -185,6 +192,7 @@ def fitter(targname, redshift, sedPck, config):
 
     #Run MCMC
     #t0 = time()
+    #print("[gsf test]: {0}".format(np.array(p0).shape))
     print( "\n{:*^35}".format(" Final Sampling ") )
     em.run_mcmc(p0, iterations=rStep, printFrac=printFrac, thin=thin)
     em.diagnose()
@@ -267,7 +275,7 @@ def gsf_fitter(configName, targname=None, redshift=None, sedFile=None):
     -----
     None.
     """
-    config = importlib.import_module(configName.split(".")[0])
+    config = importlib.import_module(configName.split("/")[-1].split(".")[0])
     if targname is None:
         assert redshift is None
         assert sedFile is None
