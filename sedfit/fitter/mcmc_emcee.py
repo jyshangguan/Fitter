@@ -143,7 +143,9 @@ class EmceeModel(object):
         self.sampler = emcee.PTSampler(ntemps, nwalkers, self.__dim,
                        logl=self.__lnlike, logp=lnprior,
                        loglargs=[self.__data, self.__model],
-                       logpargs=[self.__data, self.__model, self.__modelunct], **kwargs)
+                       logpargs=[self.__data, self.__model,
+                                 self.__modelunct, self.__unctDict],
+                        **kwargs)
         self.__ntemps = ntemps
         self.__nwalkers = nwalkers
         self.__sampler = "PTSampler"
@@ -218,10 +220,11 @@ class EmceeModel(object):
         """
         sampler = self.__sampler
         if sampler == "EnsembleSampler":
+            chain  = self.sampler.chain
             lnlike = self.sampler.lnprobability
         else:
-            lnlike = self.sampler.lnlikelihood
-        chain  = self.sampler.chain
+            chain  = self.sampler.chain[0, ...]
+            lnlike = self.sampler.lnlikelihood[0, ...]
         idx = lnlike.ravel().argmax()
         p   = chain.reshape(-1, self.__dim)[idx]
         return p
@@ -233,10 +236,11 @@ class EmceeModel(object):
         """
         sampler = self.__sampler
         if sampler == "EnsembleSampler":
+            chain  = self.sampler.chain
             lnlike = self.sampler.lnprobability
         else:
-            lnlike = self.sampler.lnlikelihood
-        chain  = self.sampler.chain
+            chain  = self.sampler.chain[0, ...]
+            lnlike = self.sampler.lnlikelihood[0, ...]
         idx = lnlike.ravel().argmin()
         p   = chain.reshape(-1, self.__dim)[idx]
         return p
@@ -273,12 +277,15 @@ class EmceeModel(object):
                     progress = 100. * (i + 1) / iterations
                     if sampler == "EnsembleSampler":
                         lnlike = lnprob
+                        pos0   = pos
                     elif sampler == "PTSampler":
-                        lnlike = logl.ravel()
+                        #->Only choose the zero temperature chain
+                        lnlike = logl[0, ...]
+                        pos0   = pos[0, ...]
                     idx = lnlike.argmax()
                     lmax = lnlike[idx]
                     lmin = lnlike.min()
-                    pmax = pos.reshape((-1, self.__dim))[idx]
+                    pmax = pos0.reshape((-1, self.__dim))[idx]
                     pname = self.__model.get_parVaryNames(latex=False)
                     print("-----------------------------")
                     print("[{0:<4.1f}%] lnL_max: {1:.3e}, lnL_min: {2:.3e}".format(progress, lmax, lmin))
@@ -329,10 +336,13 @@ class EmceeModel(object):
         nwalkers = self.__nwalkers
         if self.__sampler == "EnsembleSampler":
             chain = sampler.chain
+            lnprob = sampler.lnprobability[:, -1]
         elif self.__sampler == "PTSampler":
             chain = np.squeeze(sampler.chain[0, ...])
+            lnprob = np.squeeze(sampler.lnprobability[0, :, -1])
+            print("[posterior_sample]: {0}".format(chain.shape))
+            print("[posterior_sample]: {0}".format(lnprob.shape))
         if select:
-            lnprob = sampler.lnprobability[:, -1]
             lnpLim = np.percentile(lnprob, fraction)
             fltr = lnprob > lnpLim
             print("ps: {0}/{1} walkers are selected.".format(np.sum(fltr), nwalkers))
@@ -609,7 +619,10 @@ class EmceeModel(object):
             plt.close()
 
     def plot_lnlike(self, filename=None, iterList=[0.5, 0.8, 1.0], **kwargs):
-        lnprob = self.sampler.lnprobability
+        if self.__sampler == "EnsembleSampler":
+            lnprob = self.sampler.lnprobability
+        elif self.__sampler == "PTSampler":
+            lnprob = self.sampler.lnprobability[0, ...]
         _, niter = lnprob.shape
         iterList = np.around(niter * np.array(iterList)) - 1
         fig = plt.figure()
