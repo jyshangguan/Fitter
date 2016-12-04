@@ -45,8 +45,8 @@ funcLib = {
     "Torus_Emission": {
         "function": Torus_Emission,
         "x_name": "wave",
-        "param_fit": ["typeSil", "sizeSil", "T1Sil", "T2Sil", "logM1Sil", "logM2Sil",
-                      "typeGra", "sizeGra", "T1Gra", "T2Gra", "R1G2S", "R2G2S"],
+        "param_fit": ["typeSil", "size", "T1Sil", "T2Sil", "logM1Sil", "logM2Sil",
+                      "typeGra", "T1Gra", "T2Gra", "R1G2S", "R2G2S"],
         "param_add": ["DL", "TemplateSil", "TemplateGra"]
     },
     "DL07": {
