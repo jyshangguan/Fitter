@@ -130,7 +130,6 @@ def logLFunc(params, data, model):
     None.
     """
     model.updateParList(params)
-    nParVary = len(model.get_parVaryList())
     y = np.array(data.get_List('y'))
     e = np.array(data.get_List('e'))
     ym = np.array(Model2Data(model, data))
