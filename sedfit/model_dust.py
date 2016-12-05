@@ -48,9 +48,67 @@ graDict = grainModel["Graphite"]
 tSil = Template(**silDict)
 tGra = Template(**graDict)
 
-def Torus_Emission(typeSil, sizeSil, T1Sil, T2Sil, logM1Sil, logM2Sil,
-                   typeGra, sizeGra, T1Gra, T2Gra, R1G2S, R2G2S,
+def Torus_Emission(typeSil, size, T1Sil, T2Sil, logM1Sil, logM2Sil,
+                   typeGra, T1Gra, T2Gra, R1G2S, R2G2S,
                    wave, DL, TemplateSil=tSil, TemplateGra=tGra):
+    """
+    Calculate the emission of the dust torus using the dust opacity and assuming
+    it is optical thin situation. In detail, the torus emission model assumes that
+    the dust torus consists silicate and graphite dust. Moreover, each type of
+    dusts have two average temperature.
+    """
+    #Calculate the opacity curve
+    parSil   = [typeSil, size]
+    parGra   = [typeGra, size]
+    kappaSil = TemplateSil(wave, parSil)
+    kappaGra = TemplateGra(wave, parGra)
+    #Calculate the dust emission SEDs
+    M1Sil = 10**logM1Sil
+    M2Sil = 10**logM2Sil
+    M1Gra = R1G2S * M1Sil
+    M2Gra = R2G2S * M2Sil
+    de1Sil   = Dust_Emission(T1Sil, M1Sil, kappaSil, wave, DL)
+    de2Sil   = Dust_Emission(T2Sil, M2Sil, kappaSil, wave, DL)
+    de1Gra   = Dust_Emission(T1Gra, M1Gra, kappaGra, wave, DL)
+    de2Gra   = Dust_Emission(T2Gra, M2Gra, kappaGra, wave, DL)
+    deTorus  = de1Sil + de2Sil + de1Gra + de2Gra
+    return deTorus
+
+def Torus_Emission_PosPar(typeSil, size, T1Sil, T2Sil, logM1Sil, logM2Sil,
+                          typeGra, T1Gra, T2Gra, R1G2S, R2G2S,
+                          TemplateSil=tSil, TemplateGra=tGra):
+    """
+    Position the parameters in the grid. Specifically, discretize the sizeSil and
+    sizeGra.
+
+    Parameters
+    ----------
+    Same as the Torus_Emission() function.
+
+    Returns
+    -------
+    parDict : dict
+        A dict of parameters with discrete parameters positioned on the grid.
+
+    Notes
+    -----
+    None.
+    """
+    parSil   = [typeSil, size]
+    parGra   = [typeGra, size]
+    nParSil = TemplateSil.get_nearestParameters(parSil)
+    nParGra = TemplateGra.get_nearestParameters(parGra)
+    parDict = {
+        "typeSil": nParSil[0],
+        "typeGra": nParGra[0],
+        "size": nParSil[1],
+    }
+    return parDict
+
+'''
+def Torus_Emission_bak(typeSil, sizeSil, T1Sil, T2Sil, logM1Sil, logM2Sil,
+                       typeGra, sizeGra, T1Gra, T2Gra, R1G2S, R2G2S,
+                       wave, DL, TemplateSil=tSil, TemplateGra=tGra):
     """
     Calculate the emission of the dust torus using the dust opacity and assuming
     it is optical thin situation. In detail, the torus emission model assumes that
@@ -74,9 +132,9 @@ def Torus_Emission(typeSil, sizeSil, T1Sil, T2Sil, logM1Sil, logM2Sil,
     deTorus  = de1Sil + de2Sil + de1Gra + de2Gra
     return deTorus
 
-def Torus_Emission_PosPar(typeSil, sizeSil, T1Sil, T2Sil, logM1Sil, logM2Sil,
-                          typeGra, sizeGra, T1Gra, T2Gra, R1G2S, R2G2S,
-                          TemplateSil=tSil, TemplateGra=tGra):
+def Torus_Emission_PosPar_bak(typeSil, sizeSil, T1Sil, T2Sil, logM1Sil, logM2Sil,
+                              typeGra, sizeGra, T1Gra, T2Gra, R1G2S, R2G2S,
+                              TemplateSil=tSil, TemplateGra=tGra):
     """
     Position the parameters in the grid. Specifically, discretize the sizeSil and
     sizeGra.
@@ -105,6 +163,7 @@ def Torus_Emission_PosPar(typeSil, sizeSil, T1Sil, T2Sil, logM1Sil, logM2Sil,
         "sizeGra": nParGra[1]
     }
     return parDict
+'''
 
 
 if __name__ == "__main__":
