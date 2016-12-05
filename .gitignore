@@ -21,6 +21,7 @@ test*
 config*
 result_*.py
 mock_*.py
+temp/
 
 #SED data
 data/*

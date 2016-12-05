@@ -340,8 +340,6 @@ class EmceeModel(object):
         elif self.__sampler == "PTSampler":
             chain = np.squeeze(sampler.chain[0, ...])
             lnprob = np.squeeze(sampler.lnprobability[0, :, -1])
-            print("[posterior_sample]: {0}".format(chain.shape))
-            print("[posterior_sample]: {0}".format(lnprob.shape))
         if select:
             lnpLim = np.percentile(lnprob, fraction)
             fltr = lnprob > lnpLim
