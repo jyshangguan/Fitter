@@ -112,7 +112,7 @@ def fitter(targname, redshift, sedPck, config):
         "DL": sedData.dl,
     }
     funcLib    = sedmf.funcLib
-    waveModel = 10**np.linspace(0.0, 3.0, 1000)
+    waveModel = 10**np.linspace(-0.1, 3.0, 1000)
     sedModel = bc.Model_Generator(modelDict, funcLib, waveModel, parAddDict_all)
     parVary  = sedModel.get_parVaryList()
     parTruth = config.parTruth   #Whether to provide the truth of the model
