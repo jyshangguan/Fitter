@@ -413,6 +413,18 @@ class DataSet(object):
         csList = self.get_csList(typeName)
         return dsList + csList
 
+    def check_dsData(self):
+        """
+        Return the number of discrete data sets.
+        """
+        return len(self.__discreteSetDict.keys())
+
+    def chech_csData(self):
+        """
+        Return the number of continual data sets.
+        """
+        return len(self.__continueSetDict.keys())
+
     def __getstate__(self):
         return self.__dict__
 

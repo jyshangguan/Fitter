@@ -456,7 +456,7 @@ class EmceeModel(object):
             plt.savefig(filename)
             plt.close()
 
-    def plot_fit(self, filename=None, truths=None, FigAx=None, **kwargs):
+    def plot_fit(self, filename=None, truths=None, FigAx=None, xlim=[1, 1e3], **kwargs):
         """
         Plot the best-fit model and the data.
         """
@@ -489,7 +489,8 @@ class EmceeModel(object):
         #Plot the upper- and lower- boundary
         ax.fill_between(waveModel, ylow, yhgh, color="brown", alpha=0.3)
         #Plot the band average photometric data with uncertainties
-        ax.errorbar(sedData.get_dsList("x"), yPhtC, yerr=[yPhtC-yPhtL, yPhtH-yPhtC], marker="s",
+        if sedData.check_dsData() > 0:
+            ax.errorbar(sedData.get_dsList("x"), yPhtC, yerr=[yPhtC-yPhtL, yPhtH-yPhtC], marker="s",
                     color="r", mfc="none", mec="r", linestyle="none", label="Model")
         #Plot the different components of the model
         modelList = sedModel._modelList
@@ -524,6 +525,7 @@ class EmceeModel(object):
         ax.xaxis.set_tick_params(which="major", labelsize=18)
         ax.yaxis.set_tick_params(which="major", labelsize=18)
         ax.legend(loc="lower right", framealpha=0.3, fontsize=16)
+        ax.set_xlim(xlim)
         if filename is None:
             return (fig, ax)
         else:
