@@ -175,8 +175,8 @@ def logLFunc_gp(params, data, model):
     ySpcModel = np.array(yDict["spc"])
     nParVary = len(model.get_parVaryList())
     #lnlikelihood for photometric data
+    f = np.exp(params[nParVary]) #The parameter to control the model incompleteness
     if len(yPhtModel):
-        f = np.exp(params[nParVary]) #The last par is lnf.
         fltr_non = ePht < 0 #Find those non-detections
         sPht = (ePht**2 + (yPhtModel * f)**2)**0.5
         sPht[fltr_non] = -1
@@ -185,7 +185,7 @@ def logLFunc_gp(params, data, model):
         lnlPht = 0
     #lnlikelihood for spectral data using Gaussian process regression
     if len(ySpcModel):
-        a, tau = np.exp(params[nParVary+1:])
+        a, tau = np.exp(params[nParVary+1:]) #The covariance for spectral residual
         #a, tau = np.exp(params[nParVary:])
         gp = george.GP(a * kernels.Matern32Kernel(tau))
         sSpc = (eSpc**2 + (ySpcModel * f)**2)**0.5

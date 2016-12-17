@@ -225,6 +225,8 @@ class SedClass(bc.DataSet):
             fig = FigAx[0]
             ax = FigAx[1]
         ax.errorbar(wave, flux, yerr=sigma, color=color, linewidth=linewidth, label=label)
+        ax.set_xscale('log')
+        ax.set_yscale('log')
         return (fig, ax)
 
     def plot_spc(self, FigAx=None, linewidth=1., color='grey', **kwargs):
@@ -237,8 +239,10 @@ class SedClass(bc.DataSet):
         return FigAx
 
     def plot_sed(self, FigAx=None, **kwargs):
-        FigAx = self.plot_pht(FigAx=FigAx, **kwargs)
-        FigAx = self.plot_spc(FigAx=FigAx, **kwargs)
+        if self.check_dsData() > 0:
+            FigAx = self.plot_pht(FigAx=FigAx, **kwargs)
+        if self.chech_csData() > 0:
+            FigAx = self.plot_spc(FigAx=FigAx, **kwargs)
         return FigAx
 
     def add_bandpass(self, bandDict):
