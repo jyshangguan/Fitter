@@ -9,7 +9,8 @@ Mpc = 3.08567758e24 #unit: cm
 m_H = 1.6726219e-24 #unit: gram
 template_dir = "/Users/jinyi/Work/PG_QSO/templates/"
 
-fp = open("/Users/jinyi/Work/mcmc/Fitter/template/dl07_kdt.tmplt")
+#fp = open("/Users/jinyi/Work/mcmc/Fitter/template/dl07_kdt.tmplt")
+fp = open("/Users/jinyi/Work/mcmc/Fitter/template/dl07_kdt_mw.tmplt")
 tp_dl07 = pickle.load(fp)
 fp.close()
 tdl07 = Template(**tp_dl07)
@@ -17,7 +18,7 @@ modelInfo = tdl07.get_modelInfo()
 qpahList = modelInfo["qpah"]
 mdust2mh = modelInfo["mdmh"]
 
-def DL07(logumin, logumax, qpah, gamma, logMd, DL, wave, t=tdl07):
+def DL07(logumin, logumax, qpah, gamma, logMd, DL, z, wave, frame="rest", t=tdl07):
     """
     This function generates the dust emission template from Draine & Li (2007).
 
@@ -35,8 +36,12 @@ def DL07(logumin, logumax, qpah, gamma, logMd, DL, wave, t=tdl07):
         The log10 of the dust mass in the unit of solar mass.
     DL : float
         The luminosity distance.
+    z : float
+        The redshift.
     wave : float array
         The wavelengths of the output flux.
+    frame : string
+        "rest" for the rest frame SED and "obs" for the observed frame.
     tmpl_dl07 : numpy.ndarray
         The template of DL07 model provided by user.
 
@@ -61,7 +66,13 @@ def DL07(logumin, logumax, qpah, gamma, logMd, DL, wave, t=tdl07):
         raise RuntimeError("The DL07 model is inconsistent!")
     mdmh = mdust2mh[qpahList.index(qpah_min)]
     jnu = (1 - gamma) * jnu_min + gamma * jnu_pl
-    flux = 10**logMd * Msun/m_H * jnu/(DL * Mpc)**2 / mdmh * 1e3 #unit: mJy
+    if frame == "rest":
+        idx = 2.0
+    elif frame == "obs":
+        idx = 1.0
+    else:
+        raise ValueError("The frame '{0}' is not recognised!".format(frame))
+    flux = (1 + z)**idx * 10**logMd * Msun/m_H * jnu/(DL * Mpc)**2 / mdmh * 1e3 #unit: mJy
     return flux
 
 def DL07_PosPar(logumin, logumax, qpah, gamma, logMd, t=tdl07):
