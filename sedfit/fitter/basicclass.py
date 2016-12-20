@@ -21,7 +21,7 @@ class DataUnit(object):
         if (f==1) | (f==0):
             self.__f = int(f) #Flag to use the data or not
         else:
-            raise ValueError('The flag should be 0 or 1!')
+            raise ValueError("The flag should be 0 or 1!")
 
     def get_x(self):
         return self.__x
@@ -36,19 +36,19 @@ class DataUnit(object):
         return self.__f
 
     def gdu(self):
-        '''
+        """
         Get the data unit.
-        '''
+        """
         return (self.__x, self.__y, self.__e, self.__f)
 
     def set_flag(self, f):
-        '''
+        """
         Change the flag of the data.
-        '''
+        """
         if (f==1) | (f==0):
             self.__f = int(f)
         else:
-            raise ValueError('The flag should be 0 or 1!')
+            raise ValueError("The flag should be 0 or 1!")
 
     def __getstate__(self):
         return self.__dict__
@@ -60,12 +60,12 @@ class DataUnit(object):
 class DiscreteSet(object):
     def __init__(self, nameList, xList, yList, eList, fList, dataType=None):
         self.__nameList = nameList
-        self.__defaultType = ['name', 'x', 'y', 'e', 'f']
+        self.__defaultType = ["name", "x", "y", "e", "f"]
         if dataType is None:
             self.__userType = []
         else:
             if len(dataType) != 5:
-                raise ValueError('The dataType should contain 5 strings!')
+                raise ValueError("The dataType should contain 5 strings!")
             self.__userType = dataType
             self.__dataMap = {}
             for loop in range(5):
@@ -77,7 +77,7 @@ class DiscreteSet(object):
         for arg in args:
             match = match&(self.__unitNumber==len(arg))
         if not match:
-            raise ValueError('The inputs do not match in length!')
+            raise ValueError("The inputs do not match in length!")
 
         #Generate the dict of discrete unit
         self.__dataUnitDict = {}
@@ -100,9 +100,9 @@ class DiscreteSet(object):
             self.__fList.append(f)
 
     def __getitem__(self, i):
-        '''
+        """
         Get the data of one unit or one array of data for all the units.
-        '''
+        """
         nameList = self.__nameList
         if i in nameList:
             item = self.__dataUnitDict[i].gdu()
@@ -123,16 +123,16 @@ class DiscreteSet(object):
                 else:
                     item.append( self.__dataUnitDict[name].gdu()[ncol] )
         else:
-            raise ValueError('The item is not recognised!')
+            raise ValueError("The item is not recognised!")
         return item
 
     def get_dataUnitDict(self):
         return self.__dataUnitDict
 
     def get_dataDict(self):
-        '''
+        """
         Generate the data dict.
-        '''
+        """
         nameList = self.__nameList
         dataDict = {}
         for name in nameList:
@@ -166,7 +166,7 @@ class DiscreteSet(object):
     def set_fList(self, fList):
         nameList = self.__nameList
         if len(fList) != self.__unitNumber:
-            raise ValueError('The fList size is incorrect!')
+            raise ValueError("The fList size is incorrect!")
             return 0
         for loop in range(self.__unitNumber):
             name = nameList[loop]
@@ -183,12 +183,12 @@ class DiscreteSet(object):
 #The continual data set unit
 class ContinueSet(object):
     def __init__(self, xList, yList, eList, fList, dataType=None):
-        self.__defaultType = ['x', 'y', 'e', 'f']
+        self.__defaultType = ["x", "y", "e", "f"]
         if dataType is None:
             self.__userType = []
         else:
             if len(dataType) != 4:
-                raise ValueError('The dataType should contain 4 strings!')
+                raise ValueError("The dataType should contain 4 strings!")
             self.__userType = dataType
             self.__dataMap = {}
             for loop in range(4):
@@ -200,7 +200,7 @@ class ContinueSet(object):
         for arg in args:
             match = match&(self.__unitNumber==len(arg))
         if not match:
-            raise ValueError('The inputs do not match in length!')
+            raise ValueError("The inputs do not match in length!")
 
         #Generate the dict of discrete unit
         self.__dataUnitList = []
@@ -222,9 +222,9 @@ class ContinueSet(object):
             self.__fList.append(f)
 
     def __getitem__(self, i):
-        '''
+        """
         Get the data of one unit or one array of data for all the units.
-        '''
+        """
         if i in self.__userType:
             ncol = self.__userType.index(i)
             item = []
@@ -238,7 +238,7 @@ class ContinueSet(object):
         elif (type(i)==types.IntType) & (i > 0) & (i < self.__unitNumber):
             item = self.__dataUnitList[i].gdu()
         else:
-            raise ValueError('The item is not recognised!')
+            raise ValueError("The item is not recognised!")
         return item
 
     def get_dataUnitList(self):
@@ -280,7 +280,7 @@ class ContinueSet(object):
 
     def set_fList(self, fList):
         if len(fList) != self.__unitNumber:
-            raise ValueError('The fList size is incorrect!')
+            raise ValueError("The fList size is incorrect!")
             return 0
         for loop in range(self.__unitNumber):
             self.__dataUnitList[loop].set_flag(fList[loop])
@@ -307,14 +307,14 @@ class DataSet(object):
     """
     def __init__(self, dSetDict={}, cSetDict={}):
         #Check the data format
-        self.__dataType = ['x', 'y', 'e', 'f']
+        self.__dataType = ["x", "y", "e", "f"]
         self.__discreteSetDict = {}
         for dSetName in dSetDict.keys():
             dSet = dSetDict[dSetName]
             if isinstance(dSet, DiscreteSet):
                 self.__discreteSetDict[dSetName] = dSet
             else:
-                raise ValueError('The {0} discrete set is incorrect!'.format(dSetName))
+                raise ValueError("The {0} discrete set is incorrect!".format(dSetName))
         self.__continueSetDict = {}
         for cSetName in cSetDict.keys():
             cSet = cSetDict[cSetName]
@@ -327,7 +327,7 @@ class DataSet(object):
             if isinstance(dSet, DiscreteSet):
                 self.__discreteSetDict[dSetName] = dSet
             else:
-                raise ValueError('The {0} discrete set is incorrect!'.format(dSetName))
+                raise ValueError("The {0} discrete set is incorrect!".format(dSetName))
 
     def add_ContinueSet(self, cSetDict):
         for cSetName in cSetDict.keys():
@@ -603,7 +603,7 @@ class ModelCombiner(object):
         model = self.__modelDict[modelName]
         if not QuietMode:
             orgValue = model.parFitDict[parName]
-            print '[{0}][{1}] {2}->{3}'.format(modelName, parName, orgValue, parValue)
+            print "[{0}][{1}] {2}->{3}".format(modelName, parName, orgValue, parValue)
         if model.parFitDict[parName]["vary"]:
             model.parFitDict[parName]["value"] = parValue
         else:
@@ -628,10 +628,11 @@ class ModelCombiner(object):
         model = self.__modelDict[modelName]
         if not QuietMode:
             orgValue = model.parAddDict[parName]
-            print '[{0}][{1}] {2}->{3}'.format(modelName, parName, orgValue, parValue)
+            print "[{0}][{1}] {2}->{3}".format(modelName, parName, orgValue, parValue)
         model.parAddDict[parName] = parValue
 
-    def plot(self, x=None, FigAx=None, DisplayPars=True):
+    def plot(self, x=None, colorList=None, FigAx=None, DisplayPars=False,
+             tKwargs=None, cKwargs={}, useLabel=True):
         if x is None:
             x = self.__x
         if FigAx is None:
@@ -644,29 +645,42 @@ class ModelCombiner(object):
         modelList = modelDict.keys()
         TextIterm = lambda text, v1, v2: text.format(v1, v2)
         textList = []
-        yTotal = np.zeros_like(x)
-        colorList = ['r', 'g', 'b', 'c', 'm']
+        #yTotal = np.zeros_like(x)
+        yTotal = self.combineResult(x=x)
+        yCmpnt = self.componentResult(x=x) #The best-fit components
+        if colorList is None:
+            colorList = ["r", "g", "b", "m", "y", "c"]
         nColor = len(colorList)
         counter = 0
         for modelName in modelList:
-            textList.append( '<{0}>\n'.format(modelName) )
+            textList.append( "<{0}>\n".format(modelName) )
             mf = modelDict[modelName]
             parFitDict = mf.parFitDict
             for parName in parFitDict.keys():
-                textList.append( TextIterm('{0}: {1:.2f}\n', parName,
+                textList.append( TextIterm("{0}: {1:.2f}\n", parName,
                 parFitDict[parName]["value"]) )
-            y = mf(x)
-            yTotal += y
-            ax.plot(x, y, color=colorList[counter%nColor], label=modelName)
-            ax.set_xscale('log')
-            ax.set_yscale('log')
+            y = yCmpnt[modelName]
+            if useLabel:
+                cLabel = modelName
+            else:
+                cLabel = None
+            ax.plot(x, y, color=colorList[counter%nColor], label=cLabel, **cKwargs)
+            ax.set_xscale("log")
+            ax.set_yscale("log")
             counter += 1
-        ax.plot(x, yTotal, color='k', linewidth=1.5, label='Total')
-        fig.set_size_inches(8, 6)
+        if useLabel:
+            tLabel = "Total"
+        else:
+            tLabel = None
+        if tKwargs is None:
+            ax.plot(x, yTotal, color="k", label=tLabel)
+        else:
+            ax.plot(x, yTotal, label=tLabel, **tKwargs)
+        #fig.set_size_inches(8, 6)
         text = "".join(textList)
         if DisplayPars:
-            ax.text(1.02, 1.0, text, #bbox=dict(facecolor='white', alpha=0.75),
-                    verticalalignment='top', horizontalalignment='left',
+            ax.text(1.02, 1.0, text, #bbox=dict(facecolor="white", alpha=0.75),
+                    verticalalignment="top", horizontalalignment="left",
                     transform=ax.transAxes, fontsize=14)
         return FigAx
 
@@ -684,11 +698,11 @@ def Model_Generator(input_model_dict, func_lib, x_list, par_add_dict_all={}, **k
     modelDict = OrderedDict()
     modelNameList = input_model_dict.keys()
     for modelName in modelNameList:
-        funcName = input_model_dict[modelName]['function']
+        funcName = input_model_dict[modelName]["function"]
         funcInfo = func_lib[funcName]
-        xName = funcInfo['x_name']
-        parFitList = funcInfo['param_fit']
-        parAddList = funcInfo['param_add']
+        xName = funcInfo["x_name"]
+        parFitList = funcInfo["param_fit"]
+        parAddList = funcInfo["param_add"]
         parFitDict = OrderedDict()
         parAddDict = {}
         for parName in parFitList:
@@ -699,7 +713,7 @@ def Model_Generator(input_model_dict, func_lib, x_list, par_add_dict_all={}, **k
                 pass
             else:
                 parAddDict[parName] = par_add_iterm
-        #modelDict[modelName] = ModelFunction(funcInfo['function'], xName, parFitDict, parAddDict)
+        #modelDict[modelName] = ModelFunction(funcInfo["function"], xName, parFitDict, parAddDict)
         modelDict[modelName] = ModelFunction(funcName, xName, parFitDict, parAddDict)
     sed_model = ModelCombiner(modelDict, x_list, **kwargs)
     return sed_model
@@ -717,7 +731,7 @@ def Model2Data_Naive(model, data):
         raise ValueError("The data is incorrect!")
     if not isinstance(model, ModelCombiner):
         raise ValueError("The model is incorrect!")
-    x = np.array(data.get_List('x'))
+    x = np.array(data.get_List("x"))
     y = model.combineResult(x)
     return y
 
@@ -728,8 +742,8 @@ def logLFunc_naive(params, data, model):
     """
     model.updateParList(params)
     nParVary = len(model.get_parVaryList())
-    y = np.array(data.get_List('y'))
-    e = np.array(data.get_List('e'))
+    y = np.array(data.get_List("y"))
+    e = np.array(data.get_List("e"))
     ym = np.array(Model2Data_Naive(model, data))
     if len(params) == nParVary:
         s = e
