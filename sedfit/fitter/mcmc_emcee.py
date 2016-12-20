@@ -468,127 +468,51 @@ class EmceeModel(object):
             plt.savefig(filename)
             plt.close()
 
-    def plot_fit_bak(self, filename=None, truths=None, FigAx=None, xlim=[1, 1e3], **kwargs):
+    def plot_fit_spec(self, ps=None, filename=None, nSamples=100, truths=None, FigAx=None, **kwargs):
         """
         Plot the best-fit model and the data.
         """
         sedData   = self.__data
         sedModel  = self.__model
-        parRange  = self.p_uncertainty(**kwargs)
+        pcnt = self.p_median(ps, **kwargs)
         waveModel = sedModel.get_xList()
-        plow = parRange[0, :]
-        pcnt = parRange[1, :]
-        phgh = parRange[2, :]
-        #pmax = self.p_logl_max()
-        sedModel.updateParList(pcnt)
-        ycnt = sedModel.combineResult() #The best-fit model
-        ycnt_cmp = sedModel.componentResult() #The best-fit components
-        yPhtC = np.array(sedData.model_pht(waveModel, ycnt)) #The best-fit band average flux density
-        sedModel.updateParList(phgh)
-        yhgh = sedModel.combineResult() #The upperlimit model
-        yhgh_cmp = sedModel.componentResult() #The upperlimit components
-        yPhtH = np.array(sedData.model_pht(waveModel, yhgh)) #The upperlimit band average flux density
-        sedModel.updateParList(plow)
-        ylow = sedModel.combineResult() #The lowerlimit model
-        ylow_cmp = sedModel.componentResult() #The lowerlimit components
-        yPhtL = np.array(sedData.model_pht(waveModel, ylow)) #The lowerlimit band average flux density
-        #Plot the SED data
-        fig, ax = sedData.plot_sed(FigAx=FigAx)
-        cList = ["r", "g", "b", "m", "y", "c"]
-        ncolor = len(cList)
-        #Plot the best-fit model
-        ax.plot(waveModel, ycnt, color="brown", linewidth=3.0, linestyle="--", label="Total")
-        #Plot the upper- and lower- boundary
-        ax.fill_between(waveModel, ylow, yhgh, color="brown", alpha=0.3)
-        #Plot the band average photometric data with uncertainties
-        if sedData.check_dsData() > 0:
-            ax.errorbar(sedData.get_dsList("x"), yPhtC, yerr=[yPhtC-yPhtL, yPhtH-yPhtC], marker="s",
-                    color="r", mfc="none", mec="r", linestyle="none", label="Model")
-        #Plot the different components of the model
-        modelList = sedModel._modelList
-        counter = 0
-        for modelName in modelList:
-            ax.plot(waveModel, ycnt_cmp[modelName], color=cList[counter%ncolor],
-                    linestyle="--", label=modelName)
-            ax.fill_between(waveModel, ylow_cmp[modelName], yhgh_cmp[modelName],
-                             color=cList[counter], alpha=0.1)
-            counter += 1
-        #Plot the truth model if provided
-        if not truths is None:
-            sedModel.updateParList(truths)
-            ytrue = sedModel.combineResult()
-            ytrue_cmp = sedModel.componentResult()
-            ax.plot(waveModel, ytrue, color="k", linestyle="-")
-            counter = 0
-            for modelName in modelList:
-                ax.plot(waveModel, ytrue_cmp[modelName], color=cList[counter%ncolor])
-                counter += 1
-        #Setup the figure
-        ax.set_xlabel(r"Wavelength ($\mu m$)", fontsize=24)
-        ax.set_ylabel(r"$f_\nu$ (mJy)", fontsize=24)
-        yData = sedData.get_List("y")
-        ymin = 10**(np.floor(np.log10(min(yData))) - 2)
-        ymax = 10**np.ceil(np.log10( max([max(yData), max(ycnt)]) ))
-        ax.set_ylim([ymin, ymax])
-        #Set the yaxis tick range
-        yTickRange = ax.yaxis.get_majorticklocs()
-        yTickRange = yTickRange[(yTickRange >= ymin) & (yTickRange <= ymax)]
-        ax.yaxis.set_ticks(yTickRange[1:-1])
-        ax.xaxis.set_tick_params(which="major", labelsize=18)
-        ax.yaxis.set_tick_params(which="major", labelsize=18)
-        ax.legend(loc="lower right", framealpha=0.3, fontsize=16)
-        ax.set_xlim(xlim)
-        if filename is None:
-            return (fig, ax)
-        else:
-            plt.savefig(filename, bbox_inches="tight")
-            plt.close()
-
-    def plot_fit_spec(self, filename=None, truths=None, FigAx=None, **kwargs):
-        """
-        Plot the best-fit model and the data.
-        """
-        sedData   = self.__data
-        sedModel  = self.__model
-        parRange  = self.p_uncertainty(**kwargs)
-        waveModel = sedModel.get_xList()
-        plow = parRange[0, :]
-        pcnt = parRange[1, :]
-        phgh = parRange[2, :]
-        #pmax = self.p_logl_max()
+        #-->Plot the SED data
         sedModel.updateParList(pcnt)
         ycnt = sedModel.combineResult()
-        ycnt_cmp = sedModel.componentResult()
-        sedModel.updateParList(phgh)
-        yhgh = sedModel.combineResult()
-        yhgh_cmp = sedModel.componentResult()
-        sedModel.updateParList(plow)
-        ylow = sedModel.combineResult()
-        ylow_cmp = sedModel.componentResult()
         fig, ax = sedData.plot_sed(FigAx=FigAx)
         cList = ["r", "g", "b", "m", "y", "c"]
         ncolor = len(cList)
-        ax.plot(waveModel, ycnt, color="brown", linewidth=1.5, linestyle="--", label="Total")
-        ax.fill_between(waveModel, ylow, yhgh, color="brown", alpha=0.1)
-        ax.set_xlabel("")
-        ax.set_ylabel(r"$f_\nu$ (mJy)", fontsize=24)
-        modelList = sedModel._modelList
-        counter = 0
-        for modelName in modelList:
-            ax.plot(waveModel, ycnt_cmp[modelName], color=cList[counter%ncolor],
-                    linestyle="--", label=modelName)
-            ax.fill_between(waveModel, ylow_cmp[modelName], yhgh_cmp[modelName],
-                             color=cList[counter], alpha=0.1)
-            counter += 1
+        #->Plot the best-fit model
+        sedModel.updateParList(pcnt)
+        ycnt = sedModel.combineResult() #The best-fit model
+        cKwargs = {"linestyle":"--"}
+        tKwargs = {
+            "linestyle": "--",
+            "color": "brown",
+            "linewidth": 1.5
+            }
+        sedModel.plot(FigAx=(fig, ax), colorList=cList, DisplayPars=False,
+                      cKwargs=cKwargs, tKwargs=tKwargs)
+        #->Plot the variability
+        if ps is None:
+            ps = self.posterior_sample(**kwargs)
+        cKwargs = {
+            "linestyle":":",
+            "alpha": 0.1
+            }
+        tKwargs = {
+            "linestyle": ":",
+            "color": "brown",
+            "alpha": 0.1
+            }
+        for pars in ps[np.random.randint(len(ps), size=nSamples)]:
+            sedModel.updateParList(pars)
+            sedModel.plot(FigAx=(fig, ax), colorList=cList, DisplayPars=False,
+                          cKwargs=cKwargs, tKwargs=tKwargs, useLabel=False)
+        #->Plot the truth model if provided
         if not truths is None:
             sedModel.updateParList(truths)
-            ytrue = sedModel.combineResult()
-            ytrue_cmp = sedModel.componentResult()
-            ax.plot(waveModel, ytrue, color="k", linestyle="-")
-            counter = 0
-            for modelName in modelList:
-                ax.plot(waveModel, ytrue_cmp[modelName], color=cList[counter%ncolor])
-                counter += 1
+            sedModel.plot(FigAx=(fig, ax), colorList=cList, DisplayPars=False)
         xData = sedData.get_csList("x")
         yData = sedData.get_csList("y")
         xmin = min(xData)*0.8
@@ -611,10 +535,9 @@ class EmceeModel(object):
         """
         sedData   = self.__data
         sedModel  = self.__model
-        #parRange  = self.p_uncertainty(ps=ps, **kwargs)
         pcnt = self.p_median(ps, **kwargs)
         waveModel = sedModel.get_xList()
-        #->Plot the SED data
+        #-->Plot the SED data
         fig, ax = sedData.plot_sed(FigAx=FigAx)
         cList = ["r", "g", "b", "m", "y", "c"]
         ncolor = len(cList)
