@@ -110,12 +110,14 @@ def fitter(targname, redshift, sedPck, config):
     #------------------#
     parAddDict_all = {
         "DL": sedData.dl,
+        "z": redshift,
+        "frame": "rest"
     }
-    funcLib    = sedmf.funcLib
+    funcLib   = sedmf.funcLib
     waveModel = 10**np.linspace(-0.1, 3.0, 1000)
-    sedModel = bc.Model_Generator(modelDict, funcLib, waveModel, parAddDict_all)
-    parVary  = sedModel.get_parVaryList()
-    parTruth = config.parTruth   #Whether to provide the truth of the model
+    sedModel  = bc.Model_Generator(modelDict, funcLib, waveModel, parAddDict_all)
+    parVary   = sedModel.get_parVaryList()
+    parTruth  = config.parTruth   #Whether to provide the truth of the model
     modelUnct = config.modelUnct #Whether to consider the model uncertainty in the fitting
     if modelUnct:
         nAddPars = 3 #If model the uncertainty, there are 3 additional parameters.

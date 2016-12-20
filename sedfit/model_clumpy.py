@@ -25,7 +25,7 @@ try:
 except:
     print("[model_functions]: Fail to import the CLUMPY template from: {0}".format(clumpyFile))
     ip = None
-def CLUMPY_intp(logL, i, tv, q, N0, sigma, Y, wave, DL, t=ip):
+def CLUMPY_intp(logL, i, tv, q, N0, sigma, Y, wave, DL, z, frame="rest", t=ip):
     """
     This function provide the dust torus MIR flux with CLUMPY model.
 
@@ -49,6 +49,10 @@ def CLUMPY_intp(logL, i, tv, q, N0, sigma, Y, wave, DL, t=ip):
         The wavelength at which we want to calculate the flux.
     DL : float
         The luminosity distance
+    z : float
+        The redshift.
+    frame : string
+        "rest" for the rest frame SED and "obs" for the observed frame.
     t : NdimInterpolation class
         The NdimInterpolation class obtained from Nikutta"s interpolation code.
 
@@ -62,7 +66,13 @@ def CLUMPY_intp(logL, i, tv, q, N0, sigma, Y, wave, DL, t=ip):
     None.
     """
     vector = np.array([i, tv, q, N0, sigma, Y])
-    f0 = 10**(logL+26) / (4 * np.pi * (DL * Mpc)**2.) #Convert to mJy unit
+    if frame == "rest":
+        idx = 2.0
+    elif frame == "obs":
+        idx = 1.0
+    else:
+        raise ValueError("The frame '{0}' is not recognised!".format(frame))
+    f0 = (1 + z)**idx * 10**(logL+26) / (4 * np.pi * (DL * Mpc)**2.) #Convert to mJy unit
     flux = f0 * t(vector, wave)
     return flux
 #Func_end

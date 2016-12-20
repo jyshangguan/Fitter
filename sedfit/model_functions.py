@@ -34,26 +34,26 @@ funcLib = {
         "function": BC03,
         "x_name": "wave",
         "param_fit": ["logMs", "age"],
-        "param_add": ["DL", "t"],
+        "param_add": ["DL", "z", "frame", "t"],
     },
     "CLUMPY_intp": {
         "function": CLUMPY_intp,
         "x_name": "wave",
         "param_fit": ["logL", "i", "tv", "q", "N0", "sigma", "Y"],
-        "param_add": ["DL", "t"]
+        "param_add": ["DL", "z", "frame", "t"]
     },
     "Torus_Emission": {
         "function": Torus_Emission,
         "x_name": "wave",
         "param_fit": ["typeSil", "size", "T1Sil", "T2Sil", "logM1Sil", "logM2Sil",
                       "typeGra", "T1Gra", "T2Gra", "R1G2S", "R2G2S"],
-        "param_add": ["DL", "TemplateSil", "TemplateGra"]
+        "param_add": ["DL", "z", "frame", "TemplateSil", "TemplateGra"]
     },
     "DL07": {
         "function": DL07,
         "x_name": "wave",
         "param_fit": ["logumin", "logumax", "qpah", "gamma", "logMd"],
-        "param_add": ["t", "DL"]
+        "param_add": ["t", "DL", "z", "frame"]
     },
     "BlackBody": {
         "function": BlackBody,
@@ -65,7 +65,7 @@ funcLib = {
         "function": Modified_BlackBody,
         "x_name": "wave",
         "param_fit": ["logM", "beta", "T"],
-        "param_add": ["DL"]
+        "param_add": ["DL", "z", "frame"]
     },
     "Power_Law": {
         "function": Power_Law,

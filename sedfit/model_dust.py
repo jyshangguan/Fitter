@@ -7,7 +7,7 @@ ls_mic = 2.99792458e14 #unit: micron/s
 Mpc = 3.08567758e24 #unit: cm
 Msun = 1.9891e33 #unit: gram
 
-def Dust_Emission(T, Md, kappa, wave, DL):
+def Dust_Emission(T, Md, kappa, wave, DL, z, frame="rest"):
     """
     Calculate the dust emission using the dust temperature, mass, opacity and
     the luminosity distance of the source.
@@ -24,6 +24,10 @@ def Dust_Emission(T, Md, kappa, wave, DL):
         The wavelength array to caculate, unit: micron.
     DL : float
         The luminosity distance, unit: Mpc.
+    z : float
+        The redshift.
+    frame : string
+        "rest" for the rest frame SED and "obs" for the observed frame.
 
     Returns
     -------
@@ -36,7 +40,13 @@ def Dust_Emission(T, Md, kappa, wave, DL):
     """
     nu = ls_mic / wave
     bb = rmt.Single_Planck(nu, T)
-    de = (Md * Msun) * bb * kappa / (DL * Mpc)**2 * 1e26 #Unit: mJy
+    if frame == "rest":
+        idx = 2.0
+    elif frame == "obs":
+        idx = 1.0
+    else:
+        raise ValueError("The frame '{0}' is not recognised!".format(frame))
+    de = (1 + z)**idx * (Md * Msun) * bb * kappa / (DL * Mpc)**2 * 1e26 #Unit: mJy
     return de
 
 fp = open("/Users/jinyi/Work/mcmc/Fitter/template/dust_grain_kdt.tmplt", "r")
@@ -50,7 +60,7 @@ tGra = Template(**graDict)
 
 def Torus_Emission(typeSil, size, T1Sil, T2Sil, logM1Sil, logM2Sil,
                    typeGra, T1Gra, T2Gra, R1G2S, R2G2S,
-                   wave, DL, TemplateSil=tSil, TemplateGra=tGra):
+                   wave, DL, z, frame="rest", TemplateSil=tSil, TemplateGra=tGra):
     """
     Calculate the emission of the dust torus using the dust opacity and assuming
     it is optical thin situation. In detail, the torus emission model assumes that
@@ -67,10 +77,10 @@ def Torus_Emission(typeSil, size, T1Sil, T2Sil, logM1Sil, logM2Sil,
     M2Sil = 10**logM2Sil
     M1Gra = R1G2S * M1Sil
     M2Gra = R2G2S * M2Sil
-    de1Sil   = Dust_Emission(T1Sil, M1Sil, kappaSil, wave, DL)
-    de2Sil   = Dust_Emission(T2Sil, M2Sil, kappaSil, wave, DL)
-    de1Gra   = Dust_Emission(T1Gra, M1Gra, kappaGra, wave, DL)
-    de2Gra   = Dust_Emission(T2Gra, M2Gra, kappaGra, wave, DL)
+    de1Sil   = Dust_Emission(T1Sil, M1Sil, kappaSil, wave, DL, z, frame)
+    de2Sil   = Dust_Emission(T2Sil, M2Sil, kappaSil, wave, DL, z, frame)
+    de1Gra   = Dust_Emission(T1Gra, M1Gra, kappaGra, wave, DL, z, frame)
+    de2Gra   = Dust_Emission(T2Gra, M2Gra, kappaGra, wave, DL, z, frame)
     deTorus  = de1Sil + de2Sil + de1Gra + de2Gra
     return deTorus
 

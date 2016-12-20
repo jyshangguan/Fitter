@@ -10,7 +10,7 @@ fp = open("/Users/jinyi/Work/mcmc/Fitter/template/bc03_kdt.tmplt")
 tp_bc03 = pickle.load(fp)
 fp.close()
 bc03 = Template(**tp_bc03)
-def BC03(logMs, age, DL, wave, t=bc03):
+def BC03(logMs, age, DL, wave, z, frame="rest", t=bc03):
     """
     This function call the interpolated BC03 template to generate the stellar
     emission SED with the given parameters.
@@ -25,6 +25,10 @@ def BC03(logMs, age, DL, wave, t=bc03):
         The luminosity distance with the unit Mpc.
     wave : float array
         The wavelength of the SED.
+    z : float
+        The redshift.
+    frame : string
+        "rest" for the rest frame SED and "obs" for the observed frame.
     t : Template class
         The interpolated BC03 template.
 
@@ -38,7 +42,13 @@ def BC03(logMs, age, DL, wave, t=bc03):
     None.
     """
     flux = t(wave, [age])
-    fnu = flux * 10**logMs / (4 * np.pi * (DL * Mpc)**2) * mJy
+    if frame == "rest":
+        idx = 2.0
+    elif frame == "obs":
+        idx = 1.0
+    else:
+        raise ValueError("The frame '{0}' is not recognised!".format(frame))
+    fnu = (1.0 + z)**idx * flux * 10**logMs / (4 * np.pi * (DL * Mpc)**2) * mJy
     return fnu
 
 #Func_bgn:
