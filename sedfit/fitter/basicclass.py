@@ -665,8 +665,6 @@ class ModelCombiner(object):
             else:
                 cLabel = None
             ax.plot(x, y, color=colorList[counter%nColor], label=cLabel, **cKwargs)
-            ax.set_xscale("log")
-            ax.set_yscale("log")
             counter += 1
         if useLabel:
             tLabel = "Total"
