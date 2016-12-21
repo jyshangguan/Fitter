@@ -127,12 +127,16 @@ print("Triangle plot finished!")
 #Plot the SED data and fit
 fig, axarr = plt.subplots(2, 1)
 fig.set_size_inches(10, 10)
-em.plot_fit_spec(truths=parTruth, FigAx=(fig, axarr[0]),
-                 burnin=burnIn, select=True, fraction=fraction,
-                 low=psLow, center=psCenter, high=psHigh, ps=ps)
-em.plot_fit(truths=parTruth, FigAx=(fig, axarr[1]),
-            burnin=burnIn, select=True, fraction=fraction,
-            low=psLow, center=psCenter, high=psHigh, ps=ps)
+em.plot_fit_spec(truths=parTruth, FigAx=(fig, axarr[0]), nSamples=100,
+                 burnin=burnIn, select=True, fraction=fraction, ps=ps)
+em.plot_fit(truths=parTruth, FigAx=(fig, axarr[1]), nSamples=100,
+            burnin=burnIn, select=True, fraction=fraction, ps=ps)
+axarr[0].set_xlabel("")
+axarr[0].set_ylabel("")
+axarr[0].text(0.05, 0.8, targname,
+              verticalalignment='bottom', horizontalalignment='left',
+              transform=axarr[0].transAxes, fontsize=24,
+              bbox=dict(facecolor='white', alpha=0.5, edgecolor="none"))
 plt.savefig("{0}_result.png".format(targname), bbox_inches="tight")
 plt.close()
 print("Best fit plot finished!")

@@ -480,7 +480,7 @@ class EmceeModel(object):
         sedModel.updateParList(pcnt)
         ycnt = sedModel.combineResult()
         fig, ax = sedData.plot_sed(FigAx=FigAx)
-        cList = ["r", "g", "b", "m", "y", "c"]
+        cList = ["g", "r", "m", "b", "y", "c"]
         ncolor = len(cList)
         #->Plot the best-fit model
         sedModel.updateParList(pcnt)
@@ -539,7 +539,7 @@ class EmceeModel(object):
         waveModel = sedModel.get_xList()
         #-->Plot the SED data
         fig, ax = sedData.plot_sed(FigAx=FigAx)
-        cList = ["r", "g", "b", "m", "y", "c"]
+        cList = ["g", "r", "m", "b", "y", "c"]
         ncolor = len(cList)
         #->Plot the best-fit model
         sedModel.updateParList(pcnt)
