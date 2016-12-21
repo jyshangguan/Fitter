@@ -576,8 +576,8 @@ class EmceeModel(object):
             sedModel.updateParList(truths)
             sedModel.plot(FigAx=(fig, ax), colorList=cList, DisplayPars=False)
         #->Setup the figure
-        ax.set_xlabel(r"Wavelength ($\mu m$)", fontsize=24)
-        ax.set_ylabel(r"$f_\nu$ (mJy)", fontsize=24)
+        ax.set_xlabel(r"$\mathrm{Wavelength} \, (\mu m)$", fontsize=24)
+        ax.set_ylabel(r"$f_\nu \, (\mathrm{mJy})$", fontsize=24)
         yData = sedData.get_List("y")
         ymin = 10**(np.floor(np.log10(min(yData))) - 2)
         ymax = 10**np.ceil(np.log10( max([max(yData), max(ycnt)]) ))
