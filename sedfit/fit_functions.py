@@ -178,9 +178,10 @@ def logLFunc_gp(params, data, model):
     f = np.exp(params[nParVary]) #The parameter to control the model incompleteness
     if len(yPhtModel):
         fltr_non = ePht < 0 #Find those non-detections
+        fltr_det = ePht >= 0 #Find those detections
         sPht = (ePht**2 + (yPhtModel * f)**2)**0.5
         sPht[fltr_non] = -1
-        lnlPht = -0.5 * ChiSq(yPht, yPhtModel, sPht)
+        lnlPht = -0.5 * ChiSq(yPht, yPhtModel, sPht) - 0.5 * np.sum( np.log(2 * np.pi * sPht[fltr_det]**2.0) )
     else:
         lnlPht = 0
     #lnlikelihood for spectral data using Gaussian process regression
