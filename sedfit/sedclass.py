@@ -241,7 +241,7 @@ class SedClass(bc.DataSet):
     def plot_sed(self, FigAx=None, **kwargs):
         if self.check_dsData() > 0:
             FigAx = self.plot_pht(FigAx=FigAx, **kwargs)
-        if self.chech_csData() > 0:
+        if self.check_csData() > 0:
             FigAx = self.plot_spc(FigAx=FigAx, **kwargs)
         return FigAx
 
