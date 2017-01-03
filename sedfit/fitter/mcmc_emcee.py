@@ -529,7 +529,7 @@ class EmceeModel(object):
             plt.savefig(filename, bbox_inches="tight")
             plt.close()
 
-    def plot_fit(self, ps=None, filename=None, nSamples=100, truths=None, FigAx=None, xlim=[1, 1e3], **kwargs):
+    def plot_fit(self, ps=None, filename=None, nSamples=100, truths=None, FigAx=None, xlim=None, **kwargs):
         """
         Plot the best-fit model and the data.
         """
@@ -578,6 +578,13 @@ class EmceeModel(object):
         #->Setup the figure
         ax.set_xlabel(r"$\mathrm{Wavelength} \, (\mu m)$", fontsize=24)
         ax.set_ylabel(r"$f_\nu \, (\mathrm{mJy})$", fontsize=24)
+        if xlim is None:
+            xPhotData = sedData.get_dsList("x")
+            xSpecData = sedData.get_csList("x")
+            xmin = 0.8 * min([min(xPhotData), min(xSpecData)])
+            xmax = 1.2 * max([max(xPhotData), max(xSpecData)])
+            xlim = [xmin, xmax]
+        ax.set_xlim(xlim)
         yData = sedData.get_List("y")
         ymin = 10**(np.floor(np.log10(min(yData))) - 2)
         ymax = 10**np.ceil(np.log10( max([max(yData), max(ycnt)]) ))
@@ -589,7 +596,6 @@ class EmceeModel(object):
         ax.xaxis.set_tick_params(which="major", labelsize=18)
         ax.yaxis.set_tick_params(which="major", labelsize=18)
         ax.legend(loc="lower right", framealpha=0.3, fontsize=16)
-        ax.set_xlim(xlim)
         if filename is None:
             return (fig, ax)
         else:
