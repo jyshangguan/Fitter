@@ -579,10 +579,8 @@ class EmceeModel(object):
         ax.set_xlabel(r"$\mathrm{Wavelength} \, (\mu m)$", fontsize=24)
         ax.set_ylabel(r"$f_\nu \, (\mathrm{mJy})$", fontsize=24)
         if xlim is None:
-            xPhotData = sedData.get_dsList("x")
-            xSpecData = sedData.get_csList("x")
-            xmin = 0.8 * min([min(xPhotData), min(xSpecData)])
-            xmax = 1.2 * max([max(xPhotData), max(xSpecData)])
+            xmin = min(waveModel)
+            xmax = max(waveModel)
             xlim = [xmin, xmax]
         ax.set_xlim(xlim)
         yData = sedData.get_List("y")
