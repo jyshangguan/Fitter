@@ -3,7 +3,7 @@ from collections import OrderedDict
 from model_bc03 import BC03
 from model_dl07 import DL07, DL07_PosPar
 import model_analyticals as ma
-from model_dust import Torus_Emission, Torus_Emission_PosPar
+from model_xl import Torus_Emission, Torus_Emission_PosPar
 from model_clumpy import CLUMPY_intp
 #CLUMPY_intp = None
 
@@ -65,7 +65,7 @@ funcLib = {
         "function": Modified_BlackBody,
         "x_name": "wave",
         "param_fit": ["logM", "beta", "T"],
-        "param_add": ["DL", "z", "frame"]
+        "param_add": ["DL", "z", "kappa0", "lambda0", "frame"]
     },
     "Power_Law": {
         "function": Power_Law,

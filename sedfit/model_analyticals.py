@@ -31,7 +31,7 @@ def BlackBody(logOmega, T, wave):
     flux = rmt.BlackBody(nu, logOmega=logOmega, T=T) / mJy #unit: mJy
     return flux
 
-def Modified_BlackBody(logM, T, beta, wave, DL, kappa0=16.2, lambda0=140):
+def Modified_BlackBody(logM, T, beta, wave, DL, z, kappa0=16.2, lambda0=140, frame="rest"):
     """
     This function is a wrapper to calculate the modified blackbody model.
 
@@ -47,6 +47,10 @@ def Modified_BlackBody(logM, T, beta, wave, DL, kappa0=16.2, lambda0=140):
         The wavelengths of the calculated fluxes.
     DL : float
         The luminosity distance in the unit Mpc.
+    z : float
+        The redshift of the source.
+    frame : string
+        "rest" for the rest frame SED and "obs" for the observed frame.
     kappa0 : float, default: 16.2
         The normalisation opacity.
     lambda0 : float, default: 140
@@ -63,7 +67,7 @@ def Modified_BlackBody(logM, T, beta, wave, DL, kappa0=16.2, lambda0=140):
 
     """
     nu = ls_mic / wave
-    flux = rmt.Dust_Modified_BlackBody(nu, logM, DL, beta, T, kappa0, lambda0)
+    flux = rmt.Dust_Modified_BlackBody(nu, logM, DL, beta, T, z, frame, kappa0, lambda0)
     return flux
 
 def Power_Law(PL_alpha, PL_logsf, wave):

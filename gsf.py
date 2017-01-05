@@ -108,13 +108,12 @@ def fitter(targname, redshift, sedPck, config):
 
     #Build up the model#
     #------------------#
-    parAddDict_all = {
-        "DL": sedData.dl,
-        "z": redshift,
-        "frame": "rest"
-    }
     funcLib   = sedmf.funcLib
-    waveModel = 10**np.linspace(-0.1, 3.0, 1000)
+    waveModel = config.waveModel
+    parAddDict_all = config.parAddDict_all
+    parAddDict_all["DL"]    = sedData.dl
+    parAddDict_all["z"]     = redshift
+    parAddDict_all["frame"] = "rest"
     sedModel  = bc.Model_Generator(modelDict, funcLib, waveModel, parAddDict_all)
     parVary   = sedModel.get_parVaryList()
     parTruth  = config.parTruth   #Whether to provide the truth of the model
@@ -240,20 +239,28 @@ def fitter(targname, redshift, sedPck, config):
                    quantiles=[psLow/100., psCenter/100., psHigh/100.], show_titles=True,
                    title_kwargs={"fontsize": 20})
     #->Plot the SED fitting result figure
-    fig, axarr = plt.subplots(2, 1)
-    fig.set_size_inches(10, 10)
-    em.plot_fit_spec(truths=parTruth, FigAx=(fig, axarr[0]), nSamples=100,
-                     burnin=burnIn, select=True, fraction=fraction)
-    em.plot_fit(truths=parTruth, FigAx=(fig, axarr[1]), nSamples=100,
-                burnin=burnIn, select=True, fraction=fraction)
-    axarr[0].set_xlabel("")
-    axarr[0].set_ylabel("")
-    axarr[0].text(0.05, 0.8, targname,
-                  verticalalignment='bottom', horizontalalignment='left',
-                  transform=axarr[0].transAxes, fontsize=24,
-                  bbox=dict(facecolor='white', alpha=0.5, edgecolor="none"))
-    plt.savefig("{0}_result.png".format(targname), bbox_inches="tight")
-    plt.close()
+    if sedData.check_csData():
+        fig, axarr = plt.subplots(2, 1)
+        fig.set_size_inches(10, 10)
+        em.plot_fit_spec(truths=parTruth, FigAx=(fig, axarr[0]), nSamples=100,
+                         burnin=burnIn, select=True, fraction=fraction)
+        em.plot_fit(truths=parTruth, FigAx=(fig, axarr[1]), nSamples=100,
+                    burnin=burnIn, select=True, fraction=fraction)
+        axarr[0].set_xlabel("")
+        axarr[0].set_ylabel("")
+        axarr[0].text(0.05, 0.8, targname,
+                      verticalalignment='bottom', horizontalalignment='left',
+                      transform=axarr[0].transAxes, fontsize=24,
+                      bbox=dict(facecolor='white', alpha=0.5, edgecolor="none"))
+        plt.savefig("{0}_result.png".format(targname), bbox_inches="tight")
+        plt.close()
+    else:
+        fig = plt.figure(figsize=(7, 7))
+        ax = plt.gca()
+        em.plot_fit(truths=parTruth, FigAx=(fig, ax), nSamples=100,
+                    burnin=burnIn, select=True, fraction=fraction)
+        plt.savefig("{0}_result.png".format(targname), bbox_inches="tight")
+        plt.close()
     print("Post-processed!")
 
 def gsf_fitter(configName, targname=None, redshift=None, sedFile=None):
