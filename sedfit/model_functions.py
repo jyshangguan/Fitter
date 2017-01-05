@@ -65,7 +65,7 @@ funcLib = {
         "function": Modified_BlackBody,
         "x_name": "wave",
         "param_fit": ["logM", "beta", "T"],
-        "param_add": ["DL", "z", "frame"]
+        "param_add": ["DL", "z", "kappa0", "lambda0", "frame"]
     },
     "Power_Law": {
         "function": Power_Law,
