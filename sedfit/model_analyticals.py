@@ -1,5 +1,5 @@
 import numpy as np
-import rel_Radiation_Model_Toolkit as rmt
+import Radiation_Model_Toolkit as rmt
 
 ls_mic = 2.99792458e14 #unit: micron/s
 Mpc = 3.08567758e24 #unit: cm

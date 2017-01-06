@@ -1,19 +1,11 @@
+#This script provide some functions to do the postprocess of the fitting sampling.
+#
 import os
 import numpy as np
 from scipy.interpolate import interp1d
-
 ls_mic = 2.99792458e14 #unit: micron/s
 Mpc = 3.08567758e24 #unit: cm
 mJy = 1e26 #unit: erg/s/cm^2/Hz
-
-def findProducts(path, extension):
-    prodList   = []
-    for f in os.listdir(path):
-        if f.endswith(extension):
-            fitrsList.append(f)
-    nTargets = len(fitrsList)
-    print "**There are {0} products.".format(nTargets)
-    return prodList
 
 def AddDict(targetDict, quantName, quant):
     """
@@ -25,6 +17,34 @@ def AddDict(targetDict, quantName, quant):
         targetDict[quantName] = [quant]
     return None
 
+def parStatistics(ppfunc, nSamples, ps, fargs=[], fkwargs={}):
+    """
+    Get the statistics of the model calculated parameters.
+
+    Parameters
+    ----------
+    ppfunc : function
+        The function to post process the model posterior sampling.
+    nSamples : int
+        The number of sampling when it calculate the parameter statistics.
+    ps : array
+        The posterior sampling.
+
+    Returns
+    -------
+    pList : array
+        The parameter list.
+
+    Notes
+    -----
+    None.
+    """
+    pList = []
+    for pars in ps[np.random.randint(len(ps), size=nSamples)]:
+        pList.append(ppfunc(pars, *fargs, **fkwargs))
+    pList = np.array(pList)
+    return pList
+
 def Luminosity_Integrate(flux, wave, DL, z, waveRange=[8.0, 1e3], frame="rest"):
     """
     Calculate the integrated luminosity of input SED with given wavelength range.
@@ -32,9 +52,9 @@ def Luminosity_Integrate(flux, wave, DL, z, waveRange=[8.0, 1e3], frame="rest"):
     Parameters
     ----------
     flux : float array
-        The flux density used to integrate to the luminosity, unit: mJy.
+        The flux density used to integrate to the luminosity.
     wave : float array
-        The wavelength of the SED, unit: micron.
+        The wavelength of the SED.
     DL : float
         The luminosity distance of the source.
     z : float
@@ -72,9 +92,9 @@ def Luminosity_Specific(flux, wave, wave0, DL, z, frame="rest"):
     Parameters
     ----------
     flux : float array
-        The flux density of the SED, unit: mJy.
+        The flux density of the SED.
     wave : float array
-        The wavelength of the SED, unit: micron.
+        The wavelength of the SED.
     wave0 : float (array)
         The wavelength(s) to be caculated.
     DL : float
@@ -98,30 +118,12 @@ def Luminosity_Specific(flux, wave, wave0, DL, z, frame="rest"):
         Lnu = S0 * 4.0*np.pi * (DL * Mpc)**2.0 / (1 + z) / mJy #unit: erg/s/Hz
     return Lnu
 
-def parStatistics(ppfunc, nSamples, ps, fargs=[], fkwargs={}):
+def L_Total(pars, sedModel, DL, z):
     """
-    Get the statistics of the model calculated parameters.
-
-    Parameters
-    ----------
-    ppfunc : function
-        The function to post process the model posterior sampling.
-    nSamples : int
-        The number of sampling when it calculate the parameter statistics.
-    ps : array
-        The posterior sampling.
-
-    Returns
-    -------
-    pList : array
-        The parameter list.
-
-    Notes
-    -----
-    None.
+    Calculate the total luminosity.
     """
-    pList = []
-    for pars in ps[np.random.randint(len(ps), size=nSamples)]:
-        pList.append(ppfunc(pars, *fargs, **fkwargs))
-    pList = np.array(pList)
-    return pList
+    sedModel.updateParList(pars)
+    wave = sedModel.get_xList()
+    flux = sedModel.combineResult()
+    L = Luminosity_Integrate(flux, wave, DL, z, waveRange=[8.0, 1e3], frame="rest")
+    return L

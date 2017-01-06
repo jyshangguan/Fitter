@@ -1,6 +1,6 @@
 import numpy as np
 import cPickle as pickle
-import rel_Radiation_Model_Toolkit as rmt
+import Radiation_Model_Toolkit as rmt
 from sedfit.fitter.template import Template
 
 ls_mic = 2.99792458e14 #unit: micron/s
