@@ -1,11 +1,8 @@
+#This script provide some functions to do the postprocess of the fitting sampling.
+#
 import os
 import numpy as np
-import cPickle as pickle
-from astropy.table import Table
 from scipy.interpolate import interp1d
-from collections import OrderedDict
-from sedfit.fitter import basicclass as bc
-from sedfit import model_functions as sedmf
 ls_mic = 2.99792458e14 #unit: micron/s
 Mpc = 3.08567758e24 #unit: cm
 mJy = 1e26 #unit: erg/s/cm^2/Hz
