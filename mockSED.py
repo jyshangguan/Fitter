@@ -57,6 +57,8 @@ def mocker(targname, redshift, sedPck, mockPars, config,
            sysUnc=None, uncModel=[-20, -20, -20], pert=True, plot=False):
     """
     This function is to generate a mock SED according to a given observed SED.
+    Basically, the flux densities will be replaced by the model value while the
+    wavelength and uncertainties of the data will be kept.
 
     Parameters
     ----------
@@ -152,9 +154,13 @@ def mocker(targname, redshift, sedPck, mockPars, config,
 
     #Build up the model#
     #------------------#
-    parAddDict_all = {
-        "DL": sedData.dl,
-    }
+    try:
+        parAddDict_all = config.parAddDict_all
+    except:
+        parAddDict_all = {}
+    parAddDict_all["DL"]    = sedData.dl
+    parAddDict_all["z"]     = redshift
+    parAddDict_all["frame"] = "rest"
     funcLib    = sedmf.funcLib
     waveModel = 10**np.linspace(0.0, 3.0, 1000)
     sedModel = bc.Model_Generator(modelDict, funcLib, waveModel, parAddDict_all)

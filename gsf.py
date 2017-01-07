@@ -110,7 +110,10 @@ def fitter(targname, redshift, sedPck, config):
     #------------------#
     funcLib   = sedmf.funcLib
     waveModel = config.waveModel
-    parAddDict_all = config.parAddDict_all
+    try:
+        parAddDict_all = config.parAddDict_all
+    except:
+        parAddDict_all = {}
     parAddDict_all["DL"]    = sedData.dl
     parAddDict_all["z"]     = redshift
     parAddDict_all["frame"] = "rest"
