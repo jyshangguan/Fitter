@@ -11,7 +11,7 @@ from sedfit import sedclass as sedsc
 from sedfit import model_functions as sedmf
 from sedfit.fit_functions import logLFunc_gp, logLFunc
 
-def dataPerturb(x, sigma, pert=True):
+def dataPerturb(x, sigma, pert=True, maxIter=10):
     """
     Perturb the data assuming it is a Gaussian distribution around the detected
     values with standard deviation as the uncertainties.
@@ -22,7 +22,7 @@ def dataPerturb(x, sigma, pert=True):
         while np.any(xp<=0):
             xp = sigma * np.random.randn(len(np.atleast_1d(x))) + x
             counter += 1
-            if counter > 10:
+            if counter > maxIter:
                 raise ValueError("The data is too noisy...")
     else:
         xp = x
