@@ -4,6 +4,7 @@ import cPickle as pickle
 import ndiminterpolation as ndip
 from fitter.template import Template
 
+pi = np.pi
 Mpc = 3.08567758e24 #unit: cm
 template_dir = "/Users/jinyi/Work/PG_QSO/templates/"
 
@@ -72,7 +73,7 @@ def CLUMPY_intp(logL, i, tv, q, N0, sigma, Y, wave, DL, z, frame="rest", t=ip):
         idx = 1.0
     else:
         raise ValueError("The frame '{0}' is not recognised!".format(frame))
-    f0 = (1 + z)**idx * 10**(logL+26) / (4 * np.pi * (DL * Mpc)**2.) #Convert to mJy unit
+    f0 = (1 + z)**idx * 10**(logL+26) / (4 * pi * (DL * Mpc)**2.) #Convert to mJy unit
     flux = f0 * t(vector, wave)
     return flux
 #Func_end
