@@ -127,3 +127,16 @@ def L_Total(pars, sedModel, DL, z):
     flux = sedModel.combineResult()
     L = Luminosity_Integrate(flux, wave, DL, z, waveRange=[8.0, 1e3], frame="rest")
     return L
+
+def randomSampler(parRange, parType="D"):
+    """
+    This function randomly sample the given parameter space.
+    """
+    if parType == "D": #For discrete parameters
+        p = np.random.choice(parRange)
+    elif parType == "C": #For continuous parameters
+        r1, r2 = parRange
+        p = (r2 - r1) * np.random.rand() + r1
+    else:
+        raise ValueError("The parameter type '{0}' is not recognised!".format(parType))
+    return p
