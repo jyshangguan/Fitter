@@ -1,6 +1,6 @@
 import numpy as np
 import cPickle as pickle
-from fitter.template import Template
+from ..fitter.template import Template
 from scipy.interpolate import splev
 
 

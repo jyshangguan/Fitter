@@ -2,7 +2,7 @@ import h5py
 import numpy as np
 import cPickle as pickle
 import ndiminterpolation as ndip
-from fitter.template import Template
+from ..fitter.template import Template
 
 pi = np.pi
 Mpc = 3.08567758e24 #unit: cm

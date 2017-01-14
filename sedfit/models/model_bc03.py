@@ -1,6 +1,6 @@
 import numpy as np
 import cPickle as pickle
-from fitter.template import Template
+from ..fitter.template import Template
 
 Msun = 1.9891e33 #unit: gram
 Mpc = 3.08567758e24 #unit: cm
