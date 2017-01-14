@@ -34,12 +34,13 @@ def lnprior(params, data, model, ModelUnct, unctDict=None):
                 pass
     #If the model uncertainty is concerned.
     if ModelUnct:
-        #lnf, lna, lntau =  params[parIndex:]
-        lnf = params[parIndex]
-        if (lnf < unctDict["lnf"][0]) or (lnf > unctDict["lnf"][1]):
-            lnprior -= np.inf
+        if data.check_dsData():
+            lnf = params[parIndex]
+            parIndex += 1
+            if (lnf < unctDict["lnf"][0]) or (lnf > unctDict["lnf"][1]):
+                lnprior -= np.inf
         if data.check_csData():
-            lna, lntau =  params[parIndex+1:]
+            lna, lntau = params[parIndex:]
             if (lna < unctDict["lna"][0]) or (lna > unctDict["lna"][1]):
                 lnprior -= np.inf
             if (lntau < unctDict["lntau"][0]) or (lntau > unctDict["lntau"][1]):
@@ -76,14 +77,14 @@ class EmceeModel(object):
         self.__unctDict = unctDict
         self.__sampler = sampler
         print("[EmceeModel]: {0}".format(sampler))
+        edim = 0
         if ModelUnct: #If the uncertainty is modeled, there are some extra parameters.
+            if data.check_dsData():
+                edim += 1 #If there is discrete data, the lnf is added.
             if data.check_csData():
-                edim = 3 #If there is continuous data, the residual correlation is considered.
-            else:
-                edim = 1 #Else, only the model imperfectness is considered.
+                edim += 2 #If there is continuous data, the lna and lntau are added.
             print("[EmceeModel]: ModelUnct is on!")
         else: #Else, the number of dimensions is the number of model parameters.
-            edim = 0
             print "[EmceeModel]: ModelUnct is off!"
         self.__dim = len(model.get_parVaryList()) + edim
 
@@ -113,16 +114,17 @@ class EmceeModel(object):
         #If the uncertainty is modeled, there are extra parameters.
         if self.__modelunct:
             if unctDict is None:
-                raise Error("No uncertainty model parameter range is provided!")
-            rf1, rf2 = unctDict["lnf"]
-            lnf =  (rf2 - rf1) * np.random.rand() + rf1
-            parList.append(lnf)
+                raise ValueError("No uncertainty model parameter range is provided!")
+            if self.__data.check_dsData():
+                rf1, rf2 = unctDict["lnf"]
+                lnf = (rf2 - rf1) * np.random.rand() + rf1
+                parList.append(lnf)
             #If there is contiuous data, the residual correlation is considered.
             if self.__data.check_csData():
                 ra1, ra2 = unctDict["lna"]
                 rt1, rt2 = unctDict["lntau"]
-                lna =  (ra2 - ra1) * np.random.rand() + ra1
-                lntau =  (rt2 - rt1) * np.random.rand() + rt1
+                lna = (ra2 - ra1) * np.random.rand() + ra1
+                lntau = (rt2 - rt1) * np.random.rand() + rt1
                 parList.append(lna)
                 parList.append(lntau)
         parList = np.array(parList)
@@ -170,8 +172,9 @@ class EmceeModel(object):
         #If the uncertainty is modeled, there are extra parameters.
         if self.__modelunct:
             if unctDict is None:
-                raise Error("No uncertainty model parameter range is provided!")
-            pRange.append(unctDict["lnf"]) #For lnf
+                raise ValueError("No uncertainty model parameter range is provided!")
+            if self.__data.check_dsData():
+                pRange.append(unctDict["lnf"]) #For lnf
             #If there is contiuous data, the residual correlation is considered.
             if self.__data.check_csData():
                 pRange.append(unctDict["lna"])  #For lna
@@ -388,7 +391,8 @@ class EmceeModel(object):
         nameList = self.__model.get_parVaryNames(latex=False)
         parRange = self.p_uncertainty(low, center, high, **kwargs)
         if self.__modelunct:
-            nameList.append("lnf")
+            if self.__data.check_dsData():
+                nameList.append("lnf")
             if self.__data.check_csData():
                 nameList.append("lna")
                 nameList.append("lntau")
@@ -429,7 +433,8 @@ class EmceeModel(object):
         nameList = self.__model.get_parVaryNames(latex=False)
         parRange = self.p_uncertainty(low, center, high, **kwargs)
         if self.__modelunct:
-            nameList.append("lnf")
+            if self.__data.check_dsData():
+                nameList.append("lnf")
             if self.__data.check_csData():
                 nameList.append("lna")
                 nameList.append("lntau")
@@ -461,7 +466,8 @@ class EmceeModel(object):
             ps = self.posterior_sample(burnin, select, fraction)
         parname = self.__model.get_parVaryNames()
         if self.__modelunct:
-            parname.append(r"$\mathrm{ln}f$")
+            if self.__data.check_dsData():
+                parname.append(r"$\mathrm{ln}f$")
             if self.__data.check_csData():
                 parname.append(r"$\mathrm{ln}a$")
                 parname.append(r"$\mathrm{ln}\tau$")
@@ -616,7 +622,8 @@ class EmceeModel(object):
         sampler = self.sampler
         nameList = self.__model.get_parVaryNames()
         if self.__modelunct:
-            nameList.append(r"$\mathrm{ln}f$")
+            if self.__data.check_dsData():
+                nameList.append(r"$\mathrm{ln}f$")
             if self.__data.check_csData():
                 nameList.append(r"$\mathrm{ln}a$")
                 nameList.append(r"$\mathrm{ln}\tau$")
@@ -668,7 +675,8 @@ class EmceeModel(object):
         """
         nameList = self.__model.get_parVaryNames(latex=False)
         if self.__modelunct:
-            nameList.append("lnf")
+            if self.__data.check_dsData():
+                nameList.append("lnf")
             if self.__data.check_csData():
                 nameList.append("lna")
                 nameList.append("lntau")
