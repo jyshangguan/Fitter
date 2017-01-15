@@ -8,7 +8,7 @@ from collections import OrderedDict
 ################################################################################
 targname = "PG0050+124"
 redshift = 0.061
-sedFile  = "mock/Ref_SED/PG0050+124_rest.tsed"
+sedFile  = "examples/PG0050+124_dl07_0.msed"
 sedName  = "2M&W&H"
 spcName  = None #"IRS"
 sedRng   = [0, 13]
@@ -105,11 +105,11 @@ emceeDict = OrderedDict(
         ("sampler"   , "EnsembleSampler"),
         #("ntemps"    , 3),
         ("nwalkers"  , 100),
-        ("iteration" , 1),
-        ("iter-step" , 1000),
+        ("iteration" , 3),
+        ("iter-step" , 500),
         ("ball-r"    , 0.3),
         ("ball-t"    , 1.0),
-        ("run-step"  , 3000),
+        ("run-step"  , 2000),
         ("burn-in"   , 1000),
         ("thin"      , 1),
         ("threads"   , 4),
