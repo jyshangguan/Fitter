@@ -82,7 +82,8 @@ def fitter(targname, redshift, sedPck, config):
     else:
         spcData = {}
     sedData = sedsc.SedClass(targname, redshift, phtDict=phtData, spcDict=spcData)
-    sedData.set_bandpass(bandList)
+    if not bandList is None:
+        sedData.set_bandpass(bandList)
 
 
     ################################################################################
@@ -110,7 +111,10 @@ def fitter(targname, redshift, sedPck, config):
     #------------------#
     funcLib   = sedmf.funcLib
     waveModel = config.waveModel
-    parAddDict_all = config.parAddDict_all
+    try:
+        parAddDict_all = config.parAddDict_all
+    except:
+        parAddDict_all = {}
     parAddDict_all["DL"]    = sedData.dl
     parAddDict_all["z"]     = redshift
     parAddDict_all["frame"] = "rest"

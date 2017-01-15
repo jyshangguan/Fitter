@@ -135,15 +135,46 @@ class SedClass(bc.DataSet):
         The spectral data packed in a dict. The items should be the
         ContinueSet().
     """
-    def __init__(self, targetName, redshift, H0=67.8, Om0=0.308, phtDict={}, spcDict={}):
+    def __init__(self, targetName, redshift, Dist=0, H0=67.8, Om0=0.308, phtDict={}, spcDict={}):
+        """
+        Parameters
+        ----------
+        targetName : string
+            The target name.
+        redshift : float
+            The redshift of the target.
+        Dist : float
+            If the redshift is 0, the physical distance, Dist, should be given.
+        H0 : float
+            The Hubble constant.
+        Om0 : float
+            The baryonic mass fraction.
+        phtDict : dict
+            The dict containing the information of the photometric data.
+        spcDict : dict
+            The dict containing the information of the spectroscopic data.
+
+        Returns
+        -------
+        None.
+
+        Notes
+        -----
+        None.
+        """
         bc.DataSet.__init__(self, phtDict, spcDict)
         self.targetName = targetName
         self.redshift = redshift
         self.__bandDict = {}
-        #Calculate the luminosity distance
-        from astropy.cosmology import FlatLambdaCDM
-        cosmo = FlatLambdaCDM(H0=H0, Om0=Om0)
-        self.dl = cosmo.luminosity_distance(redshift).value #Luminosity distance in unit Mpc.
+        if redshift > 0:
+            #Calculate the luminosity distance
+            from astropy.cosmology import FlatLambdaCDM
+            cosmo = FlatLambdaCDM(H0=H0, Om0=Om0)
+            self.dl = cosmo.luminosity_distance(redshift).value #Luminosity distance in unit Mpc.
+        elif redshift == 0:
+            self.dl = Dist
+        else:
+            raise ValueError("The redshift '{0}' is incorrect!".format(redshift))
 
     def pht_plotter(self, wave, flux, sigma, flag, FigAx=None, linewidth='1.5',
                     symbolColor='k', symbolSize=6, label=None, Quiet=True):

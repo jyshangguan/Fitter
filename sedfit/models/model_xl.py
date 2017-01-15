@@ -1,7 +1,7 @@
 import numpy as np
 import cPickle as pickle
 import Radiation_Model_Toolkit as rmt
-from sedfit.fitter.template import Template
+from ..fitter.template import Template
 
 ls_mic = 2.99792458e14 #unit: micron/s
 Mpc = 3.08567758e24 #unit: cm

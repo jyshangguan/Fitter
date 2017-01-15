@@ -11,7 +11,7 @@ from sedfit import sedclass as sedsc
 from sedfit import model_functions as sedmf
 from sedfit.fit_functions import logLFunc_gp, logLFunc
 
-def dataPerturb(x, sigma, pert=True):
+def dataPerturb(x, sigma, pert=True, maxIter=10):
     """
     Perturb the data assuming it is a Gaussian distribution around the detected
     values with standard deviation as the uncertainties.
@@ -22,7 +22,7 @@ def dataPerturb(x, sigma, pert=True):
         while np.any(xp<=0):
             xp = sigma * np.random.randn(len(np.atleast_1d(x))) + x
             counter += 1
-            if counter > 10:
+            if counter > maxIter:
                 raise ValueError("The data is too noisy...")
     else:
         xp = x
@@ -53,10 +53,12 @@ def randomRange(low, high):
     r = low + rg * np.random.rand()
     return r
 
-def mocker(targname, redshift, sedPck, mockPars, config,
+def mocker(targname, redshift, sedPck, mockPars, config, Dist=0,
            sysUnc=None, uncModel=[-20, -20, -20], pert=True, plot=False):
     """
     This function is to generate a mock SED according to a given observed SED.
+    Basically, the flux densities will be replaced by the model value while the
+    wavelength and uncertainties of the data will be kept.
 
     Parameters
     ----------
@@ -73,6 +75,8 @@ def mocker(targname, redshift, sedPck, mockPars, config,
         }
     config : module or class
         The configuration information for the fitting.
+    Dist : float
+        The physical distance. It should be provided if the redshift is 0.
     sysUnc : dict
         {
             "pht": [([nBgn, nEnd], frac), ([nBgn, nEnd], frac), ...],
@@ -126,7 +130,7 @@ def mocker(targname, redshift, sedPck, mockPars, config,
         spcData = {"IRS": bc.ContinueSet(spcwave, spcflux, spcsigma, spcflag, spcDataType)}
     else:
         spcData = {}
-    sedData = sedsc.SedClass(targname, redshift, phtDict=phtData, spcDict=spcData)
+    sedData = sedsc.SedClass(targname, redshift, Dist=Dist, phtDict=phtData, spcDict=spcData)
     sedData.set_bandpass(bandList)
 
     ################################################################################
@@ -152,11 +156,15 @@ def mocker(targname, redshift, sedPck, mockPars, config,
 
     #Build up the model#
     #------------------#
-    parAddDict_all = {
-        "DL": sedData.dl,
-    }
+    try:
+        parAddDict_all = config.parAddDict_all
+    except:
+        parAddDict_all = {}
+    parAddDict_all["DL"]    = sedData.dl
+    parAddDict_all["z"]     = redshift
+    parAddDict_all["frame"] = "rest"
     funcLib    = sedmf.funcLib
-    waveModel = 10**np.linspace(0.0, 3.0, 1000)
+    waveModel = config.waveModel
     sedModel = bc.Model_Generator(modelDict, funcLib, waveModel, parAddDict_all)
     sedModel.updateParList(mockPars)
     #print sedModel.get_parVaryNames(latex=False)
@@ -166,20 +174,18 @@ def mocker(targname, redshift, sedPck, mockPars, config,
     mockPht0 = np.array(sedData.model_pht(waveModel, fluxModel))
     mockSpc0 = np.array(sedData.model_spc(sedModel.combineResult))
     #->Make sure the perturbed data not likely be too far away, or even negative.
-    fltr_sigma = mockPht0 < 3.0*sedsigma
+    #For photometric data
+    mockPhtSigma = np.array(sedData.get_dsList("e"))
+    fltr_sigma = mockPht0 < 3.0*mockPhtSigma #sedsigma
     if np.any(fltr_sigma):
-        mockSigma = sedsigma.copy()
-        mockSigma[fltr_sigma] = mockPht0[fltr_sigma] / 3.0
-        mockPht = dataPerturb(mockPht0, mockSigma, pert)
-    else:
-        mockPht = dataPerturb(mockPht0, sedsigma, pert)
-    fltr_sigma = mockSpc0 < 3.0*spcsigma
+        mockPhtSigma[fltr_sigma] = mockPht0[fltr_sigma] / 3.0
+    mockPht = dataPerturb(mockPht0, mockPhtSigma, pert)
+    #For spectroscopic data
+    mockSpcSigma = np.array(sedData.get_csList("e"))
+    fltr_sigma = mockSpc0 < 3.0*mockSpcSigma
     if np.any(fltr_sigma):
-        mockSigma = spcsigma.copy()
-        mockSigma[fltr_sigma] = mockSpc0[fltr_sigma] / 3.0
-        mockSpc = dataPerturb(mockSpc0, mockSigma, pert)
-    else:
-        mockSpc = dataPerturb(mockSpc0, spcsigma, pert)
+        mockSpcSigma[fltr_sigma] = mockSpc0[fltr_sigma] / 3.0
+    mockSpc = dataPerturb(mockSpc0, mockSpcSigma, pert)
     #->Systematic uncertainties
     if not sysUnc is None:
         sysSpc = sysUnc["spc"]
@@ -189,36 +195,49 @@ def mocker(targname, redshift, sedPck, mockPars, config,
             #print phtRg, frac, mockPht[phtRg[0]:phtRg[1]]
             mockPht[phtRg[0]:phtRg[1]] = (1 + randomRange(-frac, frac)) * mockPht[phtRg[0]:phtRg[1]]
     #->Add the upperlimits
-    fltr_undct = sedsigma < 0
-    mockPht[fltr_undct] = sedflux[fltr_undct]
-    #print "mockPht: ", mockPht
-    #print "sedflux: ", sedflux
+    #fltr_undct = sedsigma < 0
+    #mockPht[fltr_undct] = sedflux[fltr_undct]
     #->Add systematic uncertainty
+    mockPhtWave = np.array(sedData.get_dsList("x"))
+    mockSpcWave = np.array(sedData.get_csList("x"))
     mockSED = np.concatenate([mockPht, mockSpc])
-    mockWav = np.concatenate([sedwave, spcwave])
-    mockSig = np.concatenate([sedsigma, spcsigma])
+    mockWav = np.concatenate([mockPhtWave, mockSpcWave])
+    mockSig = np.concatenate([mockPhtSigma, mockSpcSigma])
     mock = {
         "sed": mockSED,
         "wave": mockWav,
         "sigma": mockSig
     }
     #->Calculate the lnprob
-    phtData = {sedName: bc.DiscreteSet(bandList, sedwave, mockPht, sedsigma, sedflag, sedDataType)}
-    spcData = {"IRS": bc.ContinueSet(spcwave, mockSpc, spcsigma, spcflag, spcDataType)}
+    if sedData.check_dsData():
+        mockPhtFlag = np.ones_like(mockPhtWave)
+        phtData = {sedName: bc.DiscreteSet(bandList, mockPhtWave, mockPht, mockPhtSigma, mockPhtFlag, sedDataType)}
+    else:
+        phtData = {}
+    if sedData.check_csData():
+        mockSpcFlag = np.ones_like(mockSpcWave)
+        spcData = {"IRS": bc.ContinueSet(mockSpcWave, mockSpc, mockSpcSigma, mockSpcFlag, spcDataType)}
+    else:
+        spcData = {}
     mckData = sedsc.SedClass(targname, redshift, phtDict=phtData, spcDict=spcData)
     mckData.set_bandpass(bandList)
     #lnlike = logLFunc_gp(list(mockPars)+uncModel, mckData, sedModel)
     lnlike = logLFunc(mockPars, mckData, sedModel)
 
     if plot:
-        ymin = min([min(spcflux), min(sedflux)]) / 10.0
-        ymax = max([max(spcflux), max(spcflux)]) * 10.0
+        xmin = np.min(waveModel)
+        xmax = np.max(waveModel)
+        ymin = np.min(mockSED) / 10.0
+        ymax = np.max(mockSED) * 10.0
         FigAx = sedData.plot_sed()
         FigAx = sedModel.plot(FigAx=FigAx)
-        plt.errorbar(sedwave, mockPht, yerr=sedsigma, linestyle="none", marker="s",
-                     mfc="none", mec="r", color="r", alpha=0.5)
-        plt.errorbar(spcwave, mockSpc, yerr=spcsigma, linestyle="-", color="r", alpha=0.5)
+        if sedData.check_dsData():
+            plt.errorbar(mockPhtWave, mockPht, yerr=mockPhtSigma, linestyle="none", marker="s",
+                         mfc="none", mec="r", color="r", alpha=0.5)
+        if sedData.check_csData():
+            plt.errorbar(mockSpcWave, mockSpc, yerr=mockSpcSigma, linestyle="-", color="r", alpha=0.5)
         fig, ax = FigAx
+        ax.set_xlim([xmin, xmax])
         ax.set_ylim([ymin, ymax])
     return (mock, lnlike)
 
