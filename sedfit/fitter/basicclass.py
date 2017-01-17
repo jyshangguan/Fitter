@@ -4,8 +4,6 @@ import types
 import numpy as np
 from collections import OrderedDict
 import matplotlib.pyplot as plt
-import dnest4
-from dnest4.utils import rng
 from .. import model_functions as sedmf
 
 
