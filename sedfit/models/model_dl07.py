@@ -17,8 +17,9 @@ tdl07 = Template(**tp_dl07)
 modelInfo = tdl07.get_modelInfo()
 qpahList = modelInfo["qpah"]
 mdust2mh = modelInfo["mdmh"]
+waveLim = [1.0, 1e4]
 
-def DL07(logumin, logumax, qpah, gamma, logMd, DL, z, wave, frame="rest", t=tdl07):
+def DL07(logumin, logumax, qpah, gamma, logMd, DL, z, wave, frame="rest", t=tdl07, waveLim=waveLim):
     """
     This function generates the dust emission template from Draine & Li (2007).
 
@@ -42,8 +43,10 @@ def DL07(logumin, logumax, qpah, gamma, logMd, DL, z, wave, frame="rest", t=tdl0
         The wavelengths of the output flux.
     frame : string
         "rest" for the rest frame SED and "obs" for the observed frame.
-    tmpl_dl07 : numpy.ndarray
+    t : Template object
         The template of DL07 model provided by user.
+    waveLim : list
+        The min and max of the wavelength covered by the template.
 
     Returns
     -------
@@ -58,8 +61,9 @@ def DL07(logumin, logumax, qpah, gamma, logMd, DL, z, wave, frame="rest", t=tdl0
     umax = 10**logumax
     pmin = [umin, umin, qpah]
     ppl  = [umin, umax, qpah]
-    jnu_min = t(wave, pmin)
-    jnu_pl  = t(wave, ppl)
+    fltr = (wave > waveLim[0]) & (wave < waveLim[1])
+    jnu_min = t(wave[fltr], pmin)
+    jnu_pl  = t(wave[fltr], ppl)
     qpah_min = t.get_nearestParameters(pmin)[2]
     qpah_pl = t.get_nearestParameters(ppl)[2]
     if qpah_min != qpah_pl:
@@ -72,7 +76,8 @@ def DL07(logumin, logumax, qpah, gamma, logMd, DL, z, wave, frame="rest", t=tdl0
         idx = 1.0
     else:
         raise ValueError("The frame '{0}' is not recognised!".format(frame))
-    flux = (1 + z)**idx * 10**logMd * Msun/m_H * jnu/(DL * Mpc)**2 / mdmh * 1e3 #unit: mJy
+    flux = np.zeros_like(wave)
+    flux[fltr] = (1 + z)**idx * 10**logMd * Msun/m_H * jnu/(DL * Mpc)**2 / mdmh * 1e3 #unit: mJy
     return flux
 
 def DL07_PosPar(logumin, logumax, qpah, gamma, logMd, t=tdl07):
