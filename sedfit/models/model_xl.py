@@ -57,10 +57,12 @@ silDict = grainModel["Silicate"]
 graDict = grainModel["Graphite"]
 tSil = Template(**silDict)
 tGra = Template(**graDict)
+waveLim = [0.1, 1e3]
 
 def Torus_Emission(typeSil, size, T1Sil, T2Sil, logM1Sil, logM2Sil,
                    typeGra, T1Gra, T2Gra, R1G2S, R2G2S,
-                   wave, DL, z, frame="rest", TemplateSil=tSil, TemplateGra=tGra):
+                   wave, DL, z, frame="rest", TemplateSil=tSil, TemplateGra=tGra,
+                   waveLim=waveLim):
     """
     Calculate the emission of the dust torus using the dust opacity and assuming
     it is optical thin situation. In detail, the torus emission model assumes that
@@ -70,18 +72,21 @@ def Torus_Emission(typeSil, size, T1Sil, T2Sil, logM1Sil, logM2Sil,
     #Calculate the opacity curve
     parSil   = [typeSil, size]
     parGra   = [typeGra, size]
-    kappaSil = TemplateSil(wave, parSil)
-    kappaGra = TemplateGra(wave, parGra)
+    fltr = (wave > waveLim[0]) & (wave < waveLim[1]) #Only choose the wavelength
+                                                     #that covered by the template
+    kappaSil = TemplateSil(wave[fltr], parSil)
+    kappaGra = TemplateGra(wave[fltr], parGra)
     #Calculate the dust emission SEDs
     M1Sil = 10**logM1Sil
     M2Sil = 10**logM2Sil
     M1Gra = R1G2S * M1Sil
     M2Gra = R2G2S * M2Sil
-    de1Sil   = Dust_Emission(T1Sil, M1Sil, kappaSil, wave, DL, z, frame)
-    de2Sil   = Dust_Emission(T2Sil, M2Sil, kappaSil, wave, DL, z, frame)
-    de1Gra   = Dust_Emission(T1Gra, M1Gra, kappaGra, wave, DL, z, frame)
-    de2Gra   = Dust_Emission(T2Gra, M2Gra, kappaGra, wave, DL, z, frame)
-    deTorus  = de1Sil + de2Sil + de1Gra + de2Gra
+    de1Sil  = Dust_Emission(T1Sil, M1Sil, kappaSil, wave[fltr], DL, z, frame)
+    de2Sil  = Dust_Emission(T2Sil, M2Sil, kappaSil, wave[fltr], DL, z, frame)
+    de1Gra  = Dust_Emission(T1Gra, M1Gra, kappaGra, wave[fltr], DL, z, frame)
+    de2Gra  = Dust_Emission(T2Gra, M2Gra, kappaGra, wave[fltr], DL, z, frame)
+    deTorus = np.zeros_like(wave)
+    deTorus[fltr] = de1Sil + de2Sil + de1Gra + de2Gra
     return deTorus
 
 def Torus_Emission_PosPar(typeSil, size, T1Sil, T2Sil, logM1Sil, logM2Sil,
