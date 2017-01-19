@@ -10,7 +10,8 @@ fp = open("/Users/jinyi/Work/mcmc/Fitter/template/bc03_kdt.tmplt")
 tp_bc03 = pickle.load(fp)
 fp.close()
 bc03 = Template(**tp_bc03)
-def BC03(logMs, age, DL, wave, z, frame="rest", t=bc03):
+waveLim = [1e-2, 1e3]
+def BC03(logMs, age, DL, wave, z, frame="rest", t=bc03, waveLim=waveLim):
     """
     This function call the interpolated BC03 template to generate the stellar
     emission SED with the given parameters.
@@ -31,6 +32,8 @@ def BC03(logMs, age, DL, wave, z, frame="rest", t=bc03):
         "rest" for the rest frame SED and "obs" for the observed frame.
     t : Template class
         The interpolated BC03 template.
+    waveLim : list
+        The min and max of the wavelength covered by the template.
 
     Returns
     -------
@@ -41,7 +44,9 @@ def BC03(logMs, age, DL, wave, z, frame="rest", t=bc03):
     -----
     None.
     """
-    flux = t(wave, [age])
+    flux = np.zeros_like(wave)
+    fltr = (wave > waveLim[0]) & (wave < waveLim[1])
+    flux[fltr] = t(wave[fltr], [age])
     if frame == "rest":
         idx = 2.0
     elif frame == "obs":

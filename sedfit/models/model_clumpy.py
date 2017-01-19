@@ -26,7 +26,8 @@ try:
 except:
     print("[model_functions]: Fail to import the CLUMPY template from: {0}".format(clumpyFile))
     ip = None
-def CLUMPY_intp(logL, i, tv, q, N0, sigma, Y, wave, DL, z, frame="rest", t=ip):
+waveLim = [1e-2, 1e3]
+def CLUMPY_intp(logL, i, tv, q, N0, sigma, Y, wave, DL, z, frame="rest", t=ip, waveLim=waveLim):
     """
     This function provide the dust torus MIR flux with CLUMPY model.
 
@@ -56,6 +57,8 @@ def CLUMPY_intp(logL, i, tv, q, N0, sigma, Y, wave, DL, z, frame="rest", t=ip):
         "rest" for the rest frame SED and "obs" for the observed frame.
     t : NdimInterpolation class
         The NdimInterpolation class obtained from Nikutta"s interpolation code.
+    waveLim : list
+        The min and max of the wavelength covered by the template.
 
     Returns
     -------
@@ -74,7 +77,9 @@ def CLUMPY_intp(logL, i, tv, q, N0, sigma, Y, wave, DL, z, frame="rest", t=ip):
     else:
         raise ValueError("The frame '{0}' is not recognised!".format(frame))
     f0 = (1 + z)**idx * 10**(logL+26) / (4 * pi * (DL * Mpc)**2.) #Convert to mJy unit
-    flux = f0 * t(vector, wave)
+    fltr = (wave > waveLim[0]) & (wave < waveLim[1])
+    flux = np.zeros_like(wave)
+    flux[fltr] = f0 * t(vector, wave[fltr])
     return flux
 #Func_end
 

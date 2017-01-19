@@ -30,6 +30,8 @@ def pah(logLpah, wave, DL, z, frame="rest", t=tPAH, waveLim=waveLim):
         "rest" for the rest frame SED and "obs" for the observed frame.
     t : function
         The interpolated PAH template, which should have been normalised.
+    waveLim : list
+        The min and max of the wavelength covered by the template.
 
     Returns
     -------
