@@ -12,6 +12,7 @@ from sedfit.fitter import basicclass as bc
 from sedfit import sedclass as sedsc
 from sedfit import model_functions as sedmf
 from sedfit.fit_functions import logLFunc_gp, logLFunc
+np.seterr(all="ignore")
 
 def dataPerturb(x, sigma, pert=True, maxIter=10):
     """
@@ -88,7 +89,7 @@ def mocker(targname, redshift, sedPck, mockPars, config, Dist=0,
         {
             "lnf" : float, (-inf, 0]
                 The ln of f, the imperfectness of the model.
-            "lna" : float, (-inf, 0]
+            "lna" : float, (-inf, 1]
                 The ln of a, the amplitude of the residual correlation.
             "lntau" : float, (-inf, 1]
                 The ln of tau, the scale length of the residual correlation.
@@ -198,6 +199,8 @@ def mocker(targname, redshift, sedPck, mockPars, config, Dist=0,
     if np.any(fltr_sigma):
         mockSpcSigma[fltr_sigma] = mockSpc0[fltr_sigma] / 3.0
     mockSpc = dataPerturb(mockSpc0, mockSpcSigma, pert)
+    mockPhtWave = np.array(sedData.get_dsList("x"))
+    mockSpcWave = np.array(sedData.get_csList("x"))
     #->Systematic uncertainties
     if not sysUnc is None:
         sysSpc = sysUnc["spc"]
@@ -206,19 +209,27 @@ def mocker(targname, redshift, sedPck, mockPars, config, Dist=0,
         for phtRg, frac in sysPhtList:
             #print phtRg, frac, mockPht[phtRg[0]:phtRg[1]]
             mockPht[phtRg[0]:phtRg[1]] = (1 + randomRange(-frac, frac)) * mockPht[phtRg[0]:phtRg[1]]
-    #->Model imperfectness & spectra residual correlation
+    #->Model imperfectness & spectral residual correlation
     if not uncModel is None:
-        #Model imperfectness
-        if sedModel.check_dsData():
-            f = 10**uncModel["lnf"]
-
+        e = np.e
+        #For the photometric data
+        if sedData.check_dsData():
+            f = e**uncModel["lnf"]
+            mockPht = (1 + randomRange(-f, f)) * mockPht
+        else:
+            f = 0
+        #For the spectral data
+        if sedData.check_csData():
+            a   = e**uncModel["lna"]
+            tau = e**uncModel["lntau"]
+            gp = george.GP(a * kernels.ExpSquaredKernel(tau))
+            mockSpc = (1 + randomRange(-f, f)) * mockSpc
+            mockSpc += gp.sample(mockSpcWave)
     #->Add the upperlimits
     if nonDetect:
         fltr_undct = sedsigma < 0
         mockPht[fltr_undct] = sedflux[fltr_undct]
     #->Add systematic uncertainty
-    mockPhtWave = np.array(sedData.get_dsList("x"))
-    mockSpcWave = np.array(sedData.get_csList("x"))
     mockSED = np.concatenate([mockPht, mockSpc])
     mockWav = np.concatenate([mockPhtWave, mockSpcWave])
     mockSig = np.concatenate([mockPhtSigma, mockSpcSigma])
@@ -354,7 +365,7 @@ if __name__ == "__main__":
             mockPars.append(parTable["{0}_C".format(parName)][loop_T])
         #print parTable[loop_T]
         mock, lnlike = gsm_mocker(configName, targname, redshift, sedFile, mockPars,
-                        sysUnc=sysUnc, uncModel=[-np.inf, -np.inf, -np.inf],
+                        sysUnc=sysUnc, #uncModel=[-np.inf, -np.inf, -np.inf],
                         pert=False, plot=True)
         print("--------lnlike={0:.5f}".format(lnlike))
         plt.savefig("mock/{0}_mock.png".format(targname))
