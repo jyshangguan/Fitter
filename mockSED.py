@@ -3,6 +3,8 @@ import sys
 import types
 import importlib
 import numpy as np
+import george
+from george import kernels
 import matplotlib.pyplot as plt
 import rel_SED_Toolkit as sedt
 from astropy.table import Table
@@ -54,7 +56,7 @@ def randomRange(low, high):
     return r
 
 def mocker(targname, redshift, sedPck, mockPars, config, Dist=0,
-           sysUnc=None, uncModel=[-20, -20, -20], pert=True, plot=False):
+           sysUnc=None, uncModel=None, pert=True, nonDetect=True, plot=False):
     """
     This function is to generate a mock SED according to a given observed SED.
     Basically, the flux densities will be replaced by the model value while the
@@ -77,10 +79,19 @@ def mocker(targname, redshift, sedPck, mockPars, config, Dist=0,
         The configuration information for the fitting.
     Dist : float
         The physical distance. It should be provided if the redshift is 0.
-    sysUnc : dict
+    sysUnc : dict or None, by default
         {
             "pht": [([nBgn, nEnd], frac), ([nBgn, nEnd], frac), ...],
             "spc": frac
+        }
+    uncModel : dict or None, by default
+        {
+            "lnf" : float, (-inf, 0]
+                The ln of f, the imperfectness of the model.
+            "lna" : float, (-inf, 0]
+                The ln of a, the amplitude of the residual correlation.
+            "lntau" : float, (-inf, 1]
+                The ln of tau, the scale length of the residual correlation.
         }
     pert : bool, default: True
         Perturb the data according to the uncertainty if True.
@@ -131,7 +142,8 @@ def mocker(targname, redshift, sedPck, mockPars, config, Dist=0,
     else:
         spcData = {}
     sedData = sedsc.SedClass(targname, redshift, Dist=Dist, phtDict=phtData, spcDict=spcData)
-    sedData.set_bandpass(bandList)
+    if not bandList is None:
+        sedData.set_bandpass(bandList)
 
     ################################################################################
     #                                   Model                                      #
@@ -194,9 +206,16 @@ def mocker(targname, redshift, sedPck, mockPars, config, Dist=0,
         for phtRg, frac in sysPhtList:
             #print phtRg, frac, mockPht[phtRg[0]:phtRg[1]]
             mockPht[phtRg[0]:phtRg[1]] = (1 + randomRange(-frac, frac)) * mockPht[phtRg[0]:phtRg[1]]
+    #->Model imperfectness & spectra residual correlation
+    if not uncModel is None:
+        #Model imperfectness
+        if sedModel.check_dsData():
+            f = 10**uncModel["lnf"]
+
     #->Add the upperlimits
-    #fltr_undct = sedsigma < 0
-    #mockPht[fltr_undct] = sedflux[fltr_undct]
+    if nonDetect:
+        fltr_undct = sedsigma < 0
+        mockPht[fltr_undct] = sedflux[fltr_undct]
     #->Add systematic uncertainty
     mockPhtWave = np.array(sedData.get_dsList("x"))
     mockSpcWave = np.array(sedData.get_csList("x"))

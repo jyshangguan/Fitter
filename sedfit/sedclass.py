@@ -304,7 +304,6 @@ class SedClass(bc.DataSet):
                                         bandName=bn)
         self.add_bandpass(bandDict)
 
-
     def get_bandpass(self):
         return self.__bandDict
 
