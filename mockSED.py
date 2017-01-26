@@ -12,7 +12,6 @@ from sedfit.fitter import basicclass as bc
 from sedfit import sedclass as sedsc
 from sedfit import model_functions as sedmf
 from sedfit.fit_functions import logLFunc_gp, logLFunc
-np.seterr(all="ignore")
 
 def dataPerturb(x, sigma, pert=True, maxIter=10):
     """
