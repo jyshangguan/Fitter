@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.special import erf
 import george
 from george import kernels
 
@@ -26,7 +27,6 @@ def ChiSq(data, model, unct=None):
     -----
     None.
     '''
-    from scipy.special import erf
     if unct is None:
         unct = np.ones(len(data))
     fltr_dtc = unct>0
