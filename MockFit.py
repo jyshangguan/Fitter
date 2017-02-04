@@ -2,6 +2,7 @@ import os
 import gc
 import sys
 import gsf
+import warnings
 import traceback
 import importlib
 import numpy as np
@@ -25,13 +26,20 @@ parser.add_option("-n", "--usename", dest="usename",
 parser.add_option("-r", "--refit", dest="refit",
                   action="store_true", default=False,
                   help="Refit the SED though there is a result found.")
+parser.add_option("-w", "--warning", dest="warning",
+                  action="store_true", default=False,
+                  help="Stop ignoring the warnings.")
 (options, args) = parser.parse_args()
 if len(args) == 0:
     raise AssertionError("The config file is not specified!")
-
+#Some times the warning may stop the code, so we ignore the warnings by default.
+if options.warning:
+    pass
+else:
+    warnings.simplefilter("ignore")
 
 configName = args[0]
-config = importlib.import_module(configName.split(".")[0])
+config = importlib.import_module(configName.split("/")[-1].split(".")[0])
 targetList = options.list
 if targetList is None: #->If the target list is not provided, only fit one target according to the config file.
     targname = config.targname

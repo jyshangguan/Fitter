@@ -119,9 +119,10 @@ def fitter(targname, redshift, sedPck, config):
     parAddDict_all["z"]     = redshift
     parAddDict_all["frame"] = "rest"
     sedModel  = bc.Model_Generator(modelDict, funcLib, waveModel, parAddDict_all)
-    parVary   = sedModel.get_parVaryList()
-    parTruth  = config.parTruth   #Whether to provide the truth of the model
     modelUnct = config.modelUnct #Whether to consider the model uncertainty in the fitting
+    parTruth  = config.parTruth  #Whether to provide the truth of the model
+    """
+    parVary   = sedModel.get_parVaryList()
     if modelUnct:
         nAddPars = 3 #If model the uncertainty, there are 3 additional parameters.
         for loop in range(nAddPars):
@@ -136,6 +137,7 @@ def fitter(targname, redshift, sedPck, config):
             parTruth.append(-20) #Supplement the truth values for additional parameters.
     else:
         raise ValueError("The parameter truth list length is incorrect!")
+    """
 
 
     ################################################################################
