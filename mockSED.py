@@ -250,8 +250,14 @@ def mocker(targname, redshift, sedPck, mockPars, config, Dist=0,
         spcData = {}
     mckData = sedsc.SedClass(targname, redshift, phtDict=phtData, spcDict=spcData)
     mckData.set_bandpass(bandList)
-    #lnlike = logLFunc_gp(list(mockPars)+uncModel, mckData, sedModel)
-    lnlike = logLFunc(mockPars, mckData, sedModel)
+    if uncModel is None:
+        lnlike = logLFunc(mockPars, mckData, sedModel)
+    else:
+        mockPars = list(mockPars)
+        mockPars.append(uncModel["lnf"])
+        mockPars.append(uncModel["lna"])
+        mockPars.append(uncModel["lntau"])
+        lnlike = logLFunc_gp(mockPars, mckData, sedModel)
 
     if plot:
         xmin = np.min(waveModel)
