@@ -5,6 +5,7 @@
 *.pdf
 *.png
 *.fitrs
+*.*sed
 results/*
 chains*/*
 template/grain_models/*
