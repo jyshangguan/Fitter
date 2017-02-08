@@ -9,6 +9,7 @@
 import numpy as np
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
+from astropy.table import Table
 from scipy.interpolate import interp1d
 
 
@@ -353,10 +354,10 @@ def Load_SED(sedfile, sed_range=[7, 13], spc_range=[13, None], spc_binrsl=10.):
     -----
     None.
     '''
-    sedarray = np.loadtxt(sedfile, skiprows=1)
-    wave = sedarray[:, 0]
-    flux = sedarray[:, 1]
-    sigma = sedarray[:, 2]
+    sedarray = Table.read(sedfile, format="ascii")
+    wave  = sedarray["wavelength"].data
+    flux  = sedarray["flux"].data
+    sigma = sedarray["sigma"].data
     sedwave = wave[sed_range[0]:sed_range[1]]
     sedflux = flux[sed_range[0]:sed_range[1]]
     sedsigma = sigma[sed_range[0]:sed_range[1]]
@@ -375,6 +376,66 @@ def Load_SED(sedfile, sed_range=[7, 13], spc_range=[13, None], spc_binrsl=10.):
     sed = (sedwave, sedflux, sedsigma)
     spc = (spcwave, spcflux, spcsigma)
     spc_raw = (spcwave_raw, spcflux_raw, spcsigma_raw)
-    sed_package = {'sed_cb':sed_cb, 'sed':sed, 'spc':spc, 'spc_raw':spc_raw}
+    sed_package = {
+        'sed_cb':sed_cb,
+        'sed':sed,
+        'spc':spc,
+        'spc_raw':spc_raw,
+    }
+    return sed_package
+#Func_end
+
+#Func_bgn:
+#-------------------------------------#
+#   Created by SGJY, Jan. 8, 2017     #
+#-------------------------------------#
+def Load_SED_new(sedfile):
+    '''
+    This function is to load the SED data and compile it for use.
+
+    Parameters
+    ----------
+    sedfile : str
+        The full path of sed file.
+
+    Returns
+    -------
+    sed_package : dict
+        The dictionary storing:
+            sed_cb : combined sed
+            sed : photometric data
+            spc : spectra data
+
+    Notes
+    -----
+    None.
+    '''
+    sedarray = Table.read(sedfile, format="ascii")
+    wave  = sedarray["wavelength"].data
+    flux  = sedarray["flux"].data
+    sigma = sedarray["sigma"].data
+    band  = sedarray["band"].data
+    fltr_spc = band == "0"
+    fltr_sed = np.logical_not(fltr_spc)
+    sedwave  = wave[fltr_sed]
+    sedflux  = flux[fltr_sed]
+    sedsigma = sigma[fltr_sed]
+    sedband  = band[fltr_sed]
+    spcwave  = wave[fltr_spc]
+    spcflux  = flux[fltr_spc]
+    spcsigma = sigma[fltr_spc]
+
+    wave_cb = np.concatenate([sedwave, spcwave])
+    flux_cb = np.concatenate([sedflux, spcflux])
+    sigma_cb = np.concatenate([sedsigma, spcsigma])
+    sed_cb = (list(wave_cb), list(flux_cb), list(sigma_cb))
+    sed = (list(sedwave), list(sedflux), list(sedsigma))
+    spc = (list(spcwave), list(spcflux), list(spcsigma))
+    sed_package = {
+        'sed_cb':sed_cb,
+        'sed':sed,
+        'spc':spc,
+        "band":list(sedband)
+    }
     return sed_package
 #Func_end

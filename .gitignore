@@ -6,6 +6,7 @@
 *.png
 *.fitrs
 *.*sed
+*.csv
 results/*
 chains*/*
 template/grain_models/*
