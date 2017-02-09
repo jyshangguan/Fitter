@@ -216,9 +216,10 @@ class BandPass(object):
         if np.sum(fltr) == 0:
             raise ValueError("The wavelength is not overlapped with the filter!")
         wavelength = wavelength[fltr]
+        freq = ls_mic / wavelength
         flux = flux[fltr]
         rsrList = splev(wavelength, self.__filtertck)
-        Sbar = np.trapz(rsrList*flux, wavelength) / np.trapz(rsrList, wavelength)
+        Sbar = np.trapz(rsrList*flux, freq) / np.trapz(rsrList, freq)
         fluxFltr = self.k4p * Sbar
         return fluxFltr
 
@@ -312,7 +313,7 @@ filterDict = {
     'SPIRE_350': 350.,
     'SPIRE_500': 500.
 }
-herschelFilters = ['PACS_70', 'PACS_100', 'PACS_160', 'SPIRE_250', 'SPIRE_350', 'SPIRE_500']
+monoFilters = ['PACS_70', 'PACS_100', 'PACS_160', 'SPIRE_250', 'SPIRE_350', 'SPIRE_500']
 pathList = os.path.abspath(__file__).split("/")
 pathList[-1] = "filters"
 bandPath = "/".join(pathList)
@@ -323,19 +324,23 @@ fp.close()
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
 
-    bn = "PACS_70"
+    bn = "w4"
     bandFile = "/{0}.dat".format(bn)
     bandPck = np.genfromtxt(bandPath+bandFile)
     bandWave = bandPck[:, 0]
     bandRsr = bandPck[:, 1]
     bandCenter = filterDict[bn]
-    bp = BandPass(bandWave, bandRsr, bandCenter, bandType="mean", bandName=bn)
+    bp = BandPass(bandWave, bandRsr, bandCenter, bandType="mean", bandName=bn, silent=False)
     f0 = 10.0
     w0 = bandCenter
     alpha = -1
-    wave = 10**np.linspace(0, 1, 100)
-    flux = f0*(wave / w0)**alpha
+    wave = 10**np.linspace(0, 3, 1000)
+    freq = ls_mic / wave
+    nu0  = ls_mic / w0
+    flux = f0*(freq / nu0)**alpha
     fb = bp.filtering(wave, flux)
+    print("w0={0}".format(w0))
+    print("f0={0}, fb={1}".format(f0, fb))
     plt.plot(wave, flux)
     plt.plot(bandCenter, fb, linestyle="none", marker="s", color="k")
     plt.xscale("log")

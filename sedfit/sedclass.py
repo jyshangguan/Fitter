@@ -8,112 +8,6 @@ from . import bandfunc as bf
 from scipy.interpolate import splrep, splev
 from collections import OrderedDict
 
-class BandPass(object):
-    """
-    A class to represent one filter bandpass of a instrument.
-
-    It contains the bandpass information and can convert the spectra
-    into the band flux density.
-
-    Parameters
-    ----------
-    wavelength : float array
-        The wavelength of the relative system response curve.
-    rsr : float array
-        The relative system response curve.
-    """
-    def __init__(self, waveList, rsrList, bandCenter=None, bandFunc=None, bandName='None'):
-        waveMin = waveList[0]
-        waveMax = waveList[-1]
-        if waveMin >= waveMax:
-            raise ValueError("The waveList sequence is incorrect!")
-        if len(waveList) == len(rsrList):
-            self.__waveList = waveList
-            self.__rsrList = rsrList
-            self._bandName = bandName
-        else:
-            raise ValueError("The inputs are not matched!")
-        if (type(bandFunc) == types.FunctionType) or (bandFunc is None):
-            self.__bandFunc = bandFunc
-        else:
-            raise ValueError("The input bandFunc is incorrect!")
-        self.__filtertck = splrep(waveList, rsrList)
-        if bandCenter is None: #The bandCenter is not specified, the effective wavelength will
-                               #be used (Eq. A21, Bessell&Murphy 2012), assuming fnu~const.
-            self._bandCenter = np.trapz(rsrList, waveList)/np.trapz(rsrList/waveList, waveList)
-        else:
-            self._bandCenter = bandCenter
-
-    def get_bandpass(self):
-        bandInfo = {
-            'wave_list': self.__waveList,
-            'rsr_list': self.__rsrList,
-            'band_name': self._bandName,
-            'wave_center': self._bandCenter,
-        }
-        return bandInfo
-
-    def filtering(self, wavelength, flux, **kwargs):
-        """
-        Calculate the flux density of the input spectrum filtered
-        by the bandpass.
-
-        Parameters
-        ----------
-        wavelength : float array
-            The wavelength of the input spectrum.
-        flux : float array
-            The flux of the input spectrum.
-        kwargs : dict
-            The dict for additional parameters.
-
-        Returns
-        -------
-        fluxFltr : float
-            The flux density of the spectrum after filtered by the bandpass.
-
-        Notes
-        -----
-        None.
-        """
-        bandCenter = self._bandCenter
-        wvMin = wavelength[0]
-        wvMax = wavelength[-1]
-        if( (bandCenter <= wvMin) or (bandCenter >= wvMax) ):
-            raise ValueError("The band center '{0}' is out of the wavelength range '[{1}, {2}]!".format(bandCenter, wvMin, wvMax))
-        waveMin = self.__waveList[0]
-        waveMax = self.__waveList[-1]
-        fltr = (wavelength > waveMin) & (wavelength < waveMax)
-        if np.sum(fltr) == 0:
-            raise ValueError("The wavelength is not overlapped with the filter!")
-        wavelength = wavelength[fltr]
-        flux = flux[fltr]
-        rsrList = splev(wavelength, self.__filtertck)
-        bandFunc = self.__bandFunc
-        if bandFunc is None: #By default, the rsr is photon response and the band flux
-                             #is defined as eq. A12 (Bessell&Murphy 2012).
-            signal = np.trapz(rsrList/wavelength*flux, x=wavelength)
-            norm   = np.trapz(rsrList/wavelength, x=wavelength)
-            fluxFltr = signal/norm
-        else: #Use the user specified function to get the filtered flux.
-            kwargsAdd = {
-                'band_center': bandCenter,
-                'band_name': self._bandName,
-                'wavelength': wavelength,
-                'rsr_list': rsrList,
-                'flux': flux
-            }
-            kwargs.update(kwargsAdd)
-            fluxFltr = bandFunc(kwargs)
-        return fluxFltr
-
-    def __getstate__(self):
-        return self.__dict__
-
-    def __setstate__(self, dict):
-        self.__dict__ = dict
-
-
 class SedClass(bc.DataSet):
     """
     A class represent the SED data. It is a kind of DataSet class.
@@ -278,30 +172,24 @@ class SedClass(bc.DataSet):
 
     def add_bandpass(self, bandDict):
         for bn in bandDict.keys():
-            if isinstance(bandDict[bn], BandPass):
+            if isinstance(bandDict[bn], bf.BandPass):
                 self.__bandDict[bn] = bandDict[bn]
             else:
                 raise ValueError('The bandpass {0} has incorrect type!'.format(bn))
 
     def set_bandpass(self, bandList):
-        ls_mic = 2.99792458e14 #micron/s
-        herschelBands = bf.herschelBands
         bandDict = OrderedDict()
         for bn in bandList:
-            if not bn in bf.herschelFilters:
-                bandFile = "/{0}.dat".format(bn)
-                bandPck = np.genfromtxt(bf.bandPath+bandFile)
-                bandWave = bandPck[:, 0]
-                bandRsr = bandPck[:, 1]
-                bandCenter = bf.filterDict[bn]
-                bandDict[bn] = BandPass(bandWave, bandRsr, bandCenter, bandName=bn)
+            bandFile = "/{0}.dat".format(bn)
+            bandPck = np.genfromtxt(bf.bandPath+bandFile)
+            bandWave = bandPck[:, 0]
+            bandRsr = bandPck[:, 1]
+            bandCenter = bf.filterDict[bn]
+            if bn in bf.monoFilters:
+                bandType = "mono"
             else:
-                bandWave = ls_mic / herschelBands[bn]["bandpass"][0][::-1]
-                bandRsr = herschelBands[bn]["bandpass"][1][::-1]
-                bandCenter = herschelBands[bn]["wave0"]
-                bandDict[bn] = BandPass(bandWave, bandRsr, bandCenter,
-                                        bandFunc=bf.BandFunc_Herschel,
-                                        bandName=bn)
+                bandType = "mean"
+            bandDict[bn] = bf.BandPass(bandWave, bandRsr, bandCenter, bandType, bn)
         self.add_bandpass(bandDict)
 
     def get_bandpass(self):
@@ -414,3 +302,110 @@ class SedClass(bc.DataSet):
 
     def __setstate__(self, dict):
         self.__dict__ = dict
+
+'''
+class BandPass(object):
+    """
+    A class to represent one filter bandpass of a instrument.
+
+    It contains the bandpass information and can convert the spectra
+    into the band flux density.
+
+    Parameters
+    ----------
+    wavelength : float array
+        The wavelength of the relative system response curve.
+    rsr : float array
+        The relative system response curve.
+    """
+    def __init__(self, waveList, rsrList, bandCenter=None, bandFunc=None, bandName='None'):
+        waveMin = waveList[0]
+        waveMax = waveList[-1]
+        if waveMin >= waveMax:
+            raise ValueError("The waveList sequence is incorrect!")
+        if len(waveList) == len(rsrList):
+            self.__waveList = waveList
+            self.__rsrList = rsrList
+            self._bandName = bandName
+        else:
+            raise ValueError("The inputs are not matched!")
+        if (type(bandFunc) == types.FunctionType) or (bandFunc is None):
+            self.__bandFunc = bandFunc
+        else:
+            raise ValueError("The input bandFunc is incorrect!")
+        self.__filtertck = splrep(waveList, rsrList)
+        if bandCenter is None: #The bandCenter is not specified, the effective wavelength will
+                               #be used (Eq. A21, Bessell&Murphy 2012), assuming fnu~const.
+            self._bandCenter = np.trapz(rsrList, waveList)/np.trapz(rsrList/waveList, waveList)
+        else:
+            self._bandCenter = bandCenter
+
+    def get_bandpass(self):
+        bandInfo = {
+            'wave_list': self.__waveList,
+            'rsr_list': self.__rsrList,
+            'band_name': self._bandName,
+            'wave_center': self._bandCenter,
+        }
+        return bandInfo
+
+    def filtering(self, wavelength, flux, **kwargs):
+        """
+        Calculate the flux density of the input spectrum filtered
+        by the bandpass.
+
+        Parameters
+        ----------
+        wavelength : float array
+            The wavelength of the input spectrum.
+        flux : float array
+            The flux of the input spectrum.
+        kwargs : dict
+            The dict for additional parameters.
+
+        Returns
+        -------
+        fluxFltr : float
+            The flux density of the spectrum after filtered by the bandpass.
+
+        Notes
+        -----
+        None.
+        """
+        bandCenter = self._bandCenter
+        wvMin = wavelength[0]
+        wvMax = wavelength[-1]
+        if( (bandCenter <= wvMin) or (bandCenter >= wvMax) ):
+            raise ValueError("The band center '{0}' is out of the wavelength range '[{1}, {2}]!".format(bandCenter, wvMin, wvMax))
+        waveMin = self.__waveList[0]
+        waveMax = self.__waveList[-1]
+        fltr = (wavelength > waveMin) & (wavelength < waveMax)
+        if np.sum(fltr) == 0:
+            raise ValueError("The wavelength is not overlapped with the filter!")
+        wavelength = wavelength[fltr]
+        flux = flux[fltr]
+        rsrList = splev(wavelength, self.__filtertck)
+        bandFunc = self.__bandFunc
+        if bandFunc is None: #By default, the rsr is photon response and the band flux
+                             #is defined as eq. A12 (Bessell&Murphy 2012).
+            signal = np.trapz(rsrList/wavelength*flux, x=wavelength)
+            norm   = np.trapz(rsrList/wavelength, x=wavelength)
+            fluxFltr = signal/norm
+        else: #Use the user specified function to get the filtered flux.
+            kwargsAdd = {
+                'band_center': bandCenter,
+                'band_name': self._bandName,
+                'wavelength': wavelength,
+                'rsr_list': rsrList,
+                'flux': flux
+            }
+            kwargs.update(kwargsAdd)
+            fluxFltr = bandFunc(kwargs)
+        return fluxFltr
+
+    def __getstate__(self):
+        return self.__dict__
+
+    def __setstate__(self, dict):
+        self.__dict__ = dict
+'''
