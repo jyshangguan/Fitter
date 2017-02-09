@@ -402,13 +402,13 @@ def Load_SED_new(sedfile):
     -------
     sed_package : dict
         The dictionary storing:
-            sed_cb : combined sed
-            sed : photometric data
-            spc : spectra data
+            sed_cb : combined sed; (wave, flux, sigma)
+            sed : photometric data; (wave, flux, sigma, band)
+            spc : spectra data; (wave, flux, sigma)
 
     Notes
     -----
-    None.
+    The returned SED data are in the lists instead of the numpy.array.
     '''
     sedarray = Table.read(sedfile, format="ascii")
     wave  = sedarray["wavelength"].data
@@ -429,13 +429,24 @@ def Load_SED_new(sedfile):
     flux_cb = np.concatenate([sedflux, spcflux])
     sigma_cb = np.concatenate([sedsigma, spcsigma])
     sed_cb = (list(wave_cb), list(flux_cb), list(sigma_cb))
-    sed = (list(sedwave), list(sedflux), list(sedsigma))
+    sed = (list(sedwave), list(sedflux), list(sedsigma), list(sedband))
     spc = (list(spcwave), list(spcflux), list(spcsigma))
     sed_package = {
         'sed_cb':sed_cb,
         'sed':sed,
         'spc':spc,
-        "band":list(sedband)
     }
     return sed_package
+#Func_end
+
+#Func_bgn:
+#-------------------------------------#
+#   Created by SGJY, Jan. 9, 2017     #
+#-------------------------------------#
+def SED_select_band(sed, bandList):
+    wave  = sed[0]
+    flux  = sed[1]
+    sigma = sed[2]
+    band  = sed[3]
+
 #Func_end
