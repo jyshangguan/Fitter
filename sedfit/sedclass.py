@@ -195,7 +195,7 @@ class SedClass(bc.DataSet):
     def get_bandpass(self):
         return self.__bandDict
 
-    def filtering(self, bandName, wavelength, flux, **kwargs):
+    def filtering(self, bandName, wavelength, flux):
         """
         Calculate the flux density of the input spectrum filtered by
         the specified band. The spectrum is considered at the rest frame.
@@ -225,12 +225,12 @@ class SedClass(bc.DataSet):
         if bandpass is None:
             raise AttributeError("The bandpass '{0}' is not found!".format(bandName))
         bandCenter = bandpass._bandCenter
-        bandFlux = bandpass.filtering(waveObs, fluxObs, **kwargs)
+        bandFlux = bandpass.filtering(waveObs, fluxObs)
         waveRst = bandCenter / (1+z)
         fluxRst = bandFlux# * (1+z)
         return (waveRst, fluxRst)
 
-    def model_pht(self, wavelength, flux, bandKws={}):
+    def model_pht(self, wavelength, flux):
         """
         Calculate the model flux density of the input spectrum at the wavelengths of
         all the bands of the photometric data of the SED. The spectrum is considered
@@ -242,8 +242,6 @@ class SedClass(bc.DataSet):
             The wavelength of the input spectrum.
         flux : float array
             The flux of the input spectrum.
-        bandKws : dict, by default: {}
-            All the necessary parameters of each bandpass.
 
         Returns
         -------
@@ -257,8 +255,7 @@ class SedClass(bc.DataSet):
         bandNameList = self.get_unitNameList()
         fluxList = []
         for bandName in bandNameList:
-            kws = bandKws.get(bandName, {})
-            fluxList.append(self.filtering(bandName, wavelength, flux, **kws)[1])
+            fluxList.append(self.filtering(bandName, wavelength, flux)[1])
         return fluxList
 
     def model_spc(self, fluxFunc, cSetName=None):

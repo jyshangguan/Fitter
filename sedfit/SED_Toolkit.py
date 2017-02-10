@@ -326,7 +326,7 @@ def Herschel_Bands(wave, flux,
 #   Created by SGJY, Mar. 28, 2016    #
 #-------------------------------------#
 #From: wrk_Plot_Models.ipynb
-def Load_SED(sedfile, sed_range=[7, 13], spc_range=[13, None], spc_binrsl=10.):
+def Load_SED_old(sedfile, sed_range=[7, 13], spc_range=[13, None], spc_binrsl=10.):
     '''
     This function is to load the SED data and compile it for use.
 
@@ -389,7 +389,7 @@ def Load_SED(sedfile, sed_range=[7, 13], spc_range=[13, None], spc_binrsl=10.):
 #-------------------------------------#
 #   Created by SGJY, Jan. 8, 2017     #
 #-------------------------------------#
-def Load_SED_new(sedfile):
+def Load_SED(sedfile):
     '''
     This function is to load the SED data and compile it for use.
 
@@ -444,9 +444,33 @@ def Load_SED_new(sedfile):
 #   Created by SGJY, Jan. 9, 2017     #
 #-------------------------------------#
 def SED_select_band(sed, bandList):
-    wave  = sed[0]
-    flux  = sed[1]
-    sigma = sed[2]
-    band  = sed[3]
+    """
+    Select the SED from the input band list.
 
+    Parameters
+    ----------
+    sed : tuple
+        The tuple of the photometric SED data; (wave, flux, sigma, band).
+    bandList : list
+        The list of the bands that are used.
+
+    Returns
+    -------
+    sed_select : tuple
+        The selected SED data that are used.
+
+    Notes
+    -----
+    None.
+    """
+    wave  = []
+    flux  = []
+    sigma = []
+    for bn in bandList:
+        idx = sed[3].index(bn)
+        wave.append(sed[0][idx])
+        flux.append(sed[1][idx])
+        sigma.append(sed[2][idx])
+    sed_select = (wave, flux, sigma)
+    return sed_select
 #Func_end

@@ -151,33 +151,44 @@ class BandPass(object):
     rsr : float array
         The relative system response curve.
     """
-    def __init__(self, waveList, rsrList, bandCenter=None, bandType="mean", bandName='None', silent=True):
-        waveMin = waveList[0]
-        waveMax = waveList[-1]
-        if waveMin >= waveMax:
-            raise ValueError("The waveList sequence is incorrect!")
-        if len(waveList) == len(rsrList):
-            self.__waveList = waveList
-            self.__rsrList = rsrList
-            self._bandName = bandName
-        else:
-            raise ValueError("The inputs are not matched!")
-        self.__filtertck = splrep(waveList, rsrList)
-        if bandCenter is None: #The bandCenter is not specified, the effective wavelength will
-                               #be used (Eq. A21, Bessell&Murphy 2012), assuming fnu~const.
-            self._bandCenter = np.trapz(rsrList, waveList)/np.trapz(rsrList/waveList, waveList)
-        else:
-            self._bandCenter = bandCenter
+    def __init__(self, waveList=None, rsrList=None, bandCenter=None, bandType="mean", bandName='None', silent=True):
         self.__bandType = bandType
-        if bandType == "mono":
-            self.k4p = K_MonP(self._bandCenter, waveList, rsrList, alpha=-1)
-            if not silent:
-                print("Band {0} calculates the monochromatic flux density!".format(bandType))
-        elif bandType == "mean":
-            if not silent:
-                print("Band {0} calculates the averaged flux density!".format(bandType))
+        if not bandType == "none":
+            waveMin = waveList[0]
+            waveMax = waveList[-1]
+            if waveMin >= waveMax:
+                raise ValueError("The waveList sequence is incorrect!")
+            if len(waveList) == len(rsrList):
+                self.__waveList = waveList
+                self.__rsrList = rsrList
+                self._bandName = bandName
+            else:
+                raise ValueError("The inputs are not matched!")
+            self.__filtertck = splrep(waveList, rsrList)
+            if bandCenter is None: #The bandCenter is not specified, the effective wavelength will
+                                   #be used (Eq. A21, Bessell&Murphy 2012), assuming fnu~const.
+                self._bandCenter = np.trapz(rsrList, waveList)/np.trapz(rsrList/waveList, waveList)
+            else:
+                self._bandCenter = bandCenter
+            if bandType == "mono":
+                self.k4p = K_MonP(self._bandCenter, waveList, rsrList, alpha=-1)
+                if not silent:
+                    print("Band {0} calculates the monochromatic flux density!".format(bandType))
+            elif bandType == "mean":
+                if not silent:
+                    print("Band {0} calculates the averaged flux density!".format(bandType))
+            else:
+                raise ValueError("The input bandType ({0}) is incorrect!".format(bandType))
         else:
-            raise ValueError("The input bandType ({0}) is incorrect!".format(bandType))
+            assert waveList is None
+            assert rsrList is None
+            assert not bandCenter is None
+            self.__waveList = None
+            self.__rsrList = None
+            self._bandCenter = bandCenter
+            self._bandName = bandName
+            if not silent:
+                print("Band {0} ({1}) does not have bandpass.".format(bandName, bandCenter))
 
     def get_bandpass(self):
         bandInfo = {
@@ -192,6 +203,8 @@ class BandPass(object):
         """
         Calculate the monochromatic flux density with the given data. The function
         applies for the bolometers used by IR satellites.
+        To use this function, the relative spectral response should be for the
+        bolometer (energy/photon) instead of the CCD (electron/photon).
         Reference: Section 5.2.4, SPIRE Handbook.
 
         Parameters
@@ -208,7 +221,10 @@ class BandPass(object):
 
         Notes
         -----
-        None.
+        To convert the relative spectral response from electron/photon to
+        energy/photon is simply:
+            S(energy/photon) = S(electron/photon) / nu
+        where nu is the corresponding frequency (Bessell & Murphy 2012).
         """
         waveMin = self.__waveList[0]
         waveMax = self.__waveList[-1]
@@ -223,11 +239,12 @@ class BandPass(object):
         fluxFltr = self.k4p * Sbar
         return fluxFltr
 
-    def BandFunc_av(self, wavelength, flux):
+    def BandFunc_mean(self, wavelength, flux):
         """
         Calculate the band averaged flux density with the given data.
         By default, the rsr is photon response and the band flux is defined as
-        eq. A12 (Bessell&Murphy 2012).
+        eq. A12 (Bessell&Murphy 2012). The rsr is for the CCD detector instead
+        of bolometers.
 
         Parameters
         ----------
@@ -258,6 +275,29 @@ class BandPass(object):
         fluxFltr = signal/norm
         return fluxFltr
 
+    def BandFunc_none(self, wavelength, flux):
+        """
+        This band function provides the flux without the bandpass.
+
+        Parameters
+        ----------
+        wavelength : float array
+            The wavelength of the spectrum and the relative spectral response.
+        flux : float array
+            The flux of the spectrum.
+
+        Returns
+        -------
+        fluxFltr : float
+            The monochromatic flux density calculated from the filter rsr.
+
+        Notes
+        -----
+        None.
+        """
+        
+
+
     def filtering(self, wavelength, flux):
         """
         Calculate the flux density of the input spectrum filtered by the bandpass.
@@ -286,7 +326,7 @@ class BandPass(object):
         bandType = self.__bandType
         if bandType == "mean": #By default, the rsr is photon response and the band flux
                              #is defined as eq. A12 (Bessell&Murphy 2012).
-            fluxFltr = self.BandFunc_av(wavelength, flux)
+            fluxFltr = self.BandFunc_mean(wavelength, flux)
         elif bandType == "mono": #Use the user specified function to get the filtered flux.
             fluxFltr = self.BandFunc_mono(wavelength, flux)
         return fluxFltr
@@ -306,12 +346,16 @@ filterDict = {
     "w2": 4.603,
     "w3": 11.561,
     "w4": 22.088,
-    'PACS_70': 70.,
-    'PACS_100': 100.,
-    'PACS_160': 160.,
-    'SPIRE_250': 250.,
-    'SPIRE_350': 350.,
-    'SPIRE_500': 500.
+    "PACS_70": 70.,
+    "PACS_100": 100.,
+    "PACS_160": 160.,
+    "SPIRE_250": 250.,
+    "SPIRE_350": 350.,
+    "SPIRE_500": 500.,
+    "IRAC1": 3.550,
+    "IRAC2": 4.493,
+    "IRAC3": 5.731,
+    "IRAC4": 7.872,
 }
 monoFilters = ['PACS_70', 'PACS_100', 'PACS_160', 'SPIRE_250', 'SPIRE_350', 'SPIRE_500']
 pathList = os.path.abspath(__file__).split("/")

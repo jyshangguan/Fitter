@@ -51,12 +51,16 @@ def fitter(targname, redshift, sedPck, config):
     ################################################################################
     #                                    Data                                      #
     ################################################################################
-    sedwave = sedPck["sed"][0]
-    sedflux = sedPck["sed"][1]
-    sedsigma = sedPck["sed"][2]
-    spcwave = sedPck["spc"][0]
-    spcflux = sedPck["spc"][1]
-    spcsigma = sedPck["spc"][2]
+    sed = sedPck["sed"]
+    spc = sedPck["spc"]
+    bandList = config.bandList
+    sed = sedt.SED_select_band(sed, bandList)
+    sedwave  = sed[0]
+    sedflux  = sed[1]
+    sedsigma = sed[2]
+    spcwave  = spc[0]
+    spcflux  = spc[1]
+    spcsigma = spc[2]
     ##Check data
     chck_sed = np.sum(np.isnan(sedflux)) + np.sum(np.isnan(sedsigma))
     chck_spc = np.sum(np.isnan(spcflux)) + np.sum(np.isnan(spcsigma))
@@ -66,7 +70,6 @@ def fitter(targname, redshift, sedPck, config):
         raise ValueError("The spectrum contains bad data!")
 
     ## Put into the sedData
-    bandList = config.bandList
     sedName  = config.sedName
     spcName  = config.spcName
     if not sedName is None:
@@ -310,5 +313,6 @@ def gsf_fitter(configName, targname=None, redshift=None, sedFile=None):
     print("SED file: {0}".format(sedFile))
     print("Config file: {0}".format(configName))
     print("#--------------------------------#")
-    sedPck = sedt.Load_SED(sedFile, config.sedRng, config.spcRng, config.spcRebin)
+    #sedPck = sedt.Load_SED(sedFile, config.sedRng, config.spcRng, config.spcRebin)
+    sedPck = sedt.Load_SED(sedFile)
     fitter(targname, redshift, sedPck, config)
