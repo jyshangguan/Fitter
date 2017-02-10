@@ -2,6 +2,7 @@ import numpy as np
 import cPickle as pickle
 import Radiation_Model_Toolkit as rmt
 from ..fitter.template import Template
+from ..dir_list import template_path
 
 ls_mic = 2.99792458e14 #unit: micron/s
 Mpc = 3.08567758e24 #unit: cm
@@ -49,7 +50,7 @@ def Dust_Emission(T, Md, kappa, wave, DL, z, frame="rest"):
     de = (1 + z)**idx * (Md * Msun) * bb * kappa / (DL * Mpc)**2 * 1e26 #Unit: mJy
     return de
 
-fp = open("/Users/jinyi/Work/mcmc/Fitter/template/dust_grain_kdt.tmplt", "r")
+fp = open(template_path+"dust_grain_kdt.tmplt", "r")
 grainModel = pickle.load(fp)
 fp.close()
 #print grainModel["readMe"]

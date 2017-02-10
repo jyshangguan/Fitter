@@ -9,6 +9,7 @@
 import numpy as np
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
+from astropy.table import Table
 from scipy.interpolate import interp1d
 
 
@@ -325,7 +326,7 @@ def Herschel_Bands(wave, flux,
 #   Created by SGJY, Mar. 28, 2016    #
 #-------------------------------------#
 #From: wrk_Plot_Models.ipynb
-def Load_SED(sedfile, sed_range=[7, 13], spc_range=[13, None], spc_binrsl=10.):
+def Load_SED_old(sedfile, sed_range=[7, 13], spc_range=[13, None], spc_binrsl=10.):
     '''
     This function is to load the SED data and compile it for use.
 
@@ -353,10 +354,10 @@ def Load_SED(sedfile, sed_range=[7, 13], spc_range=[13, None], spc_binrsl=10.):
     -----
     None.
     '''
-    sedarray = np.loadtxt(sedfile, skiprows=1)
-    wave = sedarray[:, 0]
-    flux = sedarray[:, 1]
-    sigma = sedarray[:, 2]
+    sedtb = Table.read(sedfile, format="ascii")
+    wave  = sedtb["wavelength"].data
+    flux  = sedtb["flux"].data
+    sigma = sedtb["sigma"].data
     sedwave = wave[sed_range[0]:sed_range[1]]
     sedflux = flux[sed_range[0]:sed_range[1]]
     sedsigma = sigma[sed_range[0]:sed_range[1]]
@@ -375,6 +376,101 @@ def Load_SED(sedfile, sed_range=[7, 13], spc_range=[13, None], spc_binrsl=10.):
     sed = (sedwave, sedflux, sedsigma)
     spc = (spcwave, spcflux, spcsigma)
     spc_raw = (spcwave_raw, spcflux_raw, spcsigma_raw)
-    sed_package = {'sed_cb':sed_cb, 'sed':sed, 'spc':spc, 'spc_raw':spc_raw}
+    sed_package = {
+        'sed_cb':sed_cb,
+        'sed':sed,
+        'spc':spc,
+        'spc_raw':spc_raw,
+    }
     return sed_package
+#Func_end
+
+#Func_bgn:
+#-------------------------------------#
+#   Created by SGJY, Jan. 8, 2017     #
+#-------------------------------------#
+def Load_SED(sedfile):
+    '''
+    This function is to load the SED data and compile it for use.
+
+    Parameters
+    ----------
+    sedfile : str
+        The full path of sed file.
+
+    Returns
+    -------
+    sed_package : dict
+        The dictionary storing:
+            sed_cb : combined sed; (wave, flux, sigma)
+            sed : photometric data; (wave, flux, sigma, band)
+            spc : spectra data; (wave, flux, sigma)
+
+    Notes
+    -----
+    The returned SED data are in the lists instead of the numpy.array.
+    '''
+    sedtb = Table.read(sedfile, format="ascii")
+    wave  = sedtb["wavelength"].data
+    flux  = sedtb["flux"].data
+    sigma = sedtb["sigma"].data
+    band  = sedtb["band"].data
+    fltr_spc = band == "0"
+    fltr_sed = np.logical_not(fltr_spc)
+    sedwave  = wave[fltr_sed]
+    sedflux  = flux[fltr_sed]
+    sedsigma = sigma[fltr_sed]
+    sedband  = band[fltr_sed]
+    spcwave  = wave[fltr_spc]
+    spcflux  = flux[fltr_spc]
+    spcsigma = sigma[fltr_spc]
+
+    wave_cb = np.concatenate([sedwave, spcwave])
+    flux_cb = np.concatenate([sedflux, spcflux])
+    sigma_cb = np.concatenate([sedsigma, spcsigma])
+    sed_cb = (list(wave_cb), list(flux_cb), list(sigma_cb))
+    sed = (list(sedwave), list(sedflux), list(sedsigma), list(sedband))
+    spc = (list(spcwave), list(spcflux), list(spcsigma))
+    sed_package = {
+        'sed_cb':sed_cb,
+        'sed':sed,
+        'spc':spc,
+    }
+    return sed_package
+#Func_end
+
+#Func_bgn:
+#-------------------------------------#
+#   Created by SGJY, Jan. 9, 2017     #
+#-------------------------------------#
+def SED_select_band(sed, bandList):
+    """
+    Select the SED from the input band list.
+
+    Parameters
+    ----------
+    sed : tuple
+        The tuple of the photometric SED data; (wave, flux, sigma, band).
+    bandList : list
+        The list of the bands that are used.
+
+    Returns
+    -------
+    sed_select : tuple
+        The selected SED data that are used.
+
+    Notes
+    -----
+    None.
+    """
+    wave  = []
+    flux  = []
+    sigma = []
+    for bn in bandList:
+        idx = sed[3].index(bn)
+        wave.append(sed[0][idx])
+        flux.append(sed[1][idx])
+        sigma.append(sed[2][idx])
+    sed_select = (wave, flux, sigma)
+    return sed_select
 #Func_end

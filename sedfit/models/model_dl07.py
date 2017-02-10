@@ -2,15 +2,13 @@ import numpy as np
 import cPickle as pickle
 from ..fitter.template import Template
 from scipy.interpolate import splev
-
+from ..dir_list import template_path
 
 Msun = 1.9891e33 #unit: gram
 Mpc = 3.08567758e24 #unit: cm
 m_H = 1.6726219e-24 #unit: gram
-template_dir = "/Users/jinyi/Work/PG_QSO/templates/"
 
-#fp = open("/Users/jinyi/Work/mcmc/Fitter/template/dl07_kdt.tmplt")
-fp = open("/Users/jinyi/Work/mcmc/Fitter/template/dl07_kdt_mw.tmplt")
+fp = open(template_path+"dl07_kdt_mw.tmplt")
 tp_dl07 = pickle.load(fp)
 fp.close()
 tdl07 = Template(**tp_dl07)

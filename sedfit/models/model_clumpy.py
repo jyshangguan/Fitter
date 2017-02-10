@@ -3,10 +3,10 @@ import numpy as np
 import cPickle as pickle
 import ndiminterpolation as ndip
 from ..fitter.template import Template
+from ..dir_list import clumpy_path as template_path
 
 pi = np.pi
 Mpc = 3.08567758e24 #unit: cm
-template_dir = "/Users/jinyi/Work/PG_QSO/templates/"
 
 #Func_bgn:
 #-------------------------------------#
@@ -15,8 +15,8 @@ template_dir = "/Users/jinyi/Work/PG_QSO/templates/"
 #From: dev_CLUMPY_intp.ipynb
 ### CLUMPY template
 try:
-    #clumpyFile = template_dir+"clumpy_models_201410_tvavg.hdf5"
-    clumpyFile = template_dir+"clumpy_fnu_norm.hdf5"
+    #clumpyFile = template_path+"clumpy_models_201410_tvavg.hdf5"
+    clumpyFile = template_path+"clumpy_fnu_norm.hdf5"
     h = h5py.File(clumpyFile,"r")
     theta = [np.unique(h[par][:]) for par in ("i","tv","q","N0","sig","Y","wave")]
     data = h["flux_tor"].value

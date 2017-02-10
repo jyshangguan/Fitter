@@ -6,6 +6,7 @@
 *.png
 *.fitrs
 *.*sed
+*.csv
 results/*
 chains*/*
 template/grain_models/*
@@ -23,6 +24,7 @@ config*
 result_*.py
 mock_*.py
 temp/
+notes/
 *.swp
 
 #SED data
