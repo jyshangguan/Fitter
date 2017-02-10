@@ -277,7 +277,8 @@ class BandPass(object):
 
     def BandFunc_none(self, wavelength, flux):
         """
-        This band function provides the flux without the bandpass.
+        This band function provides the flux without the bandpass. The flux density
+        of the model SED at the wavelength closest to the band center is returned.
 
         Parameters
         ----------
@@ -289,13 +290,19 @@ class BandPass(object):
         Returns
         -------
         fluxFltr : float
-            The monochromatic flux density calculated from the filter rsr.
+            The flux density at the wavelength closest to the band center.
 
         Notes
         -----
         None.
         """
-        
+        bandCenter = self._bandCenter
+        wave_fdev = np.abs((wavelength - bandCenter) / bandCenter)
+        idx = np.argmin(wave_fdev)
+        if wave_fdev[idx] > 0.05:
+            print("[BandPass warning]: The wavelength deviation at {0} ({1}) is large!".format(self._bandName, bandCenter))
+        fluxFltr = flux[idx]
+        return fluxFltr
 
 
     def filtering(self, wavelength, flux):
@@ -329,6 +336,8 @@ class BandPass(object):
             fluxFltr = self.BandFunc_mean(wavelength, flux)
         elif bandType == "mono": #Use the user specified function to get the filtered flux.
             fluxFltr = self.BandFunc_mono(wavelength, flux)
+        else:
+            fluxFltr = self.BandFunc_none(wavelength, flux)
         return fluxFltr
 
     def __getstate__(self):
@@ -374,19 +383,23 @@ if __name__ == "__main__":
     bandWave = bandPck[:, 0]
     bandRsr = bandPck[:, 1]
     bandCenter = filterDict[bn]
-    bp = BandPass(bandWave, bandRsr, bandCenter, bandType="mean", bandName=bn, silent=False)
+    bp1 = BandPass(bandWave, bandRsr, bandCenter, bandType="mean", bandName=bn, silent=False)
+    bp2 = BandPass(bandCenter=bandCenter, bandType="none", bandName=bn, silent=False)
     f0 = 10.0
     w0 = bandCenter
-    alpha = -1
+    alpha = 5
     wave = 10**np.linspace(0, 3, 1000)
     freq = ls_mic / wave
     nu0  = ls_mic / w0
     flux = f0*(freq / nu0)**alpha
-    fb = bp.filtering(wave, flux)
+    fb1 = bp1.filtering(wave, flux)
+    fb2 = bp2.filtering(wave, flux)
     print("w0={0}".format(w0))
-    print("f0={0}, fb={1}".format(f0, fb))
-    plt.plot(wave, flux)
-    plt.plot(bandCenter, fb, linestyle="none", marker="s", color="k")
+    print("f0={0}, fb1={1}".format(f0, fb1))
+    print("f0={0}, fb2={1}".format(f0, fb2))
+    plt.plot(wave, flux, color="k")
+    plt.plot(bandCenter, fb1, linestyle="none", marker=".", color="r")
+    plt.plot(bandCenter, fb2, linestyle="none", marker=".", color="b")
     plt.xscale("log")
     plt.yscale("log")
     plt.show()
