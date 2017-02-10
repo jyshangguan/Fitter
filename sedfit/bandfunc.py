@@ -370,8 +370,8 @@ filterDict = {
     "mips24": 24.,
     "mips70": 70.,
     "mips160": 160.,
-    "scuba450": 450.,
-    "scuba850": 850.,
+    "scuba450_new": 450.,
+    "scuba850_new": 850.,
 }
 monoFilters = ["PACS_70", "PACS_100", "PACS_160",
                "SPIRE_250", "SPIRE_350", "SPIRE_500",

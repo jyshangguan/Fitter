@@ -354,10 +354,10 @@ def Load_SED_old(sedfile, sed_range=[7, 13], spc_range=[13, None], spc_binrsl=10
     -----
     None.
     '''
-    sedarray = Table.read(sedfile, format="ascii")
-    wave  = sedarray["wavelength"].data
-    flux  = sedarray["flux"].data
-    sigma = sedarray["sigma"].data
+    sedtb = Table.read(sedfile, format="ascii")
+    wave  = sedtb["wavelength"].data
+    flux  = sedtb["flux"].data
+    sigma = sedtb["sigma"].data
     sedwave = wave[sed_range[0]:sed_range[1]]
     sedflux = flux[sed_range[0]:sed_range[1]]
     sedsigma = sigma[sed_range[0]:sed_range[1]]
@@ -410,11 +410,11 @@ def Load_SED(sedfile):
     -----
     The returned SED data are in the lists instead of the numpy.array.
     '''
-    sedarray = Table.read(sedfile, format="ascii")
-    wave  = sedarray["wavelength"].data
-    flux  = sedarray["flux"].data
-    sigma = sedarray["sigma"].data
-    band  = sedarray["band"].data
+    sedtb = Table.read(sedfile, format="ascii")
+    wave  = sedtb["wavelength"].data
+    flux  = sedtb["flux"].data
+    sigma = sedtb["sigma"].data
+    band  = sedtb["band"].data
     fltr_spc = band == "0"
     fltr_sed = np.logical_not(fltr_spc)
     sedwave  = wave[fltr_sed]

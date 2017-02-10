@@ -181,14 +181,18 @@ class SedClass(bc.DataSet):
     def set_bandpass(self, bandList):
         bandDict = OrderedDict()
         for bn in bandList:
-            bandFile = "/{0}.dat".format(bn)
-            bandPck = np.genfromtxt(filter_path+bandFile)
-            bandWave = bandPck[:, 0]
-            bandRsr = bandPck[:, 1]
             bandCenter = bf.filterDict[bn]
             if bn in bf.monoFilters:
+                bandFile = "{0}.dat".format(bn)
+                bandPck = np.genfromtxt(filter_path+bandFile)
+                bandWave = bandPck[:, 0]
+                bandRsr = bandPck[:, 1]
                 bandDict[bn] = bf.BandPass(bandWave, bandRsr, bandCenter, "mono", bn)
             elif bn in bf.meanFilters:
+                bandFile = "{0}.dat".format(bn)
+                bandPck = np.genfromtxt(filter_path+bandFile)
+                bandWave = bandPck[:, 0]
+                bandRsr = bandPck[:, 1]
                 bandDict[bn] = bf.BandPass(bandWave, bandRsr, bandCenter, "mean", bn)
             else:
                 bandDict[bn] = bf.BandPass(bandCenter=bandCenter, bandType="none", bandName=bn)
