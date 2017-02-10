@@ -326,7 +326,7 @@ def Herschel_Bands(wave, flux,
 #   Created by SGJY, Mar. 28, 2016    #
 #-------------------------------------#
 #From: wrk_Plot_Models.ipynb
-def Load_SED(sedfile, sed_range=[7, 13], spc_range=[13, None], spc_binrsl=10.):
+def Load_SED_old(sedfile, sed_range=[7, 13], spc_range=[13, None], spc_binrsl=10.):
     '''
     This function is to load the SED data and compile it for use.
 
@@ -354,10 +354,10 @@ def Load_SED(sedfile, sed_range=[7, 13], spc_range=[13, None], spc_binrsl=10.):
     -----
     None.
     '''
-    sedarray = Table.read(sedfile, format="ascii")
-    wave  = sedarray["wavelength"].data
-    flux  = sedarray["flux"].data
-    sigma = sedarray["sigma"].data
+    sedtb = Table.read(sedfile, format="ascii")
+    wave  = sedtb["wavelength"].data
+    flux  = sedtb["flux"].data
+    sigma = sedtb["sigma"].data
     sedwave = wave[sed_range[0]:sed_range[1]]
     sedflux = flux[sed_range[0]:sed_range[1]]
     sedsigma = sigma[sed_range[0]:sed_range[1]]
@@ -389,7 +389,7 @@ def Load_SED(sedfile, sed_range=[7, 13], spc_range=[13, None], spc_binrsl=10.):
 #-------------------------------------#
 #   Created by SGJY, Jan. 8, 2017     #
 #-------------------------------------#
-def Load_SED_new(sedfile):
+def Load_SED(sedfile):
     '''
     This function is to load the SED data and compile it for use.
 
@@ -402,19 +402,19 @@ def Load_SED_new(sedfile):
     -------
     sed_package : dict
         The dictionary storing:
-            sed_cb : combined sed
-            sed : photometric data
-            spc : spectra data
+            sed_cb : combined sed; (wave, flux, sigma)
+            sed : photometric data; (wave, flux, sigma, band)
+            spc : spectra data; (wave, flux, sigma)
 
     Notes
     -----
-    None.
+    The returned SED data are in the lists instead of the numpy.array.
     '''
-    sedarray = Table.read(sedfile, format="ascii")
-    wave  = sedarray["wavelength"].data
-    flux  = sedarray["flux"].data
-    sigma = sedarray["sigma"].data
-    band  = sedarray["band"].data
+    sedtb = Table.read(sedfile, format="ascii")
+    wave  = sedtb["wavelength"].data
+    flux  = sedtb["flux"].data
+    sigma = sedtb["sigma"].data
+    band  = sedtb["band"].data
     fltr_spc = band == "0"
     fltr_sed = np.logical_not(fltr_spc)
     sedwave  = wave[fltr_sed]
@@ -429,13 +429,48 @@ def Load_SED_new(sedfile):
     flux_cb = np.concatenate([sedflux, spcflux])
     sigma_cb = np.concatenate([sedsigma, spcsigma])
     sed_cb = (list(wave_cb), list(flux_cb), list(sigma_cb))
-    sed = (list(sedwave), list(sedflux), list(sedsigma))
+    sed = (list(sedwave), list(sedflux), list(sedsigma), list(sedband))
     spc = (list(spcwave), list(spcflux), list(spcsigma))
     sed_package = {
         'sed_cb':sed_cb,
         'sed':sed,
         'spc':spc,
-        "band":list(sedband)
     }
     return sed_package
+#Func_end
+
+#Func_bgn:
+#-------------------------------------#
+#   Created by SGJY, Jan. 9, 2017     #
+#-------------------------------------#
+def SED_select_band(sed, bandList):
+    """
+    Select the SED from the input band list.
+
+    Parameters
+    ----------
+    sed : tuple
+        The tuple of the photometric SED data; (wave, flux, sigma, band).
+    bandList : list
+        The list of the bands that are used.
+
+    Returns
+    -------
+    sed_select : tuple
+        The selected SED data that are used.
+
+    Notes
+    -----
+    None.
+    """
+    wave  = []
+    flux  = []
+    sigma = []
+    for bn in bandList:
+        idx = sed[3].index(bn)
+        wave.append(sed[0][idx])
+        flux.append(sed[1][idx])
+        sigma.append(sed[2][idx])
+    sed_select = (wave, flux, sigma)
+    return sed_select
 #Func_end
