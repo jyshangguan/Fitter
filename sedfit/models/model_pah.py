@@ -1,10 +1,11 @@
 import numpy as np
 from scipy.interpolate import interp1d
+from ..dir_list import template_path
 
 Mpc = 3.08567758e24 #unit: cm
 pi = np.pi
 
-tb = np.genfromtxt("/Users/jinyi/Work/mcmc/Fitter/template/PAH.template.dat")
+tb = np.genfromtxt(template_path+"PAH.template.dat")
 twave = tb[:, 0]
 tflux_temp = tb[:, 1]
 norm = np.trapz(tflux_temp, twave)

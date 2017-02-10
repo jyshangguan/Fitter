@@ -1,12 +1,13 @@
 import numpy as np
 import cPickle as pickle
 from ..fitter.template import Template
+from ..dir_list import template_path
 
 Msun = 1.9891e33 #unit: gram
 Mpc = 3.08567758e24 #unit: cm
 mJy = 1e26 #unit: erg/s/cm^2/Hz
 
-fp = open("/Users/jinyi/Work/mcmc/Fitter/template/bc03_kdt.tmplt")
+fp = open(template_path+"bc03_kdt.tmplt")
 tp_bc03 = pickle.load(fp)
 fp.close()
 bc03 = Template(**tp_bc03)

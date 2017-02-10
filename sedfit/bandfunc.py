@@ -1,5 +1,4 @@
 from __future__ import print_function
-import os
 import numpy as np
 from scipy.interpolate import interp1d, splrep, splev
 import cPickle as pickle
@@ -304,7 +303,6 @@ class BandPass(object):
         fluxFltr = flux[idx]
         return fluxFltr
 
-
     def filtering(self, wavelength, flux):
         """
         Calculate the flux density of the input spectrum filtered by the bandpass.
@@ -365,18 +363,31 @@ filterDict = {
     "IRAC2": 4.493,
     "IRAC3": 5.731,
     "IRAC4": 7.872,
+    "iras12": 12.,
+    "iras25": 25.,
+    "iras60": 60.,
+    "iras100": 100.,
+    "mips24": 24.,
+    "mips70": 70.,
+    "mips160": 160.,
+    "scuba450": 450.,
+    "scuba850": 850.,
 }
-monoFilters = ['PACS_70', 'PACS_100', 'PACS_160', 'SPIRE_250', 'SPIRE_350', 'SPIRE_500']
+monoFilters = ["PACS_70", "PACS_100", "PACS_160",
+               "SPIRE_250", "SPIRE_350", "SPIRE_500",
+               "IRAC1", "IRAC2", "IRAC3", "IRAC4"]
+meanFilters = ["j", "h", "ks", "w1", "w2", "w3", "w4"]
+"""
 pathList = os.path.abspath(__file__).split("/")
 pathList[-1] = "filters"
 bandPath = "/".join(pathList)
 fp = open(bandPath+"/herschel_bandpass.dat", "r")
 herschelBands = pickle.load(fp)
 fp.close()
+"""
 
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
-
     bn = "w4"
     bandFile = "/{0}.dat".format(bn)
     bandPck = np.genfromtxt(bandPath+bandFile)

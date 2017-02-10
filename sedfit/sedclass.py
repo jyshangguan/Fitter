@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from fitter import basicclass as bc
 from . import bandfunc as bf
+from .dir_list import filter_path
 from scipy.interpolate import splrep, splev
 from collections import OrderedDict
 
@@ -181,15 +182,16 @@ class SedClass(bc.DataSet):
         bandDict = OrderedDict()
         for bn in bandList:
             bandFile = "/{0}.dat".format(bn)
-            bandPck = np.genfromtxt(bf.bandPath+bandFile)
+            bandPck = np.genfromtxt(filter_path+bandFile)
             bandWave = bandPck[:, 0]
             bandRsr = bandPck[:, 1]
             bandCenter = bf.filterDict[bn]
             if bn in bf.monoFilters:
-                bandType = "mono"
+                bandDict[bn] = bf.BandPass(bandWave, bandRsr, bandCenter, "mono", bn)
+            elif bn in bf.meanFilters:
+                bandDict[bn] = bf.BandPass(bandWave, bandRsr, bandCenter, "mean", bn)
             else:
-                bandType = "mean"
-            bandDict[bn] = bf.BandPass(bandWave, bandRsr, bandCenter, bandType, bn)
+                bandDict[bn] = bf.BandPass(bandCenter=bandCenter, bandType="none", bandName=bn)
         self.add_bandpass(bandDict)
 
     def get_bandpass(self):
