@@ -516,6 +516,43 @@ def SED_to_restframe(sed, redshift):
     return sed_rest
 #Func_end
 
+#Func_bgn:
+#-------------------------------------#
+#   Created by SGJY, Feb. 11, 2017    #
+#-------------------------------------#
+def SED_to_obsframe(sed, redshift):
+    """
+    Transform the input SED into the observed frame according to the given redshift.
+
+    Parameters
+    ----------
+    sed : tuple
+        The input SED data in the observed frame. Assume it consists (wave, flux,
+        sigma, ...).
+    redshift : float
+        The redshift of the SED.
+
+    Returns
+    -------
+    sed_obs : tuple
+        The output SED data in the observed frame. The tuple consists all the same
+        data as the input except the first three items.
+
+    Notes
+    -----
+    None.
+    """
+    wave  = np.array(sed[0])
+    flux  = np.array(sed[1])
+    sigma = np.array(sed[2])
+    sed_obs = list(sed)
+    sed_obs[0] = list( wave * (1 + redshift) )
+    sed_obs[1] = list( flux / (1 + redshift) )
+    sed_obs[2] = list( sigma / (1 + redshift) )
+    sed_obs= tuple(sed_obs)
+    return sed_obs
+#Func_end
+
 if __name__ == "__main__":
     wave = np.arange(8)
     flux = np.arange(8)

@@ -33,15 +33,37 @@ print("#################################")
 dataPck = fitrs["dataPck"]
 targname = dataPck["targname"]
 redshift = dataPck["redshift"]
+distance = dataPck["distance"]
+dataDict = dataPck["dataDict"]
 sedPck = dataPck["sedPck"]
-sed = sedPck["sed_cb"]
-sedwave  = sedPck["sed"][0]
-sedflux  = sedPck["sed"][1]
-sedsigma = sedPck["sed"][2]
-sedband  = sedPck["sed"][3]
-spcwave = sedPck["spc"][0]
-spcflux = sedPck["spc"][1]
-spcsigma = sedPck["spc"][2]
+sed = sedPck["sed"]
+spc = sedPck["spc"]
+#->Settle into the rest frame
+frame = dataDict.get("frame", "rest") #The coordinate frame of the SED; "rest"
+                                      #by default.
+if frame == "obs":
+    sed = sedt.SED_to_restframe(sed, redshift)
+    spc = sedt.SED_to_restframe(spc, redshift)
+    if not silent:
+        print("[gsf]: The input SED is in the observed frame!")
+else:
+    if not silent:
+        print("[gsf]: The input SED is in the rest frame!")
+#->Select bands
+bandList_use = dataDict.get("bandList_use", []) #The list of bands to incorporate;
+                                                #use all the available bands if empty.
+bandList_ignore = dataDict.get("bandList_ignore", []) #The list of bands to be
+                                                      #ignored from the bands to use.
+sed = sedt.SED_select_band(sed, bandList_use, bandList_ignore, silent)
+sedwave  = sed[0]
+sedflux  = sed[1]
+sedsigma = sed[2]
+sedband  = sed[3]
+spcwave  = spc[0]
+spcflux  = spc[1]
+spcsigma = spc[2]
+if not silent:
+    print("[gsf]: The incorporated bands are: {0}".format(sedband))
 print("#--------------------------------#")
 print("Target: {0}".format(targname))
 print("Redshift: {0}".format(redshift))
@@ -62,7 +84,7 @@ if not spcName is None:
     spcData = {"IRS": bc.ContinueSet(spcwave, spcflux, spcsigma, spcflag, spcDataType)}
 else:
     spcData = {}
-sedData = sedsc.SedClass(targname, redshift, phtDict=phtData, spcDict=spcData)
+sedData = sedsc.SedClass(targname, redshift, distance, phtDict=phtData, spcDict=spcData)
 sedData.set_bandpass(sedband, sedwave)
 
 

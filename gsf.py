@@ -66,6 +66,7 @@ def fitter(targname, redshift, sedPck, config, Dist=None):
                                           #by default.
     if frame == "obs":
         sed = sedt.SED_to_restframe(sed, redshift)
+        spc = sedt.SED_to_restframe(spc, redshift)
         if not silent:
             print("[gsf]: The input SED is in the observed frame!")
     else:
@@ -244,6 +245,7 @@ def fitter(targname, redshift, sedPck, config, Dist=None):
     dataPck = {
         "targname": targname,
         "redshift": redshift,
+        "distance": sedData.dl,
         "sedPck": sedPck,
         "sedband": sedband,
         "sedName": sedName,
