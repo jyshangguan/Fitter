@@ -334,7 +334,7 @@ class BandPass(object):
             fluxFltr = self.BandFunc_mean(wavelength, flux)
         elif bandType == "mono": #Use the user specified function to get the filtered flux.
             fluxFltr = self.BandFunc_mono(wavelength, flux)
-        else:
+        else: #If there is no filter, direct calculate the flux density.
             fluxFltr = self.BandFunc_none(wavelength, flux)
         return fluxFltr
 
