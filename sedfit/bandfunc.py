@@ -154,7 +154,7 @@ class BandPass(object):
     rsrList : float array
         The relative system response curve.
     bandCenter : float
-        The quoted wavelength for the band.
+        The quoted wavelength for the band in the observed frame.
     bandType : string
         The type of band functions.
     bandName : string
@@ -185,13 +185,13 @@ class BandPass(object):
                 raise ValueError("The inputs are not matched!")
             if bandCenter is None: #The bandCenter is not specified, the effective wavelength will
                                    #be used (Eq. A21, Bessell&Murphy 2012), assuming fnu~const.
-                bandCenter = np.trapz(rsrList, waveList)/np.trapz(rsrList/waveList, waveList)
+                bandCenter = (1 + redshift) * np.trapz(rsrList, waveList)/np.trapz(rsrList/waveList, waveList)
                 if not silent:
                     print("Band {0} center wavelength ({1}) is calculated!".format(bandName, bandCenter))
             self.__bandCenter = bandCenter
             self.__bandCenter_rest = bandCenter / (1 + redshift)
             if bandType == "mono":
-                self.k4p = K_MonP(self.__bandCenter, waveList, rsrList, alpha=-1)
+                self.k4p = K_MonP(self.__bandCenter_rest, waveList, rsrList, alpha=-1)
                 if not silent:
                     print("Band {0} calculates the monochromatic flux density!".format(bandName))
             elif bandType == "mean":
@@ -311,7 +311,8 @@ class BandPass(object):
         -----
         None.
         """
-        fluxFltr = modelFunc(np.array([self.__bandCenter]))[0]
+        wavelength = self.get_bandCenter_rest()
+        fluxFltr = modelFunc(np.array([wavelength]))[0]
         return fluxFltr
 
     def filtering(self, modelFunc):

@@ -234,7 +234,7 @@ class SedClass(bc.DataSet):
             raise AttributeError("The bandpass '{0}' is not found!".format(bandName))
         bandFlux = bandpass.filtering(modelFunc)
         waveRst = bandpass.get_bandCenter_rest()
-        fluxRst = bandFlux# * (1+z)
+        fluxRst = bandFlux
         return (waveRst, fluxRst)
 
     def model_pht(self, modelFunc):

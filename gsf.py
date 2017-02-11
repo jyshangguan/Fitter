@@ -69,9 +69,13 @@ def fitter(targname, redshift, sedPck, config, Dist=None):
         spc = sedt.SED_to_restframe(spc, redshift)
         if not silent:
             print("[gsf]: The input SED is in the observed frame!")
-    else:
+    elif frame == "frame":
         if not silent:
             print("[gsf]: The input SED is in the rest frame!")
+    else:
+        if not silent:
+            print("[gsf]: The input SED frame ({0}) is not recognised!".format(frame))
+
     #->Select bands
     bandList_use = dataDict.get("bandList_use", []) #The list of bands to incorporate;
                                                     #use all the available bands if empty.
