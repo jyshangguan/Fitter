@@ -12,9 +12,6 @@ import matplotlib.pyplot as plt
 from astropy.table import Table
 from scipy.interpolate import interp1d
 
-
-# In[3]:
-
 #Func_bgn:
 #-------------------------------------#
 #   Created by SGJY, Dec. 13, 2015    #
@@ -103,10 +100,6 @@ def Plot_SED(wavelength,
     ax.tick_params(labelsize=16)
     return fig, ax
 #Func_end
-
-
-
-# In[4]:
 
 #Func_bgn:
 #-------------------------------------#
@@ -318,9 +311,6 @@ def Herschel_Bands(wave, flux,
     return (photo_wave, photo_flxd)
 #Func_end
 
-
-# In[ ]:
-
 #Func_bgn:
 #-------------------------------------#
 #   Created by SGJY, Mar. 28, 2016    #
@@ -489,9 +479,54 @@ def SED_select_band(sed, bandList_use=[], bandList_ignore=[], silent=True):
     return sed_select
 #Func_end
 
+#Func_bgn:
+#-------------------------------------#
+#   Created by SGJY, Feb. 11, 2017    #
+#-------------------------------------#
+def SED_to_restframe(sed, redshift):
+    """
+    Transform the input SED into its rest frame according to the given redshift.
+
+    Parameters
+    ----------
+    sed : tuple
+        The input SED data in the observed frame. Assume it consists (wave, flux,
+        sigma, ...).
+    redshift : float
+        The redshift of the SED.
+
+    Returns
+    -------
+    sed_rest : tuple
+        The output SED data in the rest frame. The tuple consists all the same
+        data as the input except the first three items.
+
+    Notes
+    -----
+    None.
+    """
+    wave  = np.array(sed[0])
+    flux  = np.array(sed[1])
+    sigma = np.array(sed[2])
+    sed_rest = list(sed)
+    sed_rest[0] = list( wave / (1 + redshift) )
+    sed_rest[1] = list( flux * (1 + redshift) )
+    sed_rest[2] = list( sigma * (1 + redshift) )
+    sed_rest = tuple(sed_rest)
+    return sed_rest
+#Func_end
+
 if __name__ == "__main__":
-    a = ["a", "b", "a"]
-    b = list(a)
-    a.remove("a")
-    print a
-    print b
+    wave = np.arange(8)
+    flux = np.arange(8)
+    sigma = np.arange(8)
+    band = (2 * np.arange(8)).astype("S")
+    print band
+    bandList_use = []
+    bandList_ignore = ["10", "12"]
+    sed = (list(wave), list(flux), list(sigma), list(band))
+    sed_select = SED_select_band(sed, bandList_use, bandList_ignore)
+    sed_rest = SED_to_restframe(sed_select, 1.0)
+    print sed
+    print sed_select
+    print sed_rest

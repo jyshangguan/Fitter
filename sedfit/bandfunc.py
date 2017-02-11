@@ -193,10 +193,10 @@ class BandPass(object):
             if bandType == "mono":
                 self.k4p = K_MonP(self.__bandCenter, waveList, rsrList, alpha=-1)
                 if not silent:
-                    print("Band {0} calculates the monochromatic flux density!".format(bandType))
+                    print("Band {0} calculates the monochromatic flux density!".format(bandName))
             elif bandType == "mean":
                 if not silent:
-                    print("Band {0} calculates the averaged flux density!".format(bandType))
+                    print("Band {0} calculates the averaged flux density!".format(bandName))
             else:
                 raise ValueError("The input bandType ({0}) is incorrect!".format(bandType))
         else:

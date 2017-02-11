@@ -30,7 +30,7 @@ class SedClass(bc.DataSet):
         The spectral data packed in a dict. The items should be the
         ContinueSet().
     """
-    def __init__(self, targetName, redshift, Dist=0, H0=67.8, Om0=0.308, phtDict={}, spcDict={}):
+    def __init__(self, targetName, redshift, Dist=None, H0=67.8, Om0=0.308, phtDict={}, spcDict={}):
         """
         Parameters
         ----------
@@ -38,8 +38,8 @@ class SedClass(bc.DataSet):
             The target name.
         redshift : float
             The redshift of the target.
-        Dist : float
-            If the redshift is 0, the physical distance, Dist, should be given.
+        Dist : float (optional)
+            The physical (or luminosity) distance of the source.
         H0 : float
             The Hubble constant.
         Om0 : float
@@ -61,15 +61,16 @@ class SedClass(bc.DataSet):
         self.targetName = targetName
         self.redshift = redshift
         self.__bandDict = {}
-        if redshift > 0:
-            #Calculate the luminosity distance
-            from astropy.cosmology import FlatLambdaCDM
-            cosmo = FlatLambdaCDM(H0=H0, Om0=Om0)
-            self.dl = cosmo.luminosity_distance(redshift).value #Luminosity distance in unit Mpc.
-        elif redshift == 0:
-            self.dl = Dist
+        if Dist is None:
+            if redshift > 1e-2:
+                #Calculate the luminosity distance
+                from astropy.cosmology import FlatLambdaCDM
+                cosmo = FlatLambdaCDM(H0=H0, Om0=Om0)
+                self.dl = cosmo.luminosity_distance(redshift).value #Luminosity distance in unit Mpc.
+            else:
+                raise ValueError("The redshift ({0}) is too small to accurately estimate the distance.".format(redshift))
         else:
-            raise ValueError("The redshift '{0}' is incorrect!".format(redshift))
+            self.dl = Dist
 
     def pht_plotter(self, wave, flux, sigma, flag, FigAx=None, linewidth='1.5',
                     symbolColor='k', symbolSize=6, label=None, Quiet=True):

@@ -19,7 +19,7 @@ print("############################")
 print("# Galaxy SED Fitter starts #")
 print("############################")
 
-def fitter(targname, redshift, sedPck, config):
+def fitter(targname, redshift, sedPck, config, Dist=None):
     """
     This function is the main routine to do the SED fitting. The code will
     produce the final fitting results.
@@ -39,6 +39,9 @@ def fitter(targname, redshift, sedPck, config):
         }
     config : module or class
         The configuration information for the fitting.
+    Dist : float (optional)
+        The physical (or luminosity) distance of the source. If not provided, the
+        value will be estimated from the redshift. Unit: Mpc.
 
     Returns
     -------
@@ -48,23 +51,31 @@ def fitter(targname, redshift, sedPck, config):
     -----
     None.
     """
-    ################################################################################
-    #                                    Data                                      #
-    ################################################################################
     try:
         silent = config.silent
     except:
         silent = False
+    ################################################################################
+    #                                    Data                                      #
+    ################################################################################
+    dataDict = config.dataDict
     sed = sedPck["sed"]
     spc = sedPck["spc"]
-    try:
-        bandList_use = config.bandList_use
-    except:
-        bandList_use = []
-    try:
-        bandList_ignore = config.bandList_ignore
-    except:
-        bandList_ignore = []
+    #->Settle into the rest frame
+    frame = dataDict.get("frame", "rest") #The coordinate frame of the SED; "rest"
+                                          #by default.
+    if frame == "obs":
+        sed = sedt.SED_to_restframe(sed, redshift)
+        if not silent:
+            print("[gsf]: The input SED is in the observed frame!")
+    else:
+        if not silent:
+            print("[gsf]: The input SED is in the rest frame!")
+    #->Select bands
+    bandList_use = dataDict.get("bandList_use", []) #The list of bands to incorporate;
+                                                    #use all the available bands if empty.
+    bandList_ignore = dataDict.get("bandList_ignore", []) #The list of bands to be
+                                                          #ignored from the bands to use.
     sed = sedt.SED_select_band(sed, bandList_use, bandList_ignore, silent)
     sedwave  = sed[0]
     sedflux  = sed[1]
@@ -73,15 +84,16 @@ def fitter(targname, redshift, sedPck, config):
     spcwave  = spc[0]
     spcflux  = spc[1]
     spcsigma = spc[2]
-    ##Check data
+    if not silent:
+        print("[gsf]: The incorporated bands are: {0}".format(sedband))
+    #->Check data
     chck_sed = np.sum(np.isnan(sedflux)) + np.sum(np.isnan(sedsigma))
     chck_spc = np.sum(np.isnan(spcflux)) + np.sum(np.isnan(spcsigma))
     if chck_sed:
         raise ValueError("The photometry contains bad data!")
     if chck_spc:
         raise ValueError("The spectrum contains bad data!")
-
-    ## Put into the sedData
+    #->Put into the sedData
     sedName  = config.sedName
     spcName  = config.spcName
     if not sedName is None:
@@ -96,7 +108,12 @@ def fitter(targname, redshift, sedPck, config):
         spcData = {"IRS": bc.ContinueSet(spcwave, spcflux, spcsigma, spcflag, spcDataType)}
     else:
         spcData = {}
-    sedData = sedsc.SedClass(targname, redshift, phtDict=phtData, spcDict=spcData)
+    if Dist is None:
+        try:
+            Dist = config.distance
+        except:
+            Dist = None
+    sedData = sedsc.SedClass(targname, redshift, Dist, phtDict=phtData, spcDict=spcData)
     sedData.set_bandpass(sedband, sedwave, silent)
 
     ################################################################################
@@ -231,6 +248,7 @@ def fitter(targname, redshift, sedPck, config):
         "sedband": sedband,
         "sedName": sedName,
         "spcName": spcName,
+        "dataDict": dataDict
     }
     modelPck = {
         "modelDict": modelDict,

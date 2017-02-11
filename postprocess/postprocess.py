@@ -63,7 +63,7 @@ if not spcName is None:
 else:
     spcData = {}
 sedData = sedsc.SedClass(targname, redshift, phtDict=phtData, spcDict=spcData)
-sedData.set_bandpass(sedband)
+sedData.set_bandpass(sedband, sedwave)
 
 
 ################################################################################
