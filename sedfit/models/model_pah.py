@@ -51,6 +51,8 @@ def pah(logLpah, wave, DL, z, frame="rest", t=tPAH, waveLim=waveLim):
         raise ValueError("The frame '{0}' is not recognised!".format(frame))
     flux = np.zeros_like(wave)
     fltr = (wave > waveLim[0]) & (wave < waveLim[1])
+    if np.sum(fltr) == 0:
+        return np.zeros_like(wave)
     f0 = (1 + z)**idx * 10**(logLpah+26) / (4 * pi * (DL * Mpc)**2.) #Convert to mJy unit
     flux[fltr] = f0 * t(wave[fltr])
     return flux

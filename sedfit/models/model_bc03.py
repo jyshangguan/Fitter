@@ -47,6 +47,8 @@ def BC03(logMs, age, DL, wave, z, frame="rest", t=bc03, waveLim=waveLim):
     """
     flux = np.zeros_like(wave)
     fltr = (wave > waveLim[0]) & (wave < waveLim[1])
+    if np.sum(fltr) == 0:
+        return np.zeros_like(wave)
     flux[fltr] = t(wave[fltr], [age])
     if frame == "rest":
         idx = 2.0
