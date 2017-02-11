@@ -75,6 +75,8 @@ def Torus_Emission(typeSil, size, T1Sil, T2Sil, logM1Sil, logM2Sil,
     parGra   = [typeGra, size]
     fltr = (wave > waveLim[0]) & (wave < waveLim[1]) #Only choose the wavelength
                                                      #that covered by the template
+    if np.sum(fltr) == 0:
+        return np.zeros_like(wave)
     kappaSil = TemplateSil(wave[fltr], parSil)
     kappaGra = TemplateGra(wave[fltr], parGra)
     #Calculate the dust emission SEDs

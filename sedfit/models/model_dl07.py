@@ -60,6 +60,8 @@ def DL07(logumin, logumax, qpah, gamma, logMd, DL, z, wave, frame="rest", t=tdl0
     pmin = [umin, umin, qpah]
     ppl  = [umin, umax, qpah]
     fltr = (wave > waveLim[0]) & (wave < waveLim[1])
+    if np.sum(fltr) == 0:
+        return np.zeros_like(wave)
     jnu_min = t(wave[fltr], pmin)
     jnu_pl  = t(wave[fltr], ppl)
     qpah_min = t.get_nearestParameters(pmin)[2]

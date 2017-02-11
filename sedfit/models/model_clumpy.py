@@ -78,6 +78,8 @@ def CLUMPY_intp(logL, i, tv, q, N0, sigma, Y, wave, DL, z, frame="rest", t=ip, w
         raise ValueError("The frame '{0}' is not recognised!".format(frame))
     f0 = (1 + z)**idx * 10**(logL+26) / (4 * pi * (DL * Mpc)**2.) #Convert to mJy unit
     fltr = (wave > waveLim[0]) & (wave < waveLim[1])
+    if np.sum(fltr) == 0:
+        return np.zeros_like(wave)
     flux = np.zeros_like(wave)
     flux[fltr] = f0 * t(vector, wave[fltr])
     return flux

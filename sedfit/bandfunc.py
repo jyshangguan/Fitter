@@ -141,21 +141,41 @@ class BandPass(object):
     A class to represent one filter bandpass of a instrument.
 
     It contains the bandpass information and can convert the spectra
-    into the band flux density.
+    into the band flux density. The user should understand how the
+    instrument works to obtain the measured flux density, in order to
+    correctly use the relative spectral response (rsr) curve and the
+    band wavelength.
 
     Parameters
     ----------
-    wavelength : float array
-        The wavelength of the relative system response curve.
-    rsr : float array
+    waveList : float array
+        The wavelength of the relative system response curve. The provided
+        wavelength should be always in the observed frame.
+    rsrList : float array
         The relative system response curve.
+    bandCenter : float
+        The quoted wavelength for the band.
+    bandType : string
+        The type of band functions.
+    bandName : string
+        The name of the band.
+    redshift : float
+        The redshift of the source. Since the SED model is in the rest frame, we
+        need to move the wavelength of the filter rsr curve into the rest frame.
+    silent : bool
+        Stop printing information if True, by default.
     """
-    def __init__(self, waveList=None, rsrList=None, bandCenter=None, bandType="mean", bandName='None', silent=True):
+    def __init__(self, waveList=None, rsrList=None, bandCenter=None, bandType="mean", bandName='None', redshift=0, silent=True):
         self.__bandType = bandType
+        self.redshift = redshift
         if not bandType == "none":
+            assert not waveList is None
+            assert not rsrList is None
+            #->Move the wavelength of the bandpass to match the rest-frame SED.
+            waveList = np.array(waveList) / (1 + redshift)
             waveMin = waveList[0]
             waveMax = waveList[-1]
-            if waveMin >= waveMax:
+            if waveMin >= waveMax: #-> The waveList should be from small to large.
                 raise ValueError("The waveList sequence is incorrect!")
             if len(waveList) == len(rsrList):
                 self.__waveList = waveList
@@ -163,14 +183,15 @@ class BandPass(object):
                 self._bandName = bandName
             else:
                 raise ValueError("The inputs are not matched!")
-            self.__filtertck = splrep(waveList, rsrList)
             if bandCenter is None: #The bandCenter is not specified, the effective wavelength will
                                    #be used (Eq. A21, Bessell&Murphy 2012), assuming fnu~const.
-                self._bandCenter = np.trapz(rsrList, waveList)/np.trapz(rsrList/waveList, waveList)
-            else:
-                self._bandCenter = bandCenter
+                bandCenter = np.trapz(rsrList, waveList)/np.trapz(rsrList/waveList, waveList)
+                if not silent:
+                    print("Band {0} center wavelength ({1}) is calculated!".format(bandName, bandCenter))
+            self.__bandCenter = bandCenter
+            self.__bandCenter_rest = bandCenter / (1 + redshift)
             if bandType == "mono":
-                self.k4p = K_MonP(self._bandCenter, waveList, rsrList, alpha=-1)
+                self.k4p = K_MonP(self.__bandCenter, waveList, rsrList, alpha=-1)
                 if not silent:
                     print("Band {0} calculates the monochromatic flux density!".format(bandType))
             elif bandType == "mean":
@@ -184,21 +205,31 @@ class BandPass(object):
             assert not bandCenter is None
             self.__waveList = None
             self.__rsrList = None
-            self._bandCenter = bandCenter
-            self._bandName = bandName
+            self.__bandCenter = bandCenter
+            self.__bandCenter_rest = bandCenter / (1 + redshift)
+            self.__bandName = bandName
             if not silent:
                 print("Band {0} ({1}) does not have bandpass.".format(bandName, bandCenter))
 
+    def get_bandCenter(self):
+        return self.__bandCenter
+
+    def get_bandCenter_rest(self):
+        return self.__bandCenter_rest
+
     def get_bandpass(self):
         bandInfo = {
-            'wave_list': self.__waveList,
-            'rsr_list': self.__rsrList,
-            'band_name': self._bandName,
-            'wave_center': self._bandCenter,
+            "wave_list": self.__waveList,
+            "rsr_list": self.__rsrList,
+            "band_name": self._bandName,
+            "band_type": self.__bandType,
+            "wave_center": self.__bandCenter,
+            "wave_center_rest": self.__bandCenter_rest,
+            "redshift": self.redshift
         }
         return bandInfo
 
-    def BandFunc_mono(self, wavelength, flux):
+    def BandFunc_mono(self, modelFunc):
         """
         Calculate the monochromatic flux density with the given data. The function
         applies for the bolometers used by IR satellites.
@@ -208,10 +239,8 @@ class BandPass(object):
 
         Parameters
         ----------
-        wavelength : float array
-            The wavelength of the spectrum and the relative spectral response.
-        flux : float array
-            The flux of the spectrum.
+        modelFunc : function
+            The model function to takes wavelength and returns flux density.
 
         Returns
         -------
@@ -225,20 +254,15 @@ class BandPass(object):
             S(energy/photon) = S(electron/photon) / nu
         where nu is the corresponding frequency (Bessell & Murphy 2012).
         """
-        waveMin = self.__waveList[0]
-        waveMax = self.__waveList[-1]
-        fltr = (wavelength > waveMin) & (wavelength < waveMax)
-        if np.sum(fltr) == 0:
-            raise ValueError("The wavelength is not overlapped with the filter!")
-        wavelength = wavelength[fltr]
-        freq = ls_mic / wavelength
-        flux = flux[fltr]
-        rsrList = splev(wavelength, self.__filtertck)
+        waveList = self.__waveList
+        rsrList = self.__rsrList
+        freq = ls_mic / waveList
+        flux = modelFunc(waveList)
         Sbar = np.trapz(rsrList*flux, freq) / np.trapz(rsrList, freq)
         fluxFltr = self.k4p * Sbar
         return fluxFltr
 
-    def BandFunc_mean(self, wavelength, flux):
+    def BandFunc_mean(self, modelFunc):
         """
         Calculate the band averaged flux density with the given data.
         By default, the rsr is photon response and the band flux is defined as
@@ -247,10 +271,8 @@ class BandPass(object):
 
         Parameters
         ----------
-        wavelength : float array
-            The wavelength of the spectrum and the relative spectral response.
-        flux : float array
-            The flux of the spectrum.
+        modelFunc : function
+            The model function to takes wavelength and returns flux density.
 
         Returns
         -------
@@ -261,30 +283,24 @@ class BandPass(object):
         -----
         None.
         """
-        waveMin = self.__waveList[0]
-        waveMax = self.__waveList[-1]
-        fltr = (wavelength > waveMin) & (wavelength < waveMax)
-        if np.sum(fltr) == 0:
-            raise ValueError("The wavelength is not overlapped with the filter!")
-        wavelength = wavelength[fltr]
-        flux = flux[fltr]
-        rsrList = splev(wavelength, self.__filtertck)
-        signal = np.trapz(rsrList/wavelength*flux, x=wavelength)
-        norm   = np.trapz(rsrList/wavelength, x=wavelength)
+        waveList = self.__waveList
+        rsrList = self.__rsrList
+        freq = ls_mic / waveList
+        flux = modelFunc(waveList)
+        signal = np.trapz(rsrList / waveList * flux, x=waveList)
+        norm   = np.trapz(rsrList / waveList, x=waveList)
         fluxFltr = signal/norm
         return fluxFltr
 
-    def BandFunc_none(self, wavelength, flux):
+    def BandFunc_none(self, modelFunc):
         """
         This band function provides the flux without the bandpass. The flux density
         of the model SED at the wavelength closest to the band center is returned.
 
         Parameters
         ----------
-        wavelength : float array
-            The wavelength of the spectrum and the relative spectral response.
-        flux : float array
-            The flux of the spectrum.
+        modelFunc : function
+            The model function to takes wavelength and returns flux density.
 
         Returns
         -------
@@ -295,24 +311,17 @@ class BandPass(object):
         -----
         None.
         """
-        bandCenter = self._bandCenter
-        wave_fdev = np.abs((wavelength - bandCenter) / bandCenter)
-        idx = np.argmin(wave_fdev)
-        if wave_fdev[idx] > 0.05:
-            print("[BandPass warning]: The wavelength deviation at {0} ({1}) is large!".format(self._bandName, bandCenter))
-        fluxFltr = flux[idx]
+        fluxFltr = modelFunc(np.array([self.__bandCenter]))[0]
         return fluxFltr
 
-    def filtering(self, wavelength, flux):
+    def filtering(self, modelFunc):
         """
         Calculate the flux density of the input spectrum filtered by the bandpass.
 
         Parameters
         ----------
-        wavelength : float array
-            The wavelength of the input spectrum.
-        flux : float array
-            The flux of the input spectrum.
+        modelFunc : function
+            The model function to takes wavelength and returns flux density.
 
         Returns
         -------
@@ -323,19 +332,14 @@ class BandPass(object):
         -----
         None.
         """
-        bandCenter = self._bandCenter
-        wvMin = wavelength[0]
-        wvMax = wavelength[-1]
-        if( (bandCenter <= wvMin) or (bandCenter >= wvMax) ):
-            raise ValueError("The band center '{0}' is out of the wavelength range '[{1}, {2}]!".format(bandCenter, wvMin, wvMax))
         bandType = self.__bandType
         if bandType == "mean": #By default, the rsr is photon response and the band flux
                              #is defined as eq. A12 (Bessell&Murphy 2012).
-            fluxFltr = self.BandFunc_mean(wavelength, flux)
+            fluxFltr = self.BandFunc_mean(modelFunc)
         elif bandType == "mono": #Use the user specified function to get the filtered flux.
-            fluxFltr = self.BandFunc_mono(wavelength, flux)
+            fluxFltr = self.BandFunc_mono(modelFunc)
         else: #If there is no filter, direct calculate the flux density.
-            fluxFltr = self.BandFunc_none(wavelength, flux)
+            fluxFltr = self.BandFunc_none(modelFunc)
         return fluxFltr
 
     def __getstate__(self):
@@ -377,40 +381,43 @@ monoFilters = ["PACS_70", "PACS_100", "PACS_160",
                "SPIRE_250", "SPIRE_350", "SPIRE_500",
                "IRAC1", "IRAC2", "IRAC3", "IRAC4"]
 meanFilters = ["j", "h", "ks", "w1", "w2", "w3", "w4"]
-"""
-pathList = os.path.abspath(__file__).split("/")
-pathList[-1] = "filters"
-bandPath = "/".join(pathList)
-fp = open(bandPath+"/herschel_bandpass.dat", "r")
-herschelBands = pickle.load(fp)
-fp.close()
-"""
 
 if __name__ == "__main__":
+    from dir_list import filter_path as bandPath
     import matplotlib.pyplot as plt
+    z = 1.5
     bn = "w4"
     bandFile = "/{0}.dat".format(bn)
     bandPck = np.genfromtxt(bandPath+bandFile)
     bandWave = bandPck[:, 0]
     bandRsr = bandPck[:, 1]
     bandCenter = filterDict[bn]
-    bp1 = BandPass(bandWave, bandRsr, bandCenter, bandType="mean", bandName=bn, silent=False)
-    bp2 = BandPass(bandCenter=bandCenter, bandType="none", bandName=bn, silent=False)
+    bp1 = BandPass(bandWave, bandRsr, bandCenter, bandType="mean", bandName=bn, redshift=0, silent=False)
+    bp2 = BandPass(bandWave, bandRsr, bandCenter, bandType="mean", bandName=bn, redshift=z, silent=False)
+    #bp2 = BandPass(bandCenter=bandCenter, bandType="none", bandName=bn, redshift=z, silent=False)
+
+    alpha = 1
     f0 = 10.0
     w0 = bandCenter
-    alpha = 5
-    wave = 10**np.linspace(0, 3, 1000)
-    freq = ls_mic / wave
     nu0  = ls_mic / w0
-    flux = f0*(freq / nu0)**alpha
-    fb1 = bp1.filtering(wave, flux)
-    fb2 = bp2.filtering(wave, flux)
+    wave_0 = 10**np.linspace(0, 3, 1000)
+    freq = ls_mic / wave_0
+    flux_0 = f0*(freq / nu0)**alpha
+    wave_1 = wave_0 / (1 + z)
+    flux_1 = flux_0
+
+    mF_0 = interp1d(wave_0, flux_0)
+    mF_1 = interp1d(wave_1, flux_1)
+    fb_0 = bp1.filtering(mF_0)
+    fb_1 = bp2.filtering(mF_1)
     print("w0={0}".format(w0))
-    print("f0={0}, fb1={1}".format(f0, fb1))
-    print("f0={0}, fb2={1}".format(f0, fb2))
-    plt.plot(wave, flux, color="k")
-    plt.plot(bandCenter, fb1, linestyle="none", marker=".", color="r")
-    plt.plot(bandCenter, fb2, linestyle="none", marker=".", color="b")
+    print("f0={0}, fb1={1}".format(f0, fb_0))
+    print("f0={0}, fb2={1}".format(f0, fb_1))
+    plt.plot(wave_0, flux_0, ":r", label="0")
+    plt.plot(wave_1, flux_1, ":b", label="1")
+    plt.plot(bp1.get_bandCenter_rest(), fb_0, linestyle="none", marker=".", color="r")
+    plt.plot(bp2.get_bandCenter_rest(), fb_1, linestyle="none", marker=".", color="b")
     plt.xscale("log")
     plt.yscale("log")
+    plt.legend()
     plt.show()

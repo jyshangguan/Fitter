@@ -19,6 +19,7 @@ input_*.py
 bak_*.py
 sv_*.py
 aux_*.py
+dev_*.py
 test*
 config*
 result_*.py

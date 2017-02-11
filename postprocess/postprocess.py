@@ -35,9 +35,10 @@ targname = dataPck["targname"]
 redshift = dataPck["redshift"]
 sedPck = dataPck["sedPck"]
 sed = sedPck["sed_cb"]
-sedwave = sedPck["sed"][0]
-sedflux = sedPck["sed"][1]
+sedwave  = sedPck["sed"][0]
+sedflux  = sedPck["sed"][1]
 sedsigma = sedPck["sed"][2]
+sedband  = sedPck["sed"][3]
 spcwave = sedPck["spc"][0]
 spcflux = sedPck["spc"][1]
 spcsigma = sedPck["spc"][2]
@@ -47,13 +48,12 @@ print("Redshift: {0}".format(redshift))
 print("#--------------------------------#")
 
 ## Put into the sedData
-bandList = dataPck["bandList"]
 sedName  = dataPck["sedName"]
 spcName  = dataPck["spcName"]
 if not sedName is None:
     sedflag = np.ones_like(sedwave)
     sedDataType = ["name", "wavelength", "flux", "error", "flag"]
-    phtData = {sedName: bc.DiscreteSet(bandList, sedwave, sedflux, sedsigma, sedflag, sedDataType)}
+    phtData = {sedName: bc.DiscreteSet(sedband, sedwave, sedflux, sedsigma, sedflag, sedDataType)}
 else:
     phtData = {}
 if not spcName is None:
@@ -63,7 +63,7 @@ if not spcName is None:
 else:
     spcData = {}
 sedData = sedsc.SedClass(targname, redshift, phtDict=phtData, spcDict=spcData)
-sedData.set_bandpass(bandList)
+sedData.set_bandpass(sedband)
 
 
 ################################################################################
