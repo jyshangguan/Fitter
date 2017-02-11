@@ -443,7 +443,7 @@ def Load_SED(sedfile):
 #-------------------------------------#
 #   Created by SGJY, Jan. 9, 2017     #
 #-------------------------------------#
-def SED_select_band(sed, bandList):
+def SED_select_band(sed, bandList_use=[], bandList_ignore=[], silent=True):
     """
     Select the SED from the input band list.
 
@@ -451,8 +451,12 @@ def SED_select_band(sed, bandList):
     ----------
     sed : tuple
         The tuple of the photometric SED data; (wave, flux, sigma, band).
-    bandList : list
+    bandList_use : list
         The list of the bands that are used.
+    bandList_ignore : list
+        The list of the bands that are ignored.
+    silent : bool
+        Stop printing out information if True, by default.
 
     Returns
     -------
@@ -466,11 +470,28 @@ def SED_select_band(sed, bandList):
     wave  = []
     flux  = []
     sigma = []
-    for bn in bandList:
+    if not len(bandList_use):
+        bandList_use = list(sed[3])
+    for bn in bandList_ignore:
+        if bn in bandList_use:
+            bandList_use.remove(bn)
+        else:
+            if not silent:
+                print("Warning: Band {0} is not included in the SED.".format(bn))
+    if len(bandList_use) == 0:
+        raise RuntimeError("There is no band in use!")
+    for bn in bandList_use:
         idx = sed[3].index(bn)
         wave.append(sed[0][idx])
         flux.append(sed[1][idx])
         sigma.append(sed[2][idx])
-    sed_select = (wave, flux, sigma)
+    sed_select = (wave, flux, sigma, bandList_use)
     return sed_select
 #Func_end
+
+if __name__ == "__main__":
+    a = ["a", "b", "a"]
+    b = list(a)
+    a.remove("a")
+    print a
+    print b

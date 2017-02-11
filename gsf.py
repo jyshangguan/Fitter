@@ -51,13 +51,25 @@ def fitter(targname, redshift, sedPck, config):
     ################################################################################
     #                                    Data                                      #
     ################################################################################
+    try:
+        silent = config.silent
+    except:
+        silent = False
     sed = sedPck["sed"]
     spc = sedPck["spc"]
-    bandList = config.bandList
-    sed = sedt.SED_select_band(sed, bandList)
+    try:
+        bandList_use = config.bandList_use
+    except:
+        bandList_use = []
+    try:
+        bandList_ignore = config.bandList_ignore
+    except:
+        bandList_ignore = []
+    sed = sedt.SED_select_band(sed, bandList_use, bandList_ignore, silent)
     sedwave  = sed[0]
     sedflux  = sed[1]
     sedsigma = sed[2]
+    sedband  = sed[3]
     spcwave  = spc[0]
     spcflux  = spc[1]
     spcsigma = spc[2]
@@ -75,7 +87,7 @@ def fitter(targname, redshift, sedPck, config):
     if not sedName is None:
         sedflag = np.ones_like(sedwave)
         sedDataType = ["name", "wavelength", "flux", "error", "flag"]
-        phtData = {sedName: bc.DiscreteSet(bandList, sedwave, sedflux, sedsigma, sedflag, sedDataType)}
+        phtData = {sedName: bc.DiscreteSet(sedband, sedwave, sedflux, sedsigma, sedflag, sedDataType)}
     else:
         phtData = {}
     if not spcName is None:
@@ -85,9 +97,7 @@ def fitter(targname, redshift, sedPck, config):
     else:
         spcData = {}
     sedData = sedsc.SedClass(targname, redshift, phtDict=phtData, spcDict=spcData)
-    if not bandList is None:
-        sedData.set_bandpass(bandList)
-
+    sedData.set_bandpass(sedband, sedwave, silent)
 
     ################################################################################
     #                                   Model                                      #
@@ -218,7 +228,7 @@ def fitter(targname, redshift, sedPck, config):
         "targname": targname,
         "redshift": redshift,
         "sedPck": sedPck,
-        "bandList": bandList,
+        "sedband": sedband,
         "sedName": sedName,
         "spcName": spcName,
     }
