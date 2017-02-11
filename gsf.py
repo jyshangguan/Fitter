@@ -19,7 +19,7 @@ print("############################")
 print("# Galaxy SED Fitter starts #")
 print("############################")
 
-def fitter(targname, redshift, sedPck, config):
+def fitter(targname, redshift, sedPck, config, Dist=None):
     """
     This function is the main routine to do the SED fitting. The code will
     produce the final fitting results.
@@ -39,6 +39,9 @@ def fitter(targname, redshift, sedPck, config):
         }
     config : module or class
         The configuration information for the fitting.
+    Dist : float (optional)
+        The physical (or luminosity) distance of the source. If not provided, the
+        value will be estimated from the redshift. Unit: Mpc.
 
     Returns
     -------
@@ -48,23 +51,36 @@ def fitter(targname, redshift, sedPck, config):
     -----
     None.
     """
-    ################################################################################
-    #                                    Data                                      #
-    ################################################################################
     try:
         silent = config.silent
     except:
         silent = False
+    ################################################################################
+    #                                    Data                                      #
+    ################################################################################
+    dataDict = config.dataDict
     sed = sedPck["sed"]
     spc = sedPck["spc"]
-    try:
-        bandList_use = config.bandList_use
-    except:
-        bandList_use = []
-    try:
-        bandList_ignore = config.bandList_ignore
-    except:
-        bandList_ignore = []
+    #->Settle into the rest frame
+    frame = dataDict.get("frame", "rest") #The coordinate frame of the SED; "rest"
+                                          #by default.
+    if frame == "obs":
+        sed = sedt.SED_to_restframe(sed, redshift)
+        spc = sedt.SED_to_restframe(spc, redshift)
+        if not silent:
+            print("[gsf]: The input SED is in the observed frame!")
+    elif frame == "frame":
+        if not silent:
+            print("[gsf]: The input SED is in the rest frame!")
+    else:
+        if not silent:
+            print("[gsf]: The input SED frame ({0}) is not recognised!".format(frame))
+
+    #->Select bands
+    bandList_use = dataDict.get("bandList_use", []) #The list of bands to incorporate;
+                                                    #use all the available bands if empty.
+    bandList_ignore = dataDict.get("bandList_ignore", []) #The list of bands to be
+                                                          #ignored from the bands to use.
     sed = sedt.SED_select_band(sed, bandList_use, bandList_ignore, silent)
     sedwave  = sed[0]
     sedflux  = sed[1]
@@ -73,15 +89,16 @@ def fitter(targname, redshift, sedPck, config):
     spcwave  = spc[0]
     spcflux  = spc[1]
     spcsigma = spc[2]
-    ##Check data
+    if not silent:
+        print("[gsf]: The incorporated bands are: {0}".format(sedband))
+    #->Check data
     chck_sed = np.sum(np.isnan(sedflux)) + np.sum(np.isnan(sedsigma))
     chck_spc = np.sum(np.isnan(spcflux)) + np.sum(np.isnan(spcsigma))
     if chck_sed:
         raise ValueError("The photometry contains bad data!")
     if chck_spc:
         raise ValueError("The spectrum contains bad data!")
-
-    ## Put into the sedData
+    #->Put into the sedData
     sedName  = config.sedName
     spcName  = config.spcName
     if not sedName is None:
@@ -96,7 +113,12 @@ def fitter(targname, redshift, sedPck, config):
         spcData = {"IRS": bc.ContinueSet(spcwave, spcflux, spcsigma, spcflag, spcDataType)}
     else:
         spcData = {}
-    sedData = sedsc.SedClass(targname, redshift, phtDict=phtData, spcDict=spcData)
+    if Dist is None:
+        try:
+            Dist = config.distance
+        except:
+            Dist = None
+    sedData = sedsc.SedClass(targname, redshift, Dist, phtDict=phtData, spcDict=spcData)
     sedData.set_bandpass(sedband, sedwave, silent)
 
     ################################################################################
@@ -227,10 +249,12 @@ def fitter(targname, redshift, sedPck, config):
     dataPck = {
         "targname": targname,
         "redshift": redshift,
+        "distance": sedData.dl,
         "sedPck": sedPck,
         "sedband": sedband,
         "sedName": sedName,
         "spcName": spcName,
+        "dataDict": dataDict
     }
     modelPck = {
         "modelDict": modelDict,
@@ -282,7 +306,7 @@ def fitter(targname, redshift, sedPck, config):
         plt.close()
     print("Post-processed!")
 
-def gsf_fitter(configName, targname=None, redshift=None, sedFile=None):
+def gsf_fitter(configName, targname=None, redshift=None, distance=None, sedFile=None):
     """
     The wrapper of fitter() function. If the targname, redshift and sedFile are
     provided as arguments, they will be used overriding the values in the config
@@ -297,6 +321,8 @@ def gsf_fitter(configName, targname=None, redshift=None, sedFile=None):
         The name of the target.
     redshift : float or None by default
         The redshift of the target.
+    distance : float or None by default
+        The distance of the source from the Sun.
     sedFile : str or None by default
         The full path of the sed data file.
 
@@ -311,6 +337,7 @@ def gsf_fitter(configName, targname=None, redshift=None, sedFile=None):
     config = importlib.import_module(configName.split("/")[-1].split(".")[0])
     if targname is None:
         assert redshift is None
+        assert distance is None
         assert sedFile is None
         targname = config.targname
         redshift = config.redshift
@@ -325,4 +352,4 @@ def gsf_fitter(configName, targname=None, redshift=None, sedFile=None):
     print("#--------------------------------#")
     #sedPck = sedt.Load_SED(sedFile, config.sedRng, config.spcRng, config.spcRebin)
     sedPck = sedt.Load_SED(sedFile)
-    fitter(targname, redshift, sedPck, config)
+    fitter(targname, redshift, sedPck, config, distance)

@@ -8,7 +8,7 @@ import types
 import numpy as np
 import matplotlib.pyplot as plt
 import cPickle as pickle
-import rel_SED_Toolkit as sedt
+import sedfit.SED_Toolkit as sedt
 from sedfit.fitter import basicclass as bc
 from sedfit.fitter import mcmc_emcee as mcmc
 from sedfit import sedclass as sedsc
@@ -33,27 +33,46 @@ print("#################################")
 dataPck = fitrs["dataPck"]
 targname = dataPck["targname"]
 redshift = dataPck["redshift"]
+distance = dataPck["distance"]
+dataDict = dataPck["dataDict"]
 sedPck = dataPck["sedPck"]
-sed = sedPck["sed_cb"]
-sedwave = sedPck["sed"][0]
-sedflux = sedPck["sed"][1]
-sedsigma = sedPck["sed"][2]
-spcwave = sedPck["spc"][0]
-spcflux = sedPck["spc"][1]
-spcsigma = sedPck["spc"][2]
+sed = sedPck["sed"]
+spc = sedPck["spc"]
+#->Settle into the rest frame
+frame = dataDict.get("frame", "rest") #The coordinate frame of the SED; "rest"
+                                      #by default.
+if frame == "obs":
+    sed = sedt.SED_to_restframe(sed, redshift)
+    spc = sedt.SED_to_restframe(spc, redshift)
+    print("[gsf]: The input SED is in the observed frame!")
+else:
+    print("[gsf]: The input SED is in the rest frame!")
+#->Select bands
+bandList_use = dataDict.get("bandList_use", []) #The list of bands to incorporate;
+                                                #use all the available bands if empty.
+bandList_ignore = dataDict.get("bandList_ignore", []) #The list of bands to be
+                                                      #ignored from the bands to use.
+sed = sedt.SED_select_band(sed, bandList_use, bandList_ignore)
+sedwave  = sed[0]
+sedflux  = sed[1]
+sedsigma = sed[2]
+sedband  = sed[3]
+spcwave  = spc[0]
+spcflux  = spc[1]
+spcsigma = spc[2]
+print("[gsf]: The incorporated bands are: {0}".format(sedband))
 print("#--------------------------------#")
 print("Target: {0}".format(targname))
 print("Redshift: {0}".format(redshift))
 print("#--------------------------------#")
 
 ## Put into the sedData
-bandList = dataPck["bandList"]
 sedName  = dataPck["sedName"]
 spcName  = dataPck["spcName"]
 if not sedName is None:
     sedflag = np.ones_like(sedwave)
     sedDataType = ["name", "wavelength", "flux", "error", "flag"]
-    phtData = {sedName: bc.DiscreteSet(bandList, sedwave, sedflux, sedsigma, sedflag, sedDataType)}
+    phtData = {sedName: bc.DiscreteSet(sedband, sedwave, sedflux, sedsigma, sedflag, sedDataType)}
 else:
     phtData = {}
 if not spcName is None:
@@ -62,8 +81,8 @@ if not spcName is None:
     spcData = {"IRS": bc.ContinueSet(spcwave, spcflux, spcsigma, spcflag, spcDataType)}
 else:
     spcData = {}
-sedData = sedsc.SedClass(targname, redshift, phtDict=phtData, spcDict=spcData)
-sedData.set_bandpass(bandList)
+sedData = sedsc.SedClass(targname, redshift, distance, phtDict=phtData, spcDict=spcData)
+sedData.set_bandpass(sedband, sedwave)
 
 
 ################################################################################
