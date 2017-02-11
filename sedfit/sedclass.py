@@ -178,10 +178,22 @@ class SedClass(bc.DataSet):
             else:
                 raise ValueError('The bandpass {0} has incorrect type!'.format(bn))
 
-    def set_bandpass(self, bandList):
+    def set_bandpass(self, bandList, sedwave, silent=True):
         bandDict = OrderedDict()
-        for bn in bandList:
-            bandCenter = bf.filterDict[bn]
+        for loop in range(len(bandList)):
+            bn = bandList[loop]
+            bandCenter = sedwave[loop]
+            #->If the band is recorded, we check whether the used band wavelength
+            #deviates from our recorded value. If it deviates by >5%, error will
+            #be raised.
+            if (bn in bf.filterDict.keys()) & (not silent):
+                bandCenter_nominal = bf.filterDict[bn]
+                fdev = np.abs(bandCenter - bandCenter_nominal) / bandCenter_nominal
+                if fdev > 0.05:
+                    raise ValueError("The wavelength of band {0} ({1}) deviates from our recorded value ({2}) more than 5%!".format(bn, bandCenter, bandCenter_nominal))
+            elif not silent:
+                print("The band {0} is not included in our database!".format(bn))
+            #Determine how to use the relative spectral response data.
             if bn in bf.monoFilters:
                 bandFile = "{0}.dat".format(bn)
                 bandPck = np.genfromtxt(filter_path+bandFile)
