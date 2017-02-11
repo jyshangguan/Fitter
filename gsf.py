@@ -302,7 +302,7 @@ def fitter(targname, redshift, sedPck, config, Dist=None):
         plt.close()
     print("Post-processed!")
 
-def gsf_fitter(configName, targname=None, redshift=None, sedFile=None):
+def gsf_fitter(configName, targname=None, redshift=None, distance=None, sedFile=None):
     """
     The wrapper of fitter() function. If the targname, redshift and sedFile are
     provided as arguments, they will be used overriding the values in the config
@@ -317,6 +317,8 @@ def gsf_fitter(configName, targname=None, redshift=None, sedFile=None):
         The name of the target.
     redshift : float or None by default
         The redshift of the target.
+    distance : float or None by default
+        The distance of the source from the Sun.
     sedFile : str or None by default
         The full path of the sed data file.
 
@@ -331,6 +333,7 @@ def gsf_fitter(configName, targname=None, redshift=None, sedFile=None):
     config = importlib.import_module(configName.split("/")[-1].split(".")[0])
     if targname is None:
         assert redshift is None
+        assert distance is None
         assert sedFile is None
         targname = config.targname
         redshift = config.redshift
@@ -345,4 +348,4 @@ def gsf_fitter(configName, targname=None, redshift=None, sedFile=None):
     print("#--------------------------------#")
     #sedPck = sedt.Load_SED(sedFile, config.sedRng, config.spcRng, config.spcRebin)
     sedPck = sedt.Load_SED(sedFile)
-    fitter(targname, redshift, sedPck, config)
+    fitter(targname, redshift, sedPck, config, distance)

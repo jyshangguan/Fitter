@@ -8,7 +8,7 @@ import types
 import numpy as np
 import matplotlib.pyplot as plt
 import cPickle as pickle
-import rel_SED_Toolkit as sedt
+import sedfit.SED_Toolkit as sedt
 from sedfit.fitter import basicclass as bc
 from sedfit.fitter import mcmc_emcee as mcmc
 from sedfit import sedclass as sedsc
@@ -44,17 +44,15 @@ frame = dataDict.get("frame", "rest") #The coordinate frame of the SED; "rest"
 if frame == "obs":
     sed = sedt.SED_to_restframe(sed, redshift)
     spc = sedt.SED_to_restframe(spc, redshift)
-    if not silent:
-        print("[gsf]: The input SED is in the observed frame!")
+    print("[gsf]: The input SED is in the observed frame!")
 else:
-    if not silent:
-        print("[gsf]: The input SED is in the rest frame!")
+    print("[gsf]: The input SED is in the rest frame!")
 #->Select bands
 bandList_use = dataDict.get("bandList_use", []) #The list of bands to incorporate;
                                                 #use all the available bands if empty.
 bandList_ignore = dataDict.get("bandList_ignore", []) #The list of bands to be
                                                       #ignored from the bands to use.
-sed = sedt.SED_select_band(sed, bandList_use, bandList_ignore, silent)
+sed = sedt.SED_select_band(sed, bandList_use, bandList_ignore)
 sedwave  = sed[0]
 sedflux  = sed[1]
 sedsigma = sed[2]
@@ -62,8 +60,7 @@ sedband  = sed[3]
 spcwave  = spc[0]
 spcflux  = spc[1]
 spcsigma = spc[2]
-if not silent:
-    print("[gsf]: The incorporated bands are: {0}".format(sedband))
+print("[gsf]: The incorporated bands are: {0}".format(sedband))
 print("#--------------------------------#")
 print("Target: {0}".format(targname))
 print("Redshift: {0}".format(redshift))
