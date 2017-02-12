@@ -11,13 +11,11 @@ redshift = 0.061
 sedFile  = "examples/PG0050+124_dl07_0.msed"
 sedName  = "2M&W&H"
 spcName  = None #"IRS"
-sedRng   = [0, 13]
-spcRng   = [13, None]
-spcRebin = 1.
-#bandList = ["j", "h", "ks", "w1", "w2",
-bandList = ["j", "h", "ks", "w1", "w2", "w3", "w4",
-            "PACS_70", "PACS_100", "PACS_160",
-            "SPIRE_250", "SPIRE_350", "SPIRE_500"]
+dataDict = {
+    "bandList_use": [],
+    "bandList_ignore":[],
+    "frame": "rest",
+}
 
 ################################################################################
 #                                   Model                                      #
