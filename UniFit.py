@@ -55,6 +55,10 @@ else: #If the target list is provided, fit the targets one by one.
         targname = nameList[loop]
         redshift = zList[loop]
         sedname  = sedList[loop]
+        if "DL" in targTable.colnames:
+            distance = targTable["DL"][loop]
+        else:
+            distance = None
         config   = configFile.split("/")[-1].split(".")[0]
         if not options.refit: #Omit the target if there is a fitting result.
             fileList = os.listdir(".")
@@ -68,7 +72,7 @@ else: #If the target list is provided, fit the targets one by one.
                 config = configTry
         sedFile = sedPath + sedname
         try:
-            gsf.gsf_fitter(config, targname, redshift, sedFile)
+            gsf.gsf_fitter(config, targname, redshift, distance, sedFile)
         except:
             print("\n---------------------------")
             print("***Fitting {0} is failed!".format(targname))
