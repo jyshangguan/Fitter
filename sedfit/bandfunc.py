@@ -380,7 +380,8 @@ filterDict = {
 }
 monoFilters = ["PACS_70", "PACS_100", "PACS_160",
                "SPIRE_250", "SPIRE_350", "SPIRE_500",
-               "IRAC1", "IRAC2", "IRAC3", "IRAC4"]
+               "IRAC1", "IRAC2", "IRAC3", "IRAC4",
+               "mips24", "mips70", "mips160"]
 meanFilters = ["j", "h", "ks", "w1", "w2", "w3", "w4"]
 
 if __name__ == "__main__":
