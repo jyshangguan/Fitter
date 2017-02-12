@@ -334,7 +334,7 @@ def gsf_fitter(configName, targname=None, redshift=None, distance=None, sedFile=
     -----
     None.
     """
-    config = importlib.import_module(configName.split("/")[-1].split(".")[0])
+    config = importlib.import_module(configName)
     if targname is None:
         assert redshift is None
         assert distance is None
