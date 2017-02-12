@@ -9,7 +9,7 @@ from collections import OrderedDict
 targname = "PG0003+158"
 redshift = 0.45
 distance = None #Luminosity distance
-sedFile  = "data/PG0003+158_obs.csed"
+sedFile  = "data/{0}_obs.csed".format(targname)
 sedName  = "Phot"
 spcName  = "IRS"
 dataDict = {

@@ -37,11 +37,11 @@ else:
     warnings.simplefilter("ignore")
 
 targetList = options.list
+configFile = args[0]
 if targetList is None: #If the target list is not provided, only fit one target according to the config file.
-    configName = args[0]
+    configName = configFile.split("/")[-1].split(".")[0]
     gsf.gsf_fitter(configName)
 else: #If the target list is provided, fit the targets one by one.
-    configName = args[0]
     if len(args) == 2:
         sedPath = args[1]
     else:
@@ -55,6 +55,7 @@ else: #If the target list is provided, fit the targets one by one.
         targname = nameList[loop]
         redshift = zList[loop]
         sedname  = sedList[loop]
+        config   = configFile.split("/")[-1].split(".")[0]
         if not options.refit: #Omit the target if there is a fitting result.
             fileList = os.listdir(".")
             if "{0}_bestfit.txt".format(targname) in fileList:
@@ -64,10 +65,10 @@ else: #If the target list is provided, fit the targets one by one.
             fileList = os.listdir(".")
             configTry = "config_{0}.py".format(targname)
             if configTry in fileList:
-                configName = configTry
+                config = configTry
         sedFile = sedPath + sedname
         try:
-            gsf.gsf_fitter(configName, targname, redshift, sedFile)
+            gsf.gsf_fitter(config, targname, redshift, sedFile)
         except:
             print("\n---------------------------")
             print("***Fitting {0} is failed!".format(targname))
