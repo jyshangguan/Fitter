@@ -69,7 +69,7 @@ else: #If the target list is provided, fit the targets one by one.
             fileList = os.listdir(".")
             configTry = "config_{0}.py".format(targname)
             if configTry in fileList:
-                config = configTry
+                config = configTry.split(".")[0]
         sedFile = sedPath + sedname
         try:
             gsf.gsf_fitter(config, targname, redshift, distance, sedFile)
