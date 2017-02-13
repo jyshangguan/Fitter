@@ -1,4 +1,5 @@
-#The rsr is normalised to maximize at 1.#wavelength RSR
+#Convert the frequency to wavelength by SGJY.
+#wavelength RSR
 2.001000e+01 6.659353e-13
 2.002000e+01 6.667817e-13
 2.003000e+01 6.978611e-13
