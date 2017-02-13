@@ -96,7 +96,9 @@ def Model2Data_gp(sedModel, sedData):
     -----
     None.
     """
-    fluxModelPht = sedData.model_pht(sedModel.combineResult)
+    waveModel = sedModel.get_xList()
+    fluxModel = sedModel.combineResult()
+    fluxModelPht = sedData.model_pht(waveModel, fluxModel)
     fluxModelSpc = sedData.model_spc(sedModel.combineResult)
     fluxDict = {
         "pht": fluxModelPht,
