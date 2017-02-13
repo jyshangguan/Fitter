@@ -561,7 +561,7 @@ class EmceeModel(object):
         #->Plot the best-fit model
         sedModel.updateParList(pcnt)
         ycnt = sedModel.combineResult() #The best-fit model
-        yPhtC = np.array( sedData.model_pht(sedModel.combineResult) ) #The best-fit band average flux density
+        yPhtC = np.array( sedData.model_pht(waveModel, ycnt) ) #The best-fit band average flux density
         cKwargs = {"linestyle":"--"}
         tKwargs = {
             "linestyle": "--",
