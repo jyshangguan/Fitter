@@ -327,7 +327,7 @@ class BandPass(object):
         -----
         None.
         """
-        bandCenter = self.__bandCenter
+        bandCenter = self.__bandCenter_rest
         wave_fdev = np.abs((wavelength - bandCenter) / bandCenter)
         idx = np.argmin(wave_fdev)
         if wave_fdev[idx] > 0.05:
@@ -355,7 +355,7 @@ class BandPass(object):
         -----
         None.
         """
-        bandCenter = self.__bandCenter
+        bandCenter = self.__bandCenter_rest
         wvMin = wavelength[0]
         wvMax = wavelength[-1]
         if( (bandCenter <= wvMin) or (bandCenter >= wvMax) ):
@@ -421,11 +421,12 @@ if __name__ == "__main__":
     bandWave = bandPck[:, 0]
     bandRsr = bandPck[:, 1]
     bandCenter = filterDict[bn]
-    bp1 = BandPass(bandWave, bandRsr, bandCenter, bandType="mean", bandName=bn, redshift=0, silent=False)
-    bp2 = BandPass(bandWave, bandRsr, bandCenter, bandType="mean", bandName=bn, redshift=z, silent=False)
+    bandType = "mono"
+    bp1 = BandPass(bandWave, bandRsr, bandCenter, bandType, bandName=bn, redshift=0, silent=False)
+    bp2 = BandPass(bandWave, bandRsr, bandCenter, bandType, bandName=bn, redshift=z, silent=False)
     #bp2 = BandPass(bandCenter=bandCenter, bandType="none", bandName=bn, redshift=z, silent=False)
 
-    alpha = 1
+    alpha = -1
     f0 = 10.0
     w0 = bandCenter
     nu0  = ls_mic / w0
