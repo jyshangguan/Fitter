@@ -12,6 +12,7 @@ Linear = ma.Linear
 BlackBody = ma.BlackBody
 Modified_BlackBody = ma.Modified_BlackBody
 Power_Law = ma.Power_Law
+Synchrotron = ma.Synchrotron
 Line_Gaussian_L = ma.Line_Gaussian_L
 
 """
@@ -73,6 +74,12 @@ funcLib = {
         "x_name": "wave",
         "param_fit": ["PL_alpha", "PL_logsf"],
         "param_add": []
+    },
+    "Synchrotron": {
+        "function": Synchrotron,
+        "x_name": "wave",
+        "param_fit": ["Sn_alpha", "Sn_logsf"],
+        "param_add": ["lognu0"]
     },
     "Line_Gaussian_L": {
         "function": Line_Gaussian_L,

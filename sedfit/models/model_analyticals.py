@@ -96,6 +96,42 @@ def Power_Law(PL_alpha, PL_logsf, wave):
     flux = rmt.Power_Law(nu, PL_alpha, 10**PL_logsf)
     return flux
 
+def Synchrotron(Sn_alpha, Sn_logsf, wave, lognu0=13):
+    """
+    Calculate the model of synchrotron emission,
+        fnu ~ nu^-alpha (nu < nu0)
+            ~ nu^-(alpha+0.5) (nu > nu0),
+    which comes from Figure 1 of Pe'er, Space Sci Rev (2014) 183:371.
+
+    Parameters
+    ----------
+    Sn_alpha : float
+        The power-law index.
+    Sn_logsf : float
+        The log of the scaling factor.
+    wave : float array
+        The wavelength.
+    lognu0 : float
+        The log of the cooling frequency (unit: Hz).
+
+    Returns
+    -------
+    flux : float array
+        The flux at the given wavelengths to calculate.
+
+    Notes
+    -----
+    None.
+    """
+    nu = np.atleast_1d(ls_mic / wave) / 10**lognu0
+    fltr_h = nu > 1
+    fltr_l = np.logical_not(fltr_h)
+    flux = np.zeros_like(nu)
+    sf = 10**Sn_logsf
+    flux[fltr_h] = sf * nu[fltr_h]**(-Sn_alpha-0.5)
+    flux[fltr_l] = sf * nu[fltr_l]**(-Sn_alpha)
+    return flux
+
 def Linear(a, b, x):
     return a * np.atleast_1d(x) + b
 
@@ -132,3 +168,14 @@ def Line_Gaussian_L(wavelength, logLum, lambda0, FWHM, DL):
     nu0 = ls_mic / lambda0
     fnu  = rmt.Line_Profile_Gaussian(nu, flux, nu0, FWHM, norm="integrate")
     return fnu
+
+if __name__ == "__main__":
+    import matplotlib.pyplot as plt
+
+    wave = 10**np.linspace(0, 6, 1000)
+    flux = Synchrotron(0.8, 5, wave, lognu0=13)
+    plt.plot(wave, flux)
+    plt.axvline(x=ls_mic/1e13)
+    plt.xscale('log')
+    plt.yscale('log')
+    plt.show()
