@@ -46,7 +46,7 @@ else: #If the target list is provided, fit the targets one by one.
         sedPath = args[1]
     else:
         sedPath = ""
-    targTable = Table.read(targetList , format="ascii.ipac")
+    targTable = Table.read(targetList, format="ascii.ipac")
     nameList  = targTable["Name"]
     zList     = targTable["z"]
     sedList   = targTable["sed"]
