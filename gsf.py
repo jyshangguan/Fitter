@@ -341,13 +341,16 @@ def gsf_fitter(configName, targname=None, redshift=None, distance=None, sedFile=
         assert sedFile is None
         targname = config.targname
         redshift = config.redshift
+        distance = config.distance
         sedFile  = config.sedFile
     else:
         assert not redshift is None
         assert not sedFile is None
     print("#--------------------------------#")
-    print("Target: {0}".format(targname))
-    print("SED file: {0}".format(sedFile))
+    print("Target:      {0}".format(targname))
+    print("Redshift:    {0}".format(redshift))
+    print("Distance:    {0}".format(distance))
+    print("SED file:    {0}".format(sedFile))
     print("Config file: {0}".format(configName))
     print("#--------------------------------#")
     #sedPck = sedt.Load_SED(sedFile, config.sedRng, config.spcRng, config.spcRebin)
