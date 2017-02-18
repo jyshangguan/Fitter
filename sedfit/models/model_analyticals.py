@@ -96,7 +96,7 @@ def Power_Law(PL_alpha, PL_logsf, wave):
     flux = rmt.Power_Law(nu, PL_alpha, 10**PL_logsf)
     return flux
 
-def Synchrotron(Sn_alpha, Sn_logsf, wave, lognu0=13):
+def Synchrotron(Sn_alpha, Sn_logsf, wave, lognuc=13, lognum=14):
     """
     Calculate the model of synchrotron emission,
         fnu ~ nu^-alpha (nu < nu0)
@@ -111,8 +111,11 @@ def Synchrotron(Sn_alpha, Sn_logsf, wave, lognu0=13):
         The log of the scaling factor.
     wave : float array
         The wavelength.
-    lognu0 : float
+    lognuc : float
         The log of the cooling frequency (unit: Hz).
+    lognum : float
+        The maximum frequency above which there is no synchrotron emission
+        (unit: Hz).
 
     Returns
     -------
@@ -123,9 +126,11 @@ def Synchrotron(Sn_alpha, Sn_logsf, wave, lognu0=13):
     -----
     None.
     """
-    nu = np.atleast_1d(ls_mic / wave) / 10**lognu0
-    fltr_h = nu > 1
-    fltr_l = np.logical_not(fltr_h)
+    num = 10**(lognum - lognuc)
+    nu = np.atleast_1d(ls_mic / wave) / 10**lognuc
+    fltr_m = nu < num
+    fltr_h = (nu > 1) & fltr_m
+    fltr_l = (nu <= 1) & fltr_m
     flux = np.zeros_like(nu)
     sf = 10**Sn_logsf
     flux[fltr_h] = sf * nu[fltr_h]**(-Sn_alpha-0.5)
@@ -173,9 +178,10 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
 
     wave = 10**np.linspace(0, 6, 1000)
-    flux = Synchrotron(0.8, 5, wave, lognu0=13)
+    flux = Synchrotron(0.8, 5, wave, lognuc=13, lognum=14)
     plt.plot(wave, flux)
-    plt.axvline(x=ls_mic/1e13)
+    plt.axvline(x=ls_mic/1e13, color="r", linestyle=":")
+    plt.axvline(x=ls_mic/1e14, color="r", linestyle=":")
     plt.xscale('log')
     plt.yscale('log')
     plt.show()

@@ -274,13 +274,11 @@ def fitter(targname, redshift, sedPck, config, Dist=None):
     fp = open("{0}.fitrs".format(targname), "w")
     pickle.dump(fitrs, fp)
     fp.close()
+    #->Save the best-fit parameters
     em.Save_BestFit("{0}_bestfit.txt".format(targname), low=psLow, center=psCenter, high=psHigh,
                     burnin=burnIn, select=True, fraction=fraction)
+    #->Plot the chain of the final run
     em.plot_chain(filename="{0}_chain.png".format(targname), truths=parTruth)
-    em.plot_corner(filename="{0}_triangle.png".format(targname), burnin=burnIn,
-                   nuisance=nuisance, truths=parTruth, select=True, fraction=fraction,
-                   quantiles=[psLow/100., psCenter/100., psHigh/100.], show_titles=True,
-                   title_kwargs={"fontsize": 20})
     #->Plot the SED fitting result figure
     if sedData.check_csData():
         fig, axarr = plt.subplots(2, 1)
@@ -304,6 +302,11 @@ def fitter(targname, redshift, sedPck, config, Dist=None):
                     burnin=burnIn, select=True, fraction=fraction)
         plt.savefig("{0}_result.png".format(targname), bbox_inches="tight")
         plt.close()
+    #->Plot the posterior probability distribution
+    em.plot_corner(filename="{0}_triangle.png".format(targname), burnin=burnIn,
+                   nuisance=nuisance, truths=parTruth, select=True, fraction=fraction,
+                   quantiles=[psLow/100., psCenter/100., psHigh/100.], show_titles=True,
+                   title_kwargs={"fontsize": 20})
     print("Post-processed!")
 
 def gsf_fitter(configName, targname=None, redshift=None, distance=None, sedFile=None):

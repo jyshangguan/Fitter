@@ -79,7 +79,7 @@ funcLib = {
         "function": Synchrotron,
         "x_name": "wave",
         "param_fit": ["Sn_alpha", "Sn_logsf"],
-        "param_add": ["lognu0"]
+        "param_add": ["lognuc", "lognum"]
     },
     "Line_Gaussian_L": {
         "function": Line_Gaussian_L,
