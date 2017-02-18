@@ -8,6 +8,7 @@ from collections import OrderedDict
 ################################################################################
 targname = "PG1351+236" #"PG0050+124" #"PG0043+039" #"PG1259+593" #"PG1211+143" #
 redshift = 0.055 #0.061 #0.384 #0.472 #0.085 #
+distance = None
 sedFile  = "data/PG1351+236_obs.csed" #"data/PG0050+124_rest.tsed" #"data/PG0043+039_rest.tsed" #"data/PG1259+593_rest.tsed" #"data/PG1211+143_rest.tsed" #
 sedName  = "2M&W&H"
 spcName  = "IRS"
@@ -158,8 +159,8 @@ parTruth = None  #Whether to provide the truth of the model
 modelUnct = True #Whether to consider the model uncertainty in the fitting
 unctDict = OrderedDict(
     (
-        ("lnf"  , [-10, 10]),
-        ("lna"  , [-10, 5]),
+        ("lnf"  , [-10, 2]),
+        ("lna"  , [-10, 2]),
         ("lntau", [-5, 2.5]),
     )
 )

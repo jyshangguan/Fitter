@@ -146,28 +146,28 @@ modelDict = OrderedDict(
                 },
                 "logMd": {
                     "value": 8.42,
-                    "range": [4.0, 11.0], #[9.0, 10.0],
+                    "range": [6.0, 11.0], #[9.0, 10.0],
                     "type": "c",
                     "vary": True, #False, #
                     "latex": r"$\mathrm{log}\,M_\mathrm{d}$",
                 }
             }
         ),
-        ("PL", {
-                "function": "Power_Law",
-                "PL_alpha": {
+        ("Jet", {
+                "function": "Synchrotron",
+                "Sn_alpha": {
                     "value": -1.,
-                    "range": [-5.0, 5.0], #[0.01, 0.03],
+                    "range": [0., 5.0], #[0.01, 0.03],
                     "type": "c",
                     "vary": True, #False, #
-                    "latex": r"$\alpha_\mathrm{pl}$",
+                    "latex": r"$\alpha_\mathrm{S}$",
                 },
-                "PL_logsf": {
+                "Sn_logsf": {
                     "value": 8.42,
-                    "range": [5.0, 15.0], #[9.0, 10.0],
+                    "range": [-5.0, 5.0], #[9.0, 10.0],
                     "type": "c",
                     "vary": True, #False, #
-                    "latex": r"$\mathrm{log}\,f_\mathrm{pl}$",
+                    "latex": r"$\mathrm{log}\,f_\mathrm{S}$",
                 }
             }
         ),
@@ -177,8 +177,8 @@ parTruth = None  #Whether to provide the truth of the model
 modelUnct = True #Whether to consider the model uncertainty in the fitting
 unctDict = OrderedDict(
     (
-        ("lnf"  , [-10, 10]),
-        ("lna"  , [-10, 1]),
+        ("lnf"  , [-10, 2]),
+        ("lna"  , [-10, 2]),
         ("lntau", [-5, 2.5]),
     )
 )
