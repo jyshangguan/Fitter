@@ -57,12 +57,18 @@ class MultiNestModel(object):
         #If the model uncertainty is concerned.
         if self.__modelunct:
             if unctDict is None:
-                raise Error("No uncertainty model parameter range is provided!")
-            parList = ["lnf", "lna", "lntau"]
-            for pn in parList:
-                r1, r2 = unctDict[pn]
-                cube[counter] = (r1 - r2) * cube[counter] + r2
+                raise ValueError("No uncertainty model parameter range is provided!")
+            if self.__data.check_dsData():
+                rf1, rf2 = unctDict["lnf"]
+                cube[counter] = (rf2 - rf1) * cube[counter] + rf1
                 counter += 1
+            #If there is contiuous data, the residual correlation is considered.
+            if self.__data.check_csData():
+                ra1, ra2 = unctDict["lna"]
+                rt1, rt2 = unctDict["lntau"]
+                cube[counter] = (ra2 - ra1) * cube[counter] + ra1
+                counter += 1
+                cube[counter] = (rt2 - rt1) * cube[counter] + rt1
 
     def loglike(self, cube, ndim, nparams):
         params = []
