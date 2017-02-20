@@ -3,50 +3,6 @@ from scipy.special import erf
 import george
 from george import kernels
 
-"""
-def ChiSq(data, model, unct=None):
-    '''
-    This function calculate the Chi square of the observed data and
-    the model. The upper limits are properly deal with using the method
-    mentioned by Sawicki (2012).
-
-    Parameters
-    ----------
-    data : float array
-        The observed data.
-    model : float array
-        The model.
-    unct : float array
-        The uncertainties.
-
-    Returns
-    -------
-    chsq : float
-        The Chi square
-
-    Notes
-    -----
-    None.
-    '''
-    if unct is None:
-        unct = np.ones(len(data))
-    fltr_dtc = unct>0
-    fltr_non = unct<0
-    if sum(fltr_dtc)>0:
-        wrsd_dtc = (data[fltr_dtc] - model[fltr_dtc])/unct[fltr_dtc] #The weighted residual
-        chsq_dtc = sum(wrsd_dtc**2)
-    else:
-        chsq_dtc = 0.
-    if sum(fltr_non)>0:
-        unct_non = data[fltr_non]/3.0 #The nondetections are 3 sigma upper limits.
-        wrsd_non = (data[fltr_non] - model[fltr_non])/(unct_non * 2**0.5)
-        chsq_non = sum( -2.* np.log( 0.5 * (1 + erf(wrsd_non)) ) )
-    else:
-        chsq_non = 0.
-    chsq = chsq_dtc + chsq_non
-    return chsq
-"""
-
 def ChiSq(data, model, unct=None, flag=None):
     '''
     This is a generalized chi-square function that allows y to be upperlimits.
