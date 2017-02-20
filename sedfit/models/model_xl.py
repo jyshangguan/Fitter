@@ -50,7 +50,7 @@ def Dust_Emission(T, Md, kappa, wave, DL, z, frame="rest"):
     de = (1 + z)**idx * (Md * Msun) * bb * kappa / (DL * Mpc)**2 * 1e26 #Unit: mJy
     return de
 
-fp = open(template_path+"dust_grain_kdt.tmplt", "r")
+fp = open(template_path+"dust_xl_kdt.tmplt", "r")
 grainModel = pickle.load(fp)
 fp.close()
 #print grainModel["readMe"]
