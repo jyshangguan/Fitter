@@ -236,8 +236,8 @@ def logLFunc_gp(params, data, model):
         fltr_non = ePht < 0 #Find those non-detections
         fltr_det = ePht >= 0 #Find those detections
         flag = np.zeros_like(yPht)
-        flag[fltr_non] = 1
-        ePht[fltr_non] = yPht[fltr_non] / 3.0
+        flag[fltr_non] = 1 #Generate the flag of upperlimits.
+        ePht[fltr_non] = yPht[fltr_non] / 3.0 #In our data, the upperlimits are 3sigma.
         sPht = np.sqrt(ePht**2 + (yPhtModel * f)**2)
         lnlPht = -0.5 * ChiSq(yPht, yPhtModel, sPht, flag)
     else:
