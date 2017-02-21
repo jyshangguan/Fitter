@@ -460,6 +460,7 @@ def SED_select_band(sed, bandList_use=[], bandList_ignore=[], silent=True):
     wave  = []
     flux  = []
     sigma = []
+    band  = []
     if not len(bandList_use):
         bandList_use = list(sed[3])
     for bn in bandList_ignore:
@@ -468,14 +469,19 @@ def SED_select_band(sed, bandList_use=[], bandList_ignore=[], silent=True):
         else:
             if not silent:
                 print("Warning: Band {0} is not included in the SED.".format(bn))
-    if len(bandList_use) == 0:
-        raise RuntimeError("There is no band in use!")
     for bn in bandList_use:
         idx = sed[3].index(bn)
-        wave.append(sed[0][idx])
-        flux.append(sed[1][idx])
-        sigma.append(sed[2][idx])
-    sed_select = (wave, flux, sigma, bandList_use)
+        if np.isnan(sed[1][idx]*sed[2][idx]):
+            if not silent:
+                print("Warning: Band {0} contains bad data!".format(bn))
+        else:
+            wave.append(sed[0][idx])
+            flux.append(sed[1][idx])
+            sigma.append(sed[2][idx])
+            band.append(sed[3][idx])
+    if len(band) == 0:
+        raise RuntimeError("There is no band in use!")
+    sed_select = (wave, flux, sigma, band)
     return sed_select
 #Func_end
 
@@ -554,15 +560,16 @@ def SED_to_obsframe(sed, redshift):
 #Func_end
 
 if __name__ == "__main__":
-    wave = np.arange(8)
-    flux = np.arange(8)
-    sigma = np.arange(8)
-    band = (2 * np.arange(8)).astype("S")
+    wave = np.arange(8, dtype="float")
+    flux = np.arange(8, dtype="float")
+    sigma = np.arange(8, dtype="float")
+    band = (np.arange(8)).astype("S")
+    flux[4] = np.nan
     print band
     bandList_use = []
-    bandList_ignore = ["10", "12"]
+    bandList_ignore = ["1", "6"]
     sed = (list(wave), list(flux), list(sigma), list(band))
-    sed_select = SED_select_band(sed, bandList_use, bandList_ignore)
+    sed_select = SED_select_band(sed, bandList_use, bandList_ignore, False)
     sed_rest = SED_to_restframe(sed_select, 1.0)
     print sed
     print sed_select
