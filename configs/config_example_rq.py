@@ -14,7 +14,7 @@ sedName  = "2M&W&H"
 spcName  = "IRS"
 dataDict = {
     "bandList_use": [],
-    "bandList_ignore":["w3", "w4"],
+    "bandList_ignore":["WISE_w3", "WISE_w4"],
     "frame": "obs",
 }
 
