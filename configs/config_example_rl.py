@@ -14,7 +14,7 @@ sedName  = "Phot"
 spcName  = "IRS"
 dataDict = {
     "bandList_use": [],
-    "bandList_ignore":["WIES_w3", "WIES_w4"],
+    "bandList_ignore":["WISE_w3", "WISE_w4"],
     "frame": "obs",
 }
 
