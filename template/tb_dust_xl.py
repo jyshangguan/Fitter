@@ -8,7 +8,7 @@ from scipy.interpolate import splrep, splev
 from sedfit.fitter.template import Template
 
 modelDir = "/Users/jinyi/Work/mcmc/Fitter/template/grain_models/crosec/"
-silNameList = ["asil", "amo4", "pyr7"]
+silNameList = ["DL84", "amo4", "pyr7"]
 graNameList = ["grap"]
 silTList = np.arange(len(silNameList)) #The types of silicate dust.
 graTList = np.arange(len(graNameList)) #The types of graphite dust.
@@ -134,7 +134,7 @@ for nsil in silTList:
 plt.xscale("log")
 plt.yscale("log")
 #plt.legend(loc="best", fontsize=10)
-plt.title("{0}".format("Astronomy Silicate"), fontsize=24)
+plt.title("{0}".format("Silicate"), fontsize=24)
 #plt.savefig("dust_sil.png")
 plt.show()
 #"""
