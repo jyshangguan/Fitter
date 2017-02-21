@@ -12,7 +12,7 @@ chains*/*
 template/grain_models/*
 
 #Python auxillary files
-bak/*
+bak*
 *.pyc
 *.hdf5
 input_*.py
