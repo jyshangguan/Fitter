@@ -59,6 +59,29 @@ def BC03(logMs, age, DL, wave, z, frame="rest", t=bc03, waveLim=waveLim):
     fnu = (1.0 + z)**idx * flux * 10**logMs / (4 * np.pi * (DL * Mpc)**2) * mJy
     return fnu
 
+def BC03_PosPar(logMs, age, t=bc03):
+    """
+    Find the position of the parameters on the discrete grid.
+
+    Parameters
+    ----------
+    logMs : float
+        The log of the stellar mass, unit: Msun.
+    age : float
+        The age of the stellar population, unit: Gyr.
+
+    Returns
+    -------
+    parDict : dict
+        The dict of the parameters.
+    """
+    age_d = t.get_nearestParameters([age])
+    parDict = {
+        "logMs": logMs,
+        "age": age
+    }
+    return parDict
+
 #Func_bgn:
 #-------------------------------------#
 #   Created by SGJY, May. 3, 2016     #

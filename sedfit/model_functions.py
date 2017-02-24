@@ -1,6 +1,6 @@
 import numpy as np
 from collections import OrderedDict
-from models.model_bc03 import BC03
+from models.model_bc03 import BC03, BC03_PosPar
 from models.model_dl07 import DL07, DL07_PosPar
 import models.model_analyticals as ma
 from models.model_xl import Torus_Emission, Torus_Emission_PosPar
