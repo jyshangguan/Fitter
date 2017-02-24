@@ -1,63 +1,98 @@
 import numpy as np
-import cPickle as pickle
-from ..fitter.template import Template
-from ..dir_list import template_path
 
 Msun = 1.9891e33 #unit: gram
 Mpc = 3.08567758e24 #unit: cm
 mJy = 1e26 #unit: erg/s/cm^2/Hz
 
-fp = open(template_path+"bc03_kdt.tmplt")
-tp_bc03 = pickle.load(fp)
-fp.close()
-bc03 = Template(**tp_bc03)
 waveLim = [1e-2, 1e3]
-def BC03(logMs, age, DL, wave, z, frame="rest", t=bc03, waveLim=waveLim):
+class BC03_Template(object):
     """
     This function call the interpolated BC03 template to generate the stellar
     emission SED with the given parameters.
-
-    Parameters
-    ----------
-    logMs : float
-        The log10 of stellar mass with the unit solar mass.
-    age : float
-        The age of the stellar population with the unit Gyr.
-    DL : float
-        The luminosity distance with the unit Mpc.
-    wave : float array
-        The wavelength of the SED.
-    z : float
-        The redshift.
-    frame : string
-        "rest" for the rest frame SED and "obs" for the observed frame.
-    t : Template class
-        The interpolated BC03 template.
-    waveLim : list
-        The min and max of the wavelength covered by the template.
-
-    Returns
-    -------
-    fnu : float array
-        The flux density of the calculated SED with the unit erg/s/cm^2/Hz.
-
-    Notes
-    -----
-    None.
     """
-    flux = np.zeros_like(wave)
-    fltr = (wave > waveLim[0]) & (wave < waveLim[1])
-    if np.sum(fltr) == 0:
-        return np.zeros_like(wave)
-    flux[fltr] = t(wave[fltr], [age])
-    if frame == "rest":
-        idx = 2.0
-    elif frame == "obs":
-        idx = 1.0
-    else:
-        raise ValueError("The frame '{0}' is not recognised!".format(frame))
-    fnu = (1.0 + z)**idx * flux * 10**logMs / (4 * np.pi * (DL * Mpc)**2) * mJy
-    return fnu
+
+    def __init__(self, t):
+        """
+        Set the template for the function to use.
+
+        Parameters
+        ----------
+        t : Template class
+            The interpolated BC03 template.
+
+        Returns
+        -------
+        None.
+        """
+        self.__template = t
+
+    def __call__(self, logMs, age, DL, wave, z, frame="rest", waveLim=waveLim):
+        """
+        This function call the interpolated BC03 template to generate the stellar
+        emission SED with the given parameters.
+
+        Parameters
+        ----------
+        logMs : float
+            The log10 of stellar mass with the unit solar mass.
+        age : float
+            The age of the stellar population with the unit Gyr.
+        DL : float
+            The luminosity distance with the unit Mpc.
+        wave : float array
+            The wavelength of the SED.
+        z : float
+            The redshift.
+        frame : string
+            "rest" for the rest frame SED and "obs" for the observed frame.
+        waveLim : list
+            The min and max of the wavelength covered by the template.
+
+        Returns
+        -------
+        fnu : float array
+            The flux density of the calculated SED with the unit erg/s/cm^2/Hz.
+
+        Notes
+        -----
+        None.
+        """
+        flux = np.zeros_like(wave)
+        fltr = (wave > waveLim[0]) & (wave < waveLim[1])
+        if np.sum(fltr) == 0:
+            return np.zeros_like(wave)
+        flux[fltr] = self.__template(wave[fltr], [age])
+        if frame == "rest":
+            idx = 2.0
+        elif frame == "obs":
+            idx = 1.0
+        else:
+            raise ValueError("The frame '{0}' is not recognised!".format(frame))
+        fnu = (1.0 + z)**idx * flux * 10**logMs / (4 * np.pi * (DL * Mpc)**2) * mJy
+        return fnu
+
+    def discretize_parameters(self, logMs, age):
+        """
+        Find the discretized parameters with the template according to input values.
+
+        Parameters
+        ----------
+        logMs : float
+            The log10 of stellar mass with the unit solar mass.
+        age : float
+            The age of the stellar population with the unit Gyr.
+
+        Returns
+        -------
+        parDict : dict
+            The dict of the parameters of the template w.r.t the input values.
+        """
+        age_d = self.__template.get_nearestParameters([age])[0]
+        parDict = {
+            "logMs": logMs,
+            "age": age_d
+        }
+        return parDict
 
 #Func_bgn:
 #-------------------------------------#
@@ -175,3 +210,24 @@ def Stellar_SED_scale(logMs, flux_star_1Msun, wave):
         raise ValueError("The input wavelength is incorrect!")
     return flux
 #Func_end
+
+if __name__ == "__main__":
+    import cPickle as pickle
+    import matplotlib.pyplot as plt
+    from sedfit.fitter.template import Template
+    from sedfit.dir_list import template_path
+
+    fp = open(template_path+"bc03_kdt.tmplt")
+    tp_bc03 = pickle.load(fp)
+    fp.close()
+    bc03 = Template(**tp_bc03)
+    wave = 10**np.linspace(-1, 3, 1000)
+    BC03 = BC03_Template(bc03)
+    print bc03.get_modelInfo()
+    flux = BC03(9, 2.456, 50, wave, 0.001)
+    print BC03.discretize_parameters(9, 2.456)
+    plt.plot(wave, flux)
+    plt.xscale("log")
+    plt.yscale("log")
+    plt.ylim([5e-4, 1e1])
+    plt.show()
