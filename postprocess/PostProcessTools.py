@@ -7,15 +7,51 @@ ls_mic = 2.99792458e14 #unit: micron/s
 Mpc = 3.08567758e24 #unit: cm
 mJy = 1e26 #unit: erg/s/cm^2/Hz
 
-def AddDict(targetDict, quantName, quant):
+def AddDict(targetDict, quantName, quant, nFillPar=None):
     """
-    To add a quantity into the target dict.
+    To add a quantity into the target dict. If there is a parameter omitted
+    before, we need to fill the list with nan before the add item.
     """
+    #->If the parameter is added before.
     if quantName in targetDict.keys():
+        #print "No.{0}: {1} is there!".format(nFillPar, quantName)
         targetDict[quantName].append(quant)
-    else:
-        targetDict[quantName] = [quant]
+    else:#->If the parameter is not add before.
+        #print "No.{0}: {1} is not there!".format(nFillPar, quantName)
+        if (nFillPar is None) or (nFillPar == 0):#->If no parameter possibly omitted.
+            targetDict[quantName] = [quant]
+        else:#->If there is parameter omitted.
+            #print "Add nan to {0} for No.{1} source!".format(quantName, nFillPar)
+            ngap = nFillPar #->Find how many items are omitted.
+            #->Add the items that a omitted.
+            parList = [np.nan for loop in range(ngap)]
+            #->Add the current item.
+            parList.append(quant)
+            targetDict[quantName] = parList
     return None
+
+def MatchDict(targetDict):
+    """
+    To match the lengths of the lists in the dict by filling them with nan.
+    """
+    lmin = np.inf
+    lmax = -1
+    for quantName in targetDict.keys():
+        lq = len(targetDict[quantName])
+        if lq > lmax:
+            lmax = lq
+        if lq < lmin:
+            lmin = lq
+    ldiff = lmax-lmin
+    if ldiff > 1:
+        raise ValueError("The length difference ({0}) is larger than 1!".format(ldiff))
+    for quantName in targetDict.keys():
+        parList = targetDict[quantName]
+        if len(parList) < lmax:
+            parList.append(np.nan)
+    return None
+
+
 
 def parStatistics(ppfunc, nSamples, ps, fargs=[], fkwargs={}):
     """
