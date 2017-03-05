@@ -22,7 +22,7 @@ func_total  = interp1d(wavelength, flux_total)
 func_clumpy = interp1d(wavelength, flux_clumpy)
 
 waveLim = [1e-1, 1e3]
-def Torus_Template(logLtorus, DL, wave, z, frame="rest", t="total", waveLim=waveLim):
+def Torus_Template(logLtorus, DL, wave, z, frame="rest", ttype="total", waveLim=waveLim):
     """
     Calculate the torus emission with the dust torus templates.
 
@@ -36,7 +36,7 @@ def Torus_Template(logLtorus, DL, wave, z, frame="rest", t="total", waveLim=wave
         The wavelength at which we want to calculate the flux, unit: micron.
     frame : string
         "rest" for the rest frame SED and "obs" for the observed frame.
-    t : string
+    ttype : string
         "total" for the CLUMPY+blackbody template and "clumpy" for CLUMPY template only.
     waveLim : list
         The min and max of the wavelength covered by the template.
@@ -54,9 +54,9 @@ def Torus_Template(logLtorus, DL, wave, z, frame="rest", t="total", waveLim=wave
     fltr = (wave > waveLim[0]) & (wave < waveLim[1])
     if np.sum(fltr) == 0:
         return np.zeros_like(wave)
-    if t == "total":
+    if ttype == "total":
         fluxFunc = func_total
-    elif t == "clumpy":
+    elif ttype == "clumpy":
         fluxFunc = func_clumpy
     else:
         raise ValueError("The template type ({0}) is not recognised!".format(t))
