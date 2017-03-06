@@ -120,6 +120,14 @@ def Torus_Emission_PosPar(typeSil, size, T1Sil, T2Sil, logM1Sil, logM2Sil,
         "typeSil": nParSil[0],
         "typeGra": nParGra[0],
         "size": nParSil[1],
+        "T1Sil": T1Sil,
+        "T2Sil": T2Sil,
+        "logM1Sil": logM1Sil,
+        "logM2Sil": logM2Sil,
+        "T1Gra": T1Gra,
+        "T2Gra": T2Gra,
+        "R1G2S": R1G2S,
+        "R2G2S": R2G2S
     }
     return parDict
 

@@ -1,10 +1,11 @@
 import numpy as np
 from collections import OrderedDict
-from models.model_bc03 import BC03
+from models.model_bc03 import BC03, BC03_PosPar
 from models.model_dl07 import DL07, DL07_PosPar
 import models.model_analyticals as ma
 from models.model_xl import Torus_Emission, Torus_Emission_PosPar
 from models.model_clumpy import CLUMPY_intp
+from models.model_torus_template import Torus_Template
 from models.model_pah import pah
 #CLUMPY_intp = None
 
@@ -92,5 +93,11 @@ funcLib = {
         "x_name": "wave",
         "param_fit": ["logLpah"],
         "param_add": ["t", "DL", "z", "frame", "waveLim"]
-    }
+    },
+    "Torus_Template": {
+        "function": Torus_Template,
+        "x_name": "wave",
+        "param_fit": ["logLtorus"],
+        "param_add": ["DL", "z", "frame", "ttype", "waveLim"]
+    },
 }

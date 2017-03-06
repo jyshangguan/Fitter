@@ -6,6 +6,7 @@ from ..dir_list import template_path
 Msun = 1.9891e33 #unit: gram
 Mpc = 3.08567758e24 #unit: cm
 mJy = 1e26 #unit: erg/s/cm^2/Hz
+pi  = np.pi
 
 fp = open(template_path+"bc03_kdt.tmplt")
 tp_bc03 = pickle.load(fp)
@@ -56,8 +57,31 @@ def BC03(logMs, age, DL, wave, z, frame="rest", t=bc03, waveLim=waveLim):
         idx = 1.0
     else:
         raise ValueError("The frame '{0}' is not recognised!".format(frame))
-    fnu = (1.0 + z)**idx * flux * 10**logMs / (4 * np.pi * (DL * Mpc)**2) * mJy
+    fnu = (1.0 + z)**idx * flux * 10**logMs / (4 * pi * (DL * Mpc)**2) * mJy
     return fnu
+
+def BC03_PosPar(logMs, age, t=bc03):
+    """
+    Find the position of the parameters on the discrete grid.
+
+    Parameters
+    ----------
+    logMs : float
+        The log of the stellar mass, unit: Msun.
+    age : float
+        The age of the stellar population, unit: Gyr.
+
+    Returns
+    -------
+    parDict : dict
+        The dict of the parameters.
+    """
+    age_d = t.get_nearestParameters([age])
+    parDict = {
+        "logMs": logMs,
+        "age": age
+    }
+    return parDict
 
 #Func_bgn:
 #-------------------------------------#

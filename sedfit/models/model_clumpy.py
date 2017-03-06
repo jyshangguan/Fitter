@@ -50,7 +50,7 @@ def CLUMPY_intp(logL, i, tv, q, N0, sigma, Y, wave, DL, z, frame="rest", t=ip, w
     wave : float array
         The wavelength at which we want to calculate the flux.
     DL : float
-        The luminosity distance
+        The luminosity distance, unit: Mpc.
     z : float
         The redshift.
     frame : string
@@ -63,7 +63,7 @@ def CLUMPY_intp(logL, i, tv, q, N0, sigma, Y, wave, DL, z, frame="rest", t=ip, w
     Returns
     -------
     flux : array of float
-        The flux density (F_nu) from the model.
+        The flux density (F_nu) from the model, unit: mJy.
 
     Notes
     -----
