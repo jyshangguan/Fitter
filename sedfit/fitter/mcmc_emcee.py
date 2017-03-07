@@ -593,7 +593,7 @@ class EmceeModel(object):
             sedModel.updateParList(truths)
             sedModel.plot(FigAx=(fig, ax), colorList=cList, DisplayPars=False)
         #->Setup the figure
-        ax.set_xlabel(r"$\mathrm{Wavelength} \, (\mu m)$", fontsize=24)
+        ax.set_xlabel(r"$\mathrm{Wavelength} \, \mathrm{(\mu m)}$", fontsize=24)
         ax.set_ylabel(r"$f_\nu \, (\mathrm{mJy})$", fontsize=24)
         if xlim is None:
             xmin = min(waveModel)
