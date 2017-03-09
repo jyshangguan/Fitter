@@ -546,33 +546,19 @@ class EmceeModel(object):
             plt.savefig(filename, bbox_inches="tight")
             plt.close()
 
-    def plot_fit(self, ps=None, filename=None, nSamples=100, truths=None, FigAx=None, xlim=None, **kwargs):
+    def plot_fit(self, ps=None, filename=None, nSamples=100, truths=None, FigAx=None,
+                 xlim=None, ylim=None, **kwargs):
         """
         Plot the best-fit model and the data.
         """
         sedData   = self.__data
         sedModel  = self.__model
-        pcnt = self.p_median(ps, **kwargs)
-        waveModel = sedModel.get_xList()
         #-->Plot the SED data
         fig, ax = sedData.plot_sed(FigAx=FigAx)
+        #-->Plot the models
         cList = ["g", "r", "m", "b", "y", "c"]
         ncolor = len(cList)
-        #->Plot the best-fit model
-        sedModel.updateParList(pcnt)
-        ycnt = sedModel.combineResult() #The best-fit model
-        yPhtC = np.array( sedData.model_pht(waveModel, ycnt) ) #The best-fit band average flux density
-        cKwargs = {"linestyle":"--"}
-        tKwargs = {
-            "linestyle": "--",
-            "color": "brown",
-            "linewidth": 3.0
-            }
-        sedModel.plot(FigAx=(fig, ax), colorList=cList, DisplayPars=False,
-                      cKwargs=cKwargs, tKwargs=tKwargs)
-        ax.plot(sedData.get_dsList("x"), yPhtC, marker="s", color="r", mfc="none",
-                mec="r", mew=1.5, alpha=0.5, linestyle="none", label="Model")
-        #->Plot the variability
+        #->Plot the sampled model variability
         if ps is None:
             ps = self.posterior_sample(**kwargs)
         cKwargs = {
@@ -588,6 +574,23 @@ class EmceeModel(object):
             sedModel.updateParList(pars)
             sedModel.plot(FigAx=(fig, ax), colorList=cList, DisplayPars=False,
                           cKwargs=cKwargs, tKwargs=tKwargs, useLabel=False)
+        #->Plot the best-fit model
+        #Plot the data and model photometric points on the top of lines.
+        pcnt = self.p_median(ps, **kwargs)
+        waveModel = sedModel.get_xList()
+        sedModel.updateParList(pcnt)
+        ycnt = sedModel.combineResult() #The best-fit model
+        yPhtC = np.array( sedData.model_pht(waveModel, ycnt) ) #The best-fit band average flux density
+        cKwargs = {"linestyle":"--"}
+        tKwargs = {
+            "linestyle": "--",
+            "color": "brown",
+            "linewidth": 3.0
+            }
+        sedModel.plot(FigAx=(fig, ax), colorList=cList, DisplayPars=False,
+                      cKwargs=cKwargs, tKwargs=tKwargs)
+        ax.plot(sedData.get_dsList("x"), yPhtC, marker="s", color="k", mfc="none",
+                mec="k", mew=1.5, alpha=0.8, linestyle="none", label="Model")
         #->Plot the truth model if provided
         if not truths is None:
             sedModel.updateParList(truths)
@@ -600,10 +603,14 @@ class EmceeModel(object):
             xmax = max(waveModel)
             xlim = [xmin, xmax]
         ax.set_xlim(xlim)
-        yData = sedData.get_List("y")
-        ymin = 10**(np.floor(np.log10(min(yData))) - 2)
-        ymax = 10**np.ceil(np.log10( max([max(yData), max(ycnt)]) ))
-        ax.set_ylim([ymin, ymax])
+        if ylim is None:
+            yData = sedData.get_List("y")
+            ymin = 10**(np.floor(np.log10(min(yData))) - 2)
+            ymax = 10**np.ceil(np.log10( max([max(yData), max(ycnt)]) ))
+            ylim = [ymin, ymax]
+        else:
+            ymin, ymax = ylim
+        ax.set_ylim(ylim)
         #->Set the yaxis tick range
         yTickRange = ax.yaxis.get_majorticklocs()
         yTickRange = yTickRange[(yTickRange >= ymin) & (yTickRange <= ymax)]

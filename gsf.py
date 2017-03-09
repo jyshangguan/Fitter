@@ -1,11 +1,14 @@
 from __future__ import print_function
 import matplotlib
+import matplotlib.pyplot as plt
 matplotlib.use("Agg")
+matplotlib_version = eval(matplotlib.__version__.split(".")[0])
+if matplotlib_version > 1:
+    plt.style.use("classic")
 import types
 import numpy as np
 import importlib
 from time import time
-import matplotlib.pyplot as plt
 import cPickle as pickle
 import sedfit.SED_Toolkit as sedt
 from sedfit.fitter import basicclass as bc
@@ -285,23 +288,27 @@ def fitter(targname, redshift, sedPck, config, Dist=None):
         fig.set_size_inches(10, 10)
         em.plot_fit_spec(truths=parTruth, FigAx=(fig, axarr[0]), nSamples=100,
                          burnin=burnIn, select=True, fraction=fraction)
-        em.plot_fit(truths=parTruth, FigAx=(fig, axarr[1]), nSamples=100,
-                    burnin=burnIn, select=True, fraction=fraction)
+        xmin = np.min([np.min(sedwave), np.min(spcwave)]) * 0.9
+        xmax = np.max([np.max(sedwave), np.max(spcwave)]) * 1.1
+        xlim = [xmin, xmax]
+        ymin = np.min([np.min(sedflux), np.min(spcflux)]) * 0.5
+        ymax = np.max([np.max(sedflux), np.max(spcflux)]) * 2.0
+        ylim = [ymin, ymax]
+        em.plot_fit(truths=parTruth, FigAx=(fig, axarr[1]), xlim=xlim, ylim=ylim,
+                    nSamples=100, burnin=burnIn, select=True, fraction=fraction)
         axarr[0].set_xlabel("")
         axarr[0].set_ylabel("")
         axarr[0].text(0.05, 0.8, targname,
                       verticalalignment='bottom', horizontalalignment='left',
                       transform=axarr[0].transAxes, fontsize=24,
                       bbox=dict(facecolor='white', alpha=0.5, edgecolor="none"))
-        plt.savefig("{0}_result.png".format(targname), bbox_inches="tight")
-        plt.close()
     else:
         fig = plt.figure(figsize=(7, 7))
         ax = plt.gca()
         em.plot_fit(truths=parTruth, FigAx=(fig, ax), nSamples=100,
                     burnin=burnIn, select=True, fraction=fraction)
-        plt.savefig("{0}_result.png".format(targname), bbox_inches="tight")
-        plt.close()
+    plt.savefig("{0}_result.png".format(targname), bbox_inches="tight")
+    plt.close()
     #->Plot the posterior probability distribution
     em.plot_corner(filename="{0}_triangle.png".format(targname), burnin=burnIn,
                    nuisance=nuisance, truths=parTruth, select=True, fraction=fraction,
