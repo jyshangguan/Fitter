@@ -2,8 +2,8 @@
 
 from __future__ import print_function
 import matplotlib
-import matplotlib.pyplot as plt
 matplotlib.use("Agg")
+import matplotlib.pyplot as plt
 matplotlib_version = eval(matplotlib.__version__.split(".")[0])
 if matplotlib_version > 1:
     plt.style.use("classic")
