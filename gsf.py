@@ -283,17 +283,17 @@ def fitter(targname, redshift, sedPck, config, Dist=None):
     #->Plot the chain of the final run
     em.plot_chain(filename="{0}_chain.png".format(targname), truths=parTruth)
     #->Plot the SED fitting result figure
+    xmin = np.min([np.min(sedwave), np.min(spcwave)]) * 0.9
+    xmax = np.max([np.max(sedwave), np.max(spcwave)]) * 1.1
+    xlim = [xmin, xmax]
+    ymin = np.min([np.min(sedflux), np.min(spcflux)]) * 0.5
+    ymax = np.max([np.max(sedflux), np.max(spcflux)]) * 2.0
+    ylim = [ymin, ymax]
     if sedData.check_csData():
         fig, axarr = plt.subplots(2, 1)
         fig.set_size_inches(10, 10)
         em.plot_fit_spec(truths=parTruth, FigAx=(fig, axarr[0]), nSamples=100,
                          burnin=burnIn, select=True, fraction=fraction)
-        xmin = np.min([np.min(sedwave), np.min(spcwave)]) * 0.9
-        xmax = np.max([np.max(sedwave), np.max(spcwave)]) * 1.1
-        xlim = [xmin, xmax]
-        ymin = np.min([np.min(sedflux), np.min(spcflux)]) * 0.5
-        ymax = np.max([np.max(sedflux), np.max(spcflux)]) * 2.0
-        ylim = [ymin, ymax]
         em.plot_fit(truths=parTruth, FigAx=(fig, axarr[1]), xlim=xlim, ylim=ylim,
                     nSamples=100, burnin=burnIn, select=True, fraction=fraction)
         axarr[0].set_xlabel("")
@@ -305,8 +305,8 @@ def fitter(targname, redshift, sedPck, config, Dist=None):
     else:
         fig = plt.figure(figsize=(7, 7))
         ax = plt.gca()
-        em.plot_fit(truths=parTruth, FigAx=(fig, ax), nSamples=100,
-                    burnin=burnIn, select=True, fraction=fraction)
+        em.plot_fit(truths=parTruth, FigAx=(fig, ax), xlim=xlim, ylim=ylim,
+                    nSamples=100, burnin=burnIn, select=True, fraction=fraction)
     plt.savefig("{0}_result.png".format(targname), bbox_inches="tight")
     plt.close()
     #->Plot the posterior probability distribution
