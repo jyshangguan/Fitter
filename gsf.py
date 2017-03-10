@@ -298,15 +298,17 @@ def fitter(targname, redshift, sedPck, config, Dist=None):
                     nSamples=100, burnin=burnIn, select=True, fraction=fraction)
         axarr[0].set_xlabel("")
         axarr[0].set_ylabel("")
-        axarr[0].text(0.05, 0.8, targname,
+        axarr[0].text(0.05, 0.8, targname, transform=axarr[0].transAxes, fontsize=24,
                       verticalalignment='bottom', horizontalalignment='left',
-                      transform=axarr[0].transAxes, fontsize=24,
                       bbox=dict(facecolor='white', alpha=0.5, edgecolor="none"))
     else:
         fig = plt.figure(figsize=(7, 7))
         ax = plt.gca()
         em.plot_fit(truths=parTruth, FigAx=(fig, ax), xlim=xlim, ylim=ylim,
                     nSamples=100, burnin=burnIn, select=True, fraction=fraction)
+        ax.text(0.05, 0.8, targname, transform=ax.transAxes, fontsize=24,
+                verticalalignment='bottom', horizontalalignment='left',
+                bbox=dict(facecolor='white', alpha=0.5, edgecolor="none"))
     plt.savefig("{0}_result.png".format(targname), bbox_inches="tight")
     plt.close()
     #->Plot the posterior probability distribution
