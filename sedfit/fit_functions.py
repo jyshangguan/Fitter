@@ -50,7 +50,7 @@ def ChiSq(data, model, unct=None, flag=None):
         #Only the when the model is above the upperlimit, it contributes to the chi square.
         fltr =  model_non > data_non
         wrsd_non[fltr] = (model_non[fltr] - data_non[fltr]) / unct_non[fltr]
-        chsq_non = np.sum(wrsd_non**2) + np.sum( np.log(2 * np.pi * unct_non**2) )
+        chsq_non = np.sum(wrsd_non**2) + np.sum( np.log(2 * np.pi * unct_non[fltr]**2) )
     else:
         chsq_non = 0.
     chsq = chsq_dtc + chsq_non
