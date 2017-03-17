@@ -7,7 +7,7 @@ from matplotlib.ticker import MaxNLocator
 from scipy.stats import truncnorm
 from time import time
 
-from .. import fit_functions as sedff
+from .. import fit_functions_hgauss as sedff
 
 #The log_likelihood function
 lnlike = sedff.logLFunc
