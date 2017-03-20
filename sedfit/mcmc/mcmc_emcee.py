@@ -8,6 +8,7 @@ from scipy.stats import truncnorm
 from time import time
 
 from .. import fit_functions as sedff
+#from .. import fit_functions_erf as sedff
 
 #The log_likelihood function
 lnlike = sedff.logLFunc
@@ -614,7 +615,7 @@ class EmceeModel(object):
         #->Set the yaxis tick range
         yTickRange = ax.yaxis.get_majorticklocs()
         yTickRange = yTickRange[(yTickRange >= ymin) & (yTickRange <= ymax)]
-        ax.yaxis.set_ticks(yTickRange[1:-1])
+        #ax.yaxis.set_ticks(yTickRange[1:-1])
         ax.xaxis.set_tick_params(which="major", labelsize=18)
         ax.yaxis.set_tick_params(which="major", labelsize=18)
         ax.legend(loc="lower right", framealpha=0.3, fontsize=16)

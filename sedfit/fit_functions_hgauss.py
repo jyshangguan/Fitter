@@ -2,57 +2,8 @@ import numpy as np
 from scipy.special import erf
 import george
 from george import kernels
-sqrt2 = np.sqrt(2)
-PI2 = 2. * np.pi
 
-#-->There are three ways to define the chi-square function to consider the
-#upperlimits. The ChiSq functions are defined as (-2)*lnLikelihood.
-#->The ChiSq_erf is preferred since it smoothly change the chis quare and recently
-#many works use it.
-def ChiSq_erf(data, model, unct=None, flag=None):
-    '''
-    This function calculate the Chi square of the observed data and
-    the model. The upper limits are properly deal with using the method
-    mentioned by Sawicki (2012).
-
-    Parameters
-    ----------
-    data : float array
-        The observed data.
-    model : float array
-        The model.
-    unct : float array
-        The uncertainties.
-
-    Returns
-    -------
-    chsq : float
-        The Chi square
-
-    Notes
-    -----
-    None.
-    '''
-    if unct is None:
-        unct = np.ones_like(data)
-    if flag is None:
-        flag = np.zeros_like(data)
-    fltr_dtc = flag == 0
-    fltr_non = flag == 1
-    if np.sum(fltr_dtc)>0:
-        wrsd_dtc = (data[fltr_dtc] - model[fltr_dtc])/unct[fltr_dtc] #The weighted residual
-        chsq_dtc = np.sum(wrsd_dtc**2) + np.sum( np.log(PI2 * unct[fltr_dtc]**2) )
-    else:
-        chsq_dtc = 0.
-    if np.sum(fltr_non)>0:
-        wrsd_non = (data[fltr_non] - model[fltr_non])/(unct[fltr_non] * sqrt2)
-        chsq_non = -2.* np.sum( np.log( 0.5 * (1 + erf(wrsd_non)) ) )
-    else:
-        chsq_non = 0.
-    chsq = chsq_dtc + chsq_non
-    return chsq
-
-def ChiSq_hg(data, model, unct=None, flag=None):
+def ChiSq(data, model, unct=None, flag=None):
     '''
     This is a generalized chi-square function that allows y to be upperlimits.
     It contributes zero to the chi square that the model is below the upperlimits,
@@ -88,7 +39,7 @@ def ChiSq_hg(data, model, unct=None, flag=None):
     fltr_non = flag == 1
     if np.sum(fltr_dtc)>0:
         wrsd_dtc = (data[fltr_dtc] - model[fltr_dtc])/unct[fltr_dtc] #The weighted residual
-        chsq_dtc = np.sum(wrsd_dtc**2) + np.sum( np.log(PI2 * unct[fltr_dtc]**2) )
+        chsq_dtc = np.sum(wrsd_dtc**2) + np.sum( np.log(2 * np.pi * unct[fltr_dtc]**2) )
     else:
         chsq_dtc = 0.
     if np.sum(fltr_non)>0:
@@ -99,62 +50,12 @@ def ChiSq_hg(data, model, unct=None, flag=None):
         #Only the when the model is above the upperlimit, it contributes to the chi square.
         fltr =  model_non > data_non
         wrsd_non[fltr] = (model_non[fltr] - data_non[fltr]) / unct_non[fltr]
-        chsq_non = np.sum(wrsd_non**2.) + np.sum( np.log(PI2 * unct_non[fltr]**2.) )
+        chsq_non = np.sum(wrsd_non**2) + np.sum( np.log(2 * np.pi * unct_non[fltr]**2) )
     else:
         chsq_non = 0.
     chsq = chsq_dtc + chsq_non
     return chsq
 
-def ChiSq_af(data, model, unct=None, flag=None):
-    '''
-    This is a generalized chi-square function that allows y to be upperlimits.
-    It consider the upperlimits with the method by the AGN fitter (Calistro Rivera et al. 2016).
-
-    Parameters
-    ----------
-    data : float array
-        The observed data and upperlimits.
-    model : float array
-        The model.
-    unct : float array or Nobe by default
-        The uncertainties.
-    flag : float array or None by default
-        The flag of upperlimits, 0 for detection and 1 for upperlimits.
-
-    Returns
-    -------
-    chsq : float
-        The Chi square
-
-    Notes
-    -----
-    This chi-square form consider the x and y asymmetrically except for some special
-    situations.
-    '''
-    if unct is None:
-        unct = np.ones_like(data)
-    if flag is None:
-        flag = np.zeros_like(data)
-    fltr_dtc = flag == 0
-    fltr_non = flag == 1
-    if np.sum(fltr_dtc)>0:
-        wrsd_dtc = (data[fltr_dtc] - model[fltr_dtc])/unct[fltr_dtc] #The weighted residual
-        chsq_dtc = np.sum(wrsd_dtc**2) + np.sum( np.log(PI2 * unct[fltr_dtc]**2) )
-    else:
-        chsq_dtc = 0.
-    if np.sum(fltr_non)>0:
-        data_non  = 0.5 * data[fltr_non]
-        model_non = model[fltr_non]
-        unct_non  = 0.5 * data[fltr_non]
-        #Only the when the model is above the upperlimit, it contributes to the chi square.
-        wrsd_non = (model_non - data_non) / unct_non
-        chsq_non = np.sum(wrsd_non**2.) + np.sum( np.log(PI2 * unct_non**2.) )
-    else:
-        chsq_non = 0.
-    chsq = chsq_dtc + chsq_non
-    return chsq
-
-ChiSq = ChiSq_erf
 #Model to data function#
 def Model2Data(sedModel, sedData):
     """
@@ -243,10 +144,10 @@ def logLFunc(params, data, model):
     y = np.array(data.get_List('y'))
     e = np.array(data.get_List('e'))
     ym = np.array(Model2Data(model, data))
-    fltr_non = e < 0 #Find those non-detections
-    flag = np.zeros_like(y)
-    flag[fltr_non] = 1 #Generate the flag of upperlimits.
-    logL = -0.5 * ChiSq(y, ym, e, flag)
+    #Calculate the log_likelihood, since only the chisq vary with the parameters,
+    #we ignore the rest of the constants in the logLikelihood.
+    logL = -0.5 * ChiSq(y, ym, e) #-0.5 * np.sum( np.log(2 * np.pi * e**2) ))
+    #print logL
     return logL
 
 #The log_likelihood function: for SED fitting using Gaussian process regression
@@ -289,6 +190,7 @@ def logLFunc_gp(params, data, model):
         f = np.exp(params[nParVary]) #The parameter to control the model incompleteness
         nParVary += 1
         fltr_non = ePht < 0 #Find those non-detections
+        fltr_det = ePht >= 0 #Find those detections
         flag = np.zeros_like(yPht)
         flag[fltr_non] = 1 #Generate the flag of upperlimits.
         ePht[fltr_non] = yPht[fltr_non] / 3.0 #In our data, the upperlimits are 3sigma.
@@ -307,4 +209,5 @@ def logLFunc_gp(params, data, model):
     else:
         lnlSpc = 0
     lnL = lnlPht + lnlSpc
+    #print lnL
     return lnL

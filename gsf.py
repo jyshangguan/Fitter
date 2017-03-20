@@ -12,7 +12,7 @@ from time import time
 import cPickle as pickle
 import sedfit.SED_Toolkit as sedt
 from sedfit.fitter import basicclass as bc
-from sedfit.fitter import mcmc_emcee as mcmc
+from sedfit.mcmc import mcmc_emcee as mcmc
 from sedfit import sedclass as sedsc
 from sedfit import model_functions as sedmf
 
@@ -181,47 +181,45 @@ def fitter(targname, redshift, sedPck, config, Dist=None):
     ################################################################################
     #                                   emcee                                      #
     ################################################################################
-    #Fit with MCMC#
-    #-------------#
-    emceeDict = config.emceeDict
-    imSampler = emceeDict["sampler"]
-    nwalkers  = emceeDict["nwalkers"]
-    iteration = emceeDict["iteration"]
-    iStep     = emceeDict["iter-step"]
-    ballR     = emceeDict["ball-r"]
-    ballT     = emceeDict["ball-t"]
-    rStep     = emceeDict["run-step"]
-    burnIn    = emceeDict["burn-in"]
-    thin      = emceeDict["thin"]
-    threads   = emceeDict["threads"]
-    printFrac = emceeDict["printfrac"]
     unctDict = config.unctDict
-    ppDict   = config.ppDict
-    psLow    = ppDict["low"]
-    psCenter = ppDict["center"]
-    psHigh   = ppDict["high"]
-    nuisance = ppDict["nuisance"]
-    fraction = ppDict["fraction"]
-
-
-    print("emcee Info:")
-    for keys in emceeDict.keys():
-        print("{0}: {1}".format(keys, emceeDict[keys]))
+    emceeDict = config.emceeDict
+    print("emcee setups:")
+    for keys in emceeDict["Setup"].keys():
+        print("{0}: {1}".format(keys, emceeDict["Setup"][keys]))
     print("#--------------------------------#")
-    #em = mcmc.EmceeModel(sedData, sedModel, modelUnct, imSampler)
-    em = mcmc.EmceeModel(sedData, sedModel, modelUnct, unctDict, imSampler)
-    if imSampler == "EnsembleSampler":
+    thin        = emceeDict["Setup"]["thin"]
+    threads     = emceeDict["Setup"]["threads"]
+    printFrac   = emceeDict["Setup"]["printfrac"]
+    psLow       = emceeDict["Setup"]["pslow"]
+    psCenter    = emceeDict["Setup"]["pscenter"]
+    psHigh      = emceeDict["Setup"]["pshigh"]
+
+    #Burn-in runs#
+    #------------#
+    print( "\n{:*^35}".format(" Burn-in Sampling ") )
+    for keys in emceeDict["Burnin"].keys():
+        print("{0}: {1}".format(keys, emceeDict["Burnin"][keys]))
+    print("#--------------------------------#")
+
+    SamplerType = emceeDict["Burnin"]["sampler"]
+    nwalkers    = emceeDict["Burnin"]["nwalkers"]
+    iteration   = emceeDict["Burnin"]["iteration"]
+    iStep       = emceeDict["Burnin"]["steps"]
+    ballR       = emceeDict["Burnin"]["ball-r"]
+    ballT       = emceeDict["Burnin"]["ball-t"]
+
+    em = mcmc.EmceeModel(sedData, sedModel, modelUnct, unctDict, SamplerType)
+    if SamplerType == "EnsembleSampler":
         p0 = [em.from_prior() for i in range(nwalkers)]
         sampler = em.EnsembleSampler(nwalkers, threads=threads)
-    elif imSampler == "PTSampler":
-        ntemps = emceeDict["ntemps"]
+    elif SamplerType == "PTSampler":
+        ntemps = emceeDict["Burnin"]["ntemps"]
         p0 = []
         for i in range(ntemps):
             p0.append([em.from_prior() for i in range(nwalkers)])
         sampler = em.PTSampler(ntemps, nwalkers, threads=threads)
 
     t0 = time()
-    #Burn-in iterations
     for i in range(iteration):
         print( "\n{:*^35}".format(" {0}th iteration ".format(i)) )
         em.run_mcmc(p0, iterations=iStep, printFrac=printFrac, thin=thin)
@@ -234,11 +232,30 @@ def fitter(targname, redshift, sedPck, config, Dist=None):
         ratio = ballR * ballT**i
         print("-- P0 ball radius ratio: {0:.3f}".format(ratio))
         p0 = em.p_ball(pmax, ratio=ratio)
+    del(em)
 
-    #Run MCMC
+    #Final runs#
+    #----------#
+    print( "\n{:*^35}".format(" Final Sampling ") )
+    for keys in emceeDict["Final"].keys():
+        print("{0}: {1}".format(keys, emceeDict["Final"][keys]))
+    print("#--------------------------------#")
+
+    SamplerType = emceeDict["Final"]["sampler"]
+    nwalkers    = emceeDict["Final"]["nwalkers"]
+    rStep       = emceeDict["Final"]["steps"]
+    ballR       = emceeDict["Final"]["ball-r"]
+    burnIn      = emceeDict["Final"]["burn-in"]
+
+    em = mcmc.EmceeModel(sedData, sedModel, modelUnct, unctDict, SamplerType)
+    if SamplerType == "EnsembleSampler":
+        sampler = em.EnsembleSampler(nwalkers, threads=threads)
+    elif SamplerType == "PTSampler":
+        ntemps = emceeDict["Final"]["ntemps"]
+        sampler = em.PTSampler(ntemps, nwalkers, threads=threads)
     #t0 = time()
     #print("[gsf test]: {0}".format(np.array(p0).shape))
-    print( "\n{:*^35}".format(" Final Sampling ") )
+    p0 = em.p_ball(pmax, ratio=ballR)
     em.run_mcmc(p0, iterations=rStep, printFrac=printFrac, thin=thin)
     em.diagnose()
     em.print_parameters(truths=parTruth, burnin=burnIn, low=psLow, center=psCenter, high=psHigh)
@@ -249,6 +266,13 @@ def fitter(targname, redshift, sedPck, config, Dist=None):
     ################################################################################
     #                                  Post process                                #
     ################################################################################
+    ppDict   = config.ppDict
+    psLow    = ppDict["low"]
+    psCenter = ppDict["center"]
+    psHigh   = ppDict["high"]
+    nuisance = ppDict["nuisance"]
+    fraction = ppDict["fraction"]
+
     dataPck = {
         "targname": targname,
         "redshift": redshift,

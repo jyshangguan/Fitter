@@ -73,7 +73,7 @@ class SedClass(bc.DataSet):
             self.dl = Dist
 
     def pht_plotter(self, wave, flux, sigma, flag, FigAx=None, linewidth='1.5',
-                    symbolColor='k', symbolSize=6, label=None, zorder=20, Quiet=True):
+                    symbolColor='k', symbolSize=6, label=None, zorder=4, Quiet=True):
         wave = np.array(wave)
         flux = np.array(flux)
         sigma = np.array(sigma)
@@ -144,7 +144,7 @@ class SedClass(bc.DataSet):
         return FigAx
 
     def spc_plotter(self, wave, flux, sigma, FigAx=None, linewidth=1.,
-                    color='grey', label=None, zorder=20, Quiet=True):
+                    color='grey', label=None, zorder=4, Quiet=True):
         if(len(wave) == 0):
             if Quiet is False:
                 print 'There is no data in the SED!'
