@@ -187,7 +187,6 @@ def fitter(targname, redshift, sedPck, config, Dist=None):
     for keys in emceeDict["Setup"].keys():
         print("{0}: {1}".format(keys, emceeDict["Setup"][keys]))
     print("#--------------------------------#")
-    thin        = emceeDict["Setup"]["thin"]
     threads     = emceeDict["Setup"]["threads"]
     printFrac   = emceeDict["Setup"]["printfrac"]
     psLow       = emceeDict["Setup"]["pslow"]
@@ -196,7 +195,7 @@ def fitter(targname, redshift, sedPck, config, Dist=None):
 
     #Burn-in runs#
     #------------#
-    print( "\n{:*^35}".format(" Burn-in Sampling ") )
+    print( "\n{:*^50}".format(" Burn-in Sampling ") )
     for keys in emceeDict["Burnin"].keys():
         print("{0}: {1}".format(keys, emceeDict["Burnin"][keys]))
     print("#--------------------------------#")
@@ -204,9 +203,8 @@ def fitter(targname, redshift, sedPck, config, Dist=None):
     SamplerType = emceeDict["Burnin"]["sampler"]
     nwalkers    = emceeDict["Burnin"]["nwalkers"]
     iteration   = emceeDict["Burnin"]["iteration"]
-    iStep       = emceeDict["Burnin"]["steps"]
+    thin        = emceeDict["Burnin"]["thin"]
     ballR       = emceeDict["Burnin"]["ball-r"]
-    ballT       = emceeDict["Burnin"]["ball-t"]
 
     em = mcmc.EmceeModel(sedData, sedModel, modelUnct, unctDict, SamplerType)
     if SamplerType == "EnsembleSampler":
@@ -220,32 +218,32 @@ def fitter(targname, redshift, sedPck, config, Dist=None):
         sampler = em.PTSampler(ntemps, nwalkers, threads=threads)
 
     t0 = time()
-    for i in range(iteration):
-        print( "\n{:*^35}".format(" {0}th iteration ".format(i)) )
-        em.run_mcmc(p0, iterations=iStep, printFrac=printFrac, thin=thin)
+    for i in range(len(iteration)):
+        steps = iteration[i]
+        print( "\n{:*^35}".format(" {0}th Burn-in ".format(i)) )
+        em.run_mcmc(p0, iterations=steps, printFrac=printFrac, thin=thin)
         em.diagnose()
         pmax = em.p_logl_max()
         em.print_parameters(truths=parTruth, burnin=0)
         em.plot_lnlike(filename="{0}_lnprob.png".format(targname), histtype="step")
-        print( "**Burn-in time ellapse: {0:.3f} hour".format( (time() - t0)/3600. ) )
+        print( "**Time ellapse: {0:.3f} hour".format( (time() - t0)/3600. ) )
         em.reset()
-        ratio = ballR * ballT**i
-        print("-- P0 ball radius ratio: {0:.3f}".format(ratio))
-        p0 = em.p_ball(pmax, ratio=ratio)
+        p0 = em.p_ball(pmax, ratio=ballR)
     del(em)
 
     #Final runs#
     #----------#
-    print( "\n{:*^35}".format(" Final Sampling ") )
+    print( "\n{:*^50}".format(" Final Sampling ") )
     for keys in emceeDict["Final"].keys():
         print("{0}: {1}".format(keys, emceeDict["Final"][keys]))
     print("#--------------------------------#")
 
     SamplerType = emceeDict["Final"]["sampler"]
     nwalkers    = emceeDict["Final"]["nwalkers"]
-    rStep       = emceeDict["Final"]["steps"]
-    ballR       = emceeDict["Final"]["ball-r"]
+    iteration   = emceeDict["Final"]["iteration"]
+    thin        = emceeDict["Final"]["thin"]
     burnIn      = emceeDict["Final"]["burn-in"]
+    ballR       = emceeDict["Final"]["ball-r"]
 
     em = mcmc.EmceeModel(sedData, sedModel, modelUnct, unctDict, SamplerType)
     if SamplerType == "EnsembleSampler":
@@ -255,12 +253,17 @@ def fitter(targname, redshift, sedPck, config, Dist=None):
         sampler = em.PTSampler(ntemps, nwalkers, threads=threads)
     #t0 = time()
     #print("[gsf test]: {0}".format(np.array(p0).shape))
-    p0 = em.p_ball(pmax, ratio=ballR)
-    em.run_mcmc(p0, iterations=rStep, printFrac=printFrac, thin=thin)
-    em.diagnose()
-    em.print_parameters(truths=parTruth, burnin=burnIn, low=psLow, center=psCenter, high=psHigh)
-    em.plot_lnlike(filename="{0}_lnprob.png".format(targname), histtype="step")
-    print( "**Fit time ellapse: {0:.3f} hour".format( (time() - t0)/3600. ) )
+    for i in range(len(iteration)):
+        steps = iteration[i]
+        print( "\n{:*^35}".format(" {0}th Final ".format(i)) )
+        em.reset()
+        p0 = em.p_ball(pmax, ratio=ballR) #->Initialize the walkers
+        em.run_mcmc(p0, iterations=steps, printFrac=printFrac, thin=thin)
+        em.diagnose()
+        pmax = em.p_logl_max()
+        em.print_parameters(truths=parTruth, burnin=burnIn, low=psLow, center=psCenter, high=psHigh)
+        em.plot_lnlike(filename="{0}_lnprob.png".format(targname), histtype="step")
+        print( "**Time ellapse: {0:.3f} hour".format( (time() - t0)/3600. ) )
 
 
     ################################################################################

@@ -352,6 +352,8 @@ class EmceeModel(object):
         elif self.__sampler == "PTSampler":
             chain = np.squeeze(sampler.chain[0, ...])
             lnprob = np.squeeze(sampler.lnprobability[0, :, -1])
+        if burnin > (chain.shape[1]/2.0):
+            raise ValueError("The burn-in length ({0}) is too long!".format(burnin))
         if select:
             lnpLim = np.percentile(lnprob, fraction)
             fltr = lnprob > lnpLim
