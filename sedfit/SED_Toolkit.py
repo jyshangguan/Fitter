@@ -514,6 +514,8 @@ def SED_to_restframe(sed, redshift):
     wave  = np.array(sed[0])
     flux  = np.array(sed[1])
     sigma = np.array(sed[2])
+    fltr  = sigma == -1
+    sigma[fltr] = sigma[fltr] / (1 + redshift)
     sed_rest = list(sed)
     sed_rest[0] = list( wave / (1 + redshift) )
     sed_rest[1] = list( flux * (1 + redshift) )
@@ -551,6 +553,8 @@ def SED_to_obsframe(sed, redshift):
     wave  = np.array(sed[0])
     flux  = np.array(sed[1])
     sigma = np.array(sed[2])
+    fltr  = sigma == -1
+    sigma[fltr] = sigma[fltr] * (1 + redshift)
     sed_obs = list(sed)
     sed_obs[0] = list( wave * (1 + redshift) )
     sed_obs[1] = list( flux / (1 + redshift) )
