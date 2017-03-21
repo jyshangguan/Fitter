@@ -246,6 +246,7 @@ def logLFunc(params, data, model):
     fltr_non = e < 0 #Find those non-detections
     flag = np.zeros_like(y)
     flag[fltr_non] = 1 #Generate the flag of upperlimits.
+    e[fltr_non] = y[fltr_non] / 3.0 #In our data, the upperlimits are 3sigma.
     logL = -0.5 * ChiSq(y, ym, e, flag)
     return logL
 
