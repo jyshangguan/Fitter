@@ -74,7 +74,7 @@ class SedClass(bc.DataSet):
             self.dl = Dist
 
     def pht_plotter(self, wave, flux, sigma, flag, FigAx=None, linewidth='1.5',
-                    symbolColor='k', symbolSize=6, label=None, zorder=4, Quiet=True):
+                    phtColor='k', phtSize=6, label=None, zorder=4, Quiet=True):
         wave = np.array(wave)
         flux = np.array(flux)
         sigma = np.array(sigma)
@@ -98,9 +98,9 @@ class SedClass(bc.DataSet):
             psigu = psedu/3.0
             uplims = np.ones(len(psedu), dtype=bool)
             ax.errorbar(pwavu, psedu, yerr=psigu, uplims=uplims, linestyle='none',
-                        color=symbolColor, fmt='o', mfc='none', mec=symbolColor,
+                        color=phtColor, fmt='o', mfc='none', mec=phtColor,
                         mew=linewidth, elinewidth=linewidth, label=label,
-                        ms=symbolSize, zorder=zorder)
+                        ms=phtSize, zorder=zorder)
         elif(nup > 0): # If there are some upper limits.
             fltr_upperlimit = (sigma<0)
             fltr_detection = np.logical_not(fltr_upperlimit)
@@ -111,20 +111,20 @@ class SedClass(bc.DataSet):
             psedu = flux[fltr_upperlimit]
             psigu = psedu/3.0
             uplims = np.ones(len(psedu), dtype=bool)
-            ax.errorbar(pwav, psed, yerr=psig, linestyle='none', color=symbolColor,
-                        fmt='o', mfc='none', mec=symbolColor, mew=linewidth,
-                        elinewidth=linewidth, label=label, ms=symbolSize, zorder=zorder)
+            ax.errorbar(pwav, psed, yerr=psig, linestyle='none', color=phtColor,
+                        fmt='o', mfc='none', mec=phtColor, mew=linewidth,
+                        elinewidth=linewidth, label=label, ms=phtSize, zorder=zorder)
             ax.errorbar(pwavu, psedu, yerr=psigu, uplims=uplims, linestyle='none',
-                        color=symbolColor, fmt='o', mfc='none', mec=symbolColor,
-                        mew=linewidth, elinewidth=linewidth, ms=symbolSize,
+                        color=phtColor, fmt='o', mfc='none', mec=phtColor,
+                        mew=linewidth, elinewidth=linewidth, ms=phtSize,
                         zorder=zorder)
         else:
             pwav = wave
             psed = flux
             psig = sigma
-            ax.errorbar(pwav, psed, yerr = psig, linestyle='none', color=symbolColor,
-                        fmt='o', mfc='none', mec=symbolColor, mew=linewidth,
-                        elinewidth=linewidth, label=label, ms=symbolSize, zorder=zorder)
+            ax.errorbar(pwav, psed, yerr = psig, linestyle='none', color=phtColor,
+                        fmt='o', mfc='none', mec=phtColor, mew=linewidth,
+                        elinewidth=linewidth, label=label, ms=phtSize, zorder=zorder)
         str_xlabel = r'$\lambda \, \mathrm{(\mu m)}$'
         ax.set_xlabel(str_xlabel, fontsize=18)
         ax.set_ylabel(r'$f_\nu \, \mathrm{(mJy)}$', fontsize=18)
@@ -133,7 +133,7 @@ class SedClass(bc.DataSet):
         ax.tick_params(labelsize=16)
         return (fig, ax)
 
-    def plot_pht(self, FigAx=None, linewidth='1.5', symbolColor='k', symbolSize=6, **kwargs):
+    def plot_pht(self, FigAx=None, linewidth='1.5', phtColor='k', phtSize=6, **kwargs):
         dataDict = self.get_dsArrays()
         for name in dataDict.keys():
             wave = dataDict[name][0]
@@ -141,11 +141,11 @@ class SedClass(bc.DataSet):
             sigma = dataDict[name][2]
             flag = dataDict[name][3]
             FigAx = self.pht_plotter(wave, flux, sigma, flag, FigAx, linewidth,
-                                       symbolColor, symbolSize, name)
+                                     phtColor, phtSize, name)
         return FigAx
 
     def spc_plotter(self, wave, flux, sigma, FigAx=None, linewidth=1.,
-                    color='grey', label=None, zorder=4, Quiet=True):
+                    spcColor='grey', label=None, zorder=4, Quiet=True):
         if(len(wave) == 0):
             if Quiet is False:
                 print 'There is no data in the SED!'
@@ -156,19 +156,19 @@ class SedClass(bc.DataSet):
         else:
             fig = FigAx[0]
             ax = FigAx[1]
-        ax.errorbar(wave, flux, yerr=sigma, color=color, linewidth=linewidth,
+        ax.errorbar(wave, flux, yerr=sigma, color=spcColor, linewidth=linewidth,
                     label=label, zorder=zorder)
         ax.set_xscale('log')
         ax.set_yscale('log')
         return (fig, ax)
 
-    def plot_spc(self, FigAx=None, linewidth=1., color='grey', **kwargs):
+    def plot_spc(self, FigAx=None, linewidth=1., spcColor='grey', **kwargs):
         dataDict = self.get_csArrays()
         for name in dataDict.keys():
             wave = dataDict[name][0]
             flux = dataDict[name][1]
             sigma = dataDict[name][2]
-            FigAx = self.spc_plotter(wave, flux, sigma, FigAx, linewidth, color, name)
+            FigAx = self.spc_plotter(wave, flux, sigma, FigAx, linewidth, spcColor, name)
         return FigAx
 
     def plot_sed(self, FigAx=None, **kwargs):

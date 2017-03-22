@@ -189,15 +189,8 @@ def PlotMockSED(sedData, mockData, sedModel):
     ymin = np.min(sedPhtFlux) / 10.0
     ymax = np.max(sedPhtFlux) * 10.0
     FigAx = sedData.plot_sed()
-    FigAx = mockData.plot_sed(FigAx=FigAx, symbolColor="r", color="r")
+    FigAx = mockData.plot_sed(FigAx=FigAx, phtColor="r", spcColor="r")
     FigAx = sedModel.plot(FigAx=FigAx)
-    """
-    if sedData.check_dsData():
-        plt.errorbar(mockPhtWave, mockPht, yerr=mockPhtSigma, linestyle="none", marker="s",
-                     mfc="none", mec="r", color="r", alpha=0.5)
-    if sedData.check_csData():
-        plt.errorbar(mockSpcWave, mockSpc, yerr=mockSpcSigma, linestyle="-", color="r", alpha=0.5)
-    """
     fig, ax = FigAx
     ax.set_xlim([xmin, xmax])
     ax.set_ylim([ymin, ymax])
@@ -236,14 +229,12 @@ def gsm_mocker(configName, targname=None, redshift=None, distance=None, sedFile=
     if targname is None:
         assert redshift is None
         assert sedFile is None
-        #assert mockPars is None
         targname = config.targname
         redshift = config.redshift
         sedFile  = config.sedFile
     else:
         assert not redshift is None
         assert not sedFile is None
-        #assert not mockPars is None
     print("#--------------------------------#")
     print("Target: {0}".format(targname))
     print("SED file: {0}".format(sedFile))
@@ -299,10 +290,13 @@ def gsm_mocker(configName, targname=None, redshift=None, distance=None, sedFile=
     #                                  Mock                                    #
     ############################################################################
     mockPck = mocker(sedData, sedModel, **kwargs)
-    #->Reform the result
+    #->Reform the result and switch back to the observed frame
     sed = mockPck["sed"]
     pht = mockPck["pht"]
     spc = mockPck["spc"]
+    sed = sedt.SED_to_obsframe(sed, redshift)
+    pht = sedt.SED_to_obsframe(pht, redshift)
+    spc = sedt.SED_to_obsframe(spc, redshift)
     phtwave = pht[0]
     phtband = pht[3]
     spcwave = spc[0]
@@ -317,7 +311,12 @@ def gsm_mocker(configName, targname=None, redshift=None, distance=None, sedFile=
         "spcName": "IRS",
         "bandList_use": [],
         "bandList_ignore":["WISE_w3", "WISE_w4"],
-        "frame": "rest",
+        "frame": "obs",
+    }
+    mockPck = {
+        "sed": sed,
+        "pht": pht,
+        "spc": spc
     }
     mockData = sedsc.setSedData(targname, redshift, distance, mockDict, mockPck, silent)
     lnlike = sedLnLike(mockData, sedModel, uncModel)
@@ -333,7 +332,7 @@ if __name__ == "__main__":
     #print parTable.colnames
     if os.path.isdir("configs"):
         sys.path.append("configs/")
-    configName = "config_clu_rq"
+    configName = "config_mock_clu"
     mockSub = "test"
 
     parNameList = ['logMs', 'logOmega', 'T', 'logL', 'i', 'tv', 'q', 'N0', 'sigma', 'Y',
@@ -370,8 +369,8 @@ if __name__ == "__main__":
                             mockPars=mockPars, sysUnc=sysUnc, #uncModel=[-np.inf, -np.inf, -np.inf],
                             pert=False, plot=True)
         mock, lnlike, FigAx = gsmPck
-        #plt.savefig("mock/{0}_mock.png".format(targname))
-        plt.show()
+        plt.savefig("mock/{0}_mock.png".format(targname))
+        plt.close()
         print("--------lnlike={0:.5f}".format(lnlike))
 
         #->Save mock file
@@ -381,6 +380,9 @@ if __name__ == "__main__":
         band = mock[3]
         mockTable = Table([wave, flux, sigma, band],
                           names=['wavelength', 'flux', 'sigma', "band"])
+        mockTable["wavelength"].format = "%.3f"
+        mockTable["flux"].format = "%.3f"
+        mockTable["sigma"].format = "%.3f"
         mockName = "mock/{0}_{1}.msed".format(targname, mockSub)
         mockTable.write(mockName, format="ascii", delimiter="\t", overwrite=True)
         #f = open("mock/{0}_{1}.msed".format(mockName, mockSub), "w")
@@ -389,5 +391,3 @@ if __name__ == "__main__":
         cmnt = comments.format(targname, redshift, configName, lnlike, parNameList, mockPars, S=suList)
         f.writelines(cmnt)
         f.close()
-
-        #->Plot the SEDs
