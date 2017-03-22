@@ -8,6 +8,7 @@ from . import bandfunc as bf
 from .dir_list import filter_path
 from scipy.interpolate import splrep, splev
 from collections import OrderedDict
+import sedfit.SED_Toolkit as sedt
 
 class SedClass(bc.DataSet):
     """
@@ -312,3 +313,95 @@ class SedClass(bc.DataSet):
 
     def __setstate__(self, dict):
         self.__dict__ = dict
+
+
+def setSedData(targname, redshift, distance, dataDict, sedPck, silent=True):
+    """
+    Setup sedData.
+
+    Parameters
+    ----------
+    targname : string
+        The name of the target.
+    redshift : float
+        The redshift of the object.
+    distance : float
+        The distance of the object.
+    dataDict : dict
+        The information of the data.
+            phtName : the name of the photometric data.
+            spcName : the name of the spectroscopic data.
+            bandList_use : the list of bands to be used; use all bands if empty.
+            bandList_ignore : the list of bands to be ignored.
+            frame : the frame of the input data is in; "rest" or "obs".
+    sedPck : dict
+        The data package of the SED.
+            sed : concatenated SED.
+            pht : photometric data.
+            spc : spectroscopic data.
+        All the three items are tuple of ("wave", "flux", "sigma"), with "pht"
+        having an extra component "band" in the end.
+    silent : bool
+        The toggle not to print some information if True.
+
+    Returns
+    -------
+    sedData : SEDClass object
+        The data set of SED.
+    """
+    pht = sedPck["pht"]
+    spc = sedPck["spc"]
+    #->Settle into the rest frame
+    frame = dataDict.get("frame", "rest") #The coordinate frame of the SED; "rest"
+                                          #by default.
+    if frame == "obs":
+        pht = sedt.SED_to_restframe(pht, redshift)
+        spc = sedt.SED_to_restframe(spc, redshift)
+        if not silent:
+            print("[setSedData]: The input SED is in the observed frame!")
+    elif frame == "frame":
+        if not silent:
+            print("[setSedData]: The input SED is in the rest frame!")
+    else:
+        if not silent:
+            print("[setSedData]: The input SED frame ({0}) is not recognised!".format(frame))
+    #->Select bands
+    bandList_use = dataDict.get("bandList_use", []) #The list of bands to incorporate;
+                                                    #use all the available bands if empty.
+    bandList_ignore = dataDict.get("bandList_ignore", []) #The list of bands to be
+                                                          #ignored from the bands to use.
+    pht = sedt.SED_select_band(pht, bandList_use, bandList_ignore, silent)
+    phtwave  = pht[0]
+    phtflux  = pht[1]
+    phtsigma = pht[2]
+    phtband  = pht[3]
+    spcwave  = spc[0]
+    spcflux  = spc[1]
+    spcsigma = spc[2]
+    if not silent:
+        print("[setSedData]: The incorporated bands are: {0}".format(phtband))
+    #->Check data
+    chck_pht = np.sum(np.isnan(phtflux)) + np.sum(np.isnan(phtsigma))
+    chck_spc = np.sum(np.isnan(spcflux)) + np.sum(np.isnan(spcsigma))
+    if chck_pht:
+        raise ValueError("The photometry contains bad data!")
+    if chck_spc:
+        raise ValueError("The spectrum contains bad data!")
+    #->Put into the sedData
+    phtName = dataDict.get("phtName", None)
+    if not phtName is None:
+        phtflag = np.ones_like(phtwave)
+        phtDataType = ["name", "wavelength", "flux", "error", "flag"]
+        phtData = {phtName: bc.DiscreteSet(phtband, phtwave, phtflux, phtsigma, phtflag, phtDataType)}
+    else:
+        phtData = {}
+    spcName = dataDict.get("spcName", None)
+    if not spcName is None:
+        spcflag = np.ones_like(spcwave)
+        spcDataType = ["wavelength", "flux", "error", "flag"]
+        spcData = {"IRS": bc.ContinueSet(spcwave, spcflux, spcsigma, spcflag, spcDataType)}
+    else:
+        spcData = {}
+    sedData = SedClass(targname, redshift, distance, phtDict=phtData, spcDict=spcData)
+    sedData.set_bandpass(phtband, phtwave, silent)
+    return sedData
