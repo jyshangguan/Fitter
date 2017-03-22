@@ -89,18 +89,16 @@ def mocker(sedData, sedModel, sysUnc=None, uncModel=None, silent=True,
         }
     pert : bool, default: True
         Perturb the data according to the uncertainty if True.
-    plot : bool, default: False
-        Plot the SED to visually check if True.
+    nonDetect : bool, default: True
+        Replace the upperlimits of the sedData to the mock SED.
 
     Returns
     -------
-    (mock, lnlike) : (dict, float)
-        mock : The dict of mock data, with wave, flux and sigma inside.
-        lnlike : The likelihood calculated with the input model and the mock data.
-
-    Notes
-    -----
-    None.
+    mockPck : dict
+        The dict of mock data.
+            sed : the concatenated wave, flux and sigma of the SED.
+            pht : the photometric wave, flux, sigma and band.
+            spc : the spectra wave, flux and sigma.
     """
     ################################################################################
     #                                    Data                                      #
@@ -197,12 +195,12 @@ def PlotMockSED(sedData, mockData, sedModel):
     return (fig, ax)
 
 def gsm_mocker(configName, targname=None, redshift=None, distance=None, sedFile=None,
-               mockPars=None, uncModel=None, plot=False, **kwargs):
+               mockPars=None, uncModel=None, plot=False, cal_lnlike=False, **kwargs):
     """
-    The wrapper of mocker() function. If the targname, redshift, sedFile and
-    mockPars are provided as arguments, they will be used overriding the values
-    in the config file saved in configName. If they are not provided, then, the
-    values in the config file will be used.
+    The wrapper of mocker() function. If the targname, redshift and sedFile
+    are provided as arguments, they will be used overriding the values in the
+    config file saved in configName. If they are not provided, then, the values
+    in the config file will be used.
 
     Parameters
     ----------
@@ -210,16 +208,34 @@ def gsm_mocker(configName, targname=None, redshift=None, distance=None, sedFile=
         The full path of the config file.
     targname : str or None by default
         The name of the target.
-    redshift : float or None by default
+    redshift : float (optional)
         The redshift of the target.
+    distance : float (optional)
+        The distance of the target.
     sedFile : str or None by default
         The full path of the sed data file.
     mockPars : list
         The parameters to generate the mock SED.
+    uncModel : dict or None, by default
+        {
+            "lnf" : float, (-inf, 0]
+                The ln of f, the imperfectness of the model.
+            "lna" : float, (-inf, 1]
+                The ln of a, the amplitude of the residual correlation.
+            "lntau" : float, (-inf, 1]
+                The ln of tau, the scale length of the residual correlation.
+        }
+    plot : bool, default: False
+        Plot the SED to visually check if True.
 
     Returns
     -------
-    None.
+    mock : tuple
+        The (wavelength, flux, sigma, band) of the mock data in the observed frame.
+    lnlike : float (optional)
+        The lnlikelihood of the mock SED and the model.
+    FigAx : tuple (optional)
+        The (fig, ax) of the SED figure, if plot is True.
 
     Notes
     -----
@@ -305,6 +321,7 @@ def gsm_mocker(configName, targname=None, redshift=None, distance=None, sedFile=
     mockSedSigma = sed[2]
     mockSedBand = np.concatenate([phtband, np.zeros_like(spcwave, dtype="int")])
     mock = (mockSedWave, mockSedFlux, mockSedSigma, mockSedBand)
+    result = [mock]
     #->Calculate the lnlike
     mockDict = {
         "phtName": "Phot",
@@ -319,11 +336,14 @@ def gsm_mocker(configName, targname=None, redshift=None, distance=None, sedFile=
         "spc": spc
     }
     mockData = sedsc.setSedData(targname, redshift, distance, mockDict, mockPck, silent)
-    lnlike = sedLnLike(mockData, sedModel, uncModel)
+    if cal_lnlike:
+        lnlike = sedLnLike(mockData, sedModel, uncModel)
+        result.append(lnlike)
     #->Plot
     if plot:
         FigAx = PlotMockSED(sedData, mockData, sedModel)
-    return mock, lnlike, FigAx
+        result.append(FigAx)
+    return result
 
 if __name__ == "__main__":
     #-->Generate Mock Data
@@ -367,9 +387,9 @@ if __name__ == "__main__":
         #print parTable[loop_T]
         gsmPck = gsm_mocker(configName, targname, redshift, sedFile=sedFile,
                             mockPars=mockPars, sysUnc=sysUnc, #uncModel=[-np.inf, -np.inf, -np.inf],
-                            pert=False, plot=True)
+                            pert=False, plot=True, cal_lnlike=True)
         mock, lnlike, FigAx = gsmPck
-        plt.savefig("mock/{0}_mock.png".format(targname))
+        plt.savefig("mock/{0}_mock.png".format(targname), bbox_inches="tight")
         plt.close()
         print("--------lnlike={0:.5f}".format(lnlike))
 
