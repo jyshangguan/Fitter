@@ -340,7 +340,7 @@ class EmceeModel(object):
         """
         return np.mean(self.sampler.acceptance_fraction)
 
-    def posterior_sample(self, burnin=0, select=False, fraction=25):
+    def posterior_sample(self, burnin=0, fraction=25):
         """
         Return the samples merging from the chains of all the walkers.
         """
@@ -354,9 +354,9 @@ class EmceeModel(object):
             lnprob = np.squeeze(sampler.lnprobability[0, :, -1])
         if burnin > (chain.shape[1]/2.0):
             raise ValueError("The burn-in length ({0}) is too long!".format(burnin))
-        if select:
+        if fraction>0:
             lnpLim = np.percentile(lnprob, fraction)
-            fltr = lnprob > lnpLim
+            fltr = lnprob >= lnpLim
             print("ps: {0}/{1} walkers are selected.".format(np.sum(fltr), nwalkers))
             samples = chain[fltr, burnin:, :].reshape((-1, self.__dim))
         else:
@@ -460,13 +460,13 @@ class EmceeModel(object):
         p_logl_max = self.p_logl_max()
         fp.write("#lnL_max: {0:.3e}".format(self.get_logl(p_logl_max)))
 
-    def plot_corner(self, filename=None, burnin=0, select=True, fraction=25, ps=None, nuisance=True, **kwargs):
+    def plot_corner(self, filename=None, burnin=0, fraction=25, ps=None, nuisance=True, **kwargs):
         """
         Plot the corner diagram that illustrate the posterior probability distribution
         of each parameter.
         """
         if ps is None:
-            ps = self.posterior_sample(burnin, select, fraction)
+            ps = self.posterior_sample(burnin, fraction)
         parname = self.__model.get_parVaryNames()
         if self.__modelunct:
             if self.__data.check_dsData():

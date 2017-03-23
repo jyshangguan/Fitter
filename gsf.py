@@ -191,12 +191,16 @@ def fitter(targname, redshift, sedPck, config, distance=None):
     ################################################################################
     #                                  Post process                                #
     ################################################################################
-    ppDict   = config.ppDict
-    psLow    = ppDict["low"]
-    psCenter = ppDict["center"]
-    psHigh   = ppDict["high"]
-    nuisance = ppDict["nuisance"]
-    fraction = ppDict["fraction"]
+    try:
+        ppDict = config.ppDict
+    except:
+        print("[gsf] Warning: cannot find ppDict in the configure file!")
+        ppDict = {}
+    psLow    = ppDict.get("low", 16)
+    psCenter = ppDict.get("center", 50)
+    psHigh   = ppDict.get("high", 84)
+    nuisance = ppDict.get("nuisance", True)
+    fraction = ppDict.get("fraction", 0)
 
     dataPck = {
         "targname": targname,
@@ -216,7 +220,7 @@ def fitter(targname, redshift, sedPck, config, distance=None):
         "dataPck": dataPck,
         "modelPck": modelPck,
         "ppDict": ppDict,
-        "posterior_sample": em.posterior_sample(burnin=burnIn, select=True, fraction=fraction),
+        "posterior_sample": em.posterior_sample(burnin=burnIn, fraction=fraction),
         "chain": sampler.chain,
         "lnprobability": sampler.lnprobability
     }
@@ -225,7 +229,7 @@ def fitter(targname, redshift, sedPck, config, distance=None):
     fp.close()
     #->Save the best-fit parameters
     em.Save_BestFit("{0}_bestfit.txt".format(targname), low=psLow, center=psCenter, high=psHigh,
-                    burnin=burnIn, select=True, fraction=fraction)
+                    burnin=burnIn, fraction=fraction)
     #->Plot the chain of the final run
     em.plot_chain(filename="{0}_chain.png".format(targname), truths=parTruth)
     #->Plot the SED fitting result figure
@@ -241,9 +245,9 @@ def fitter(targname, redshift, sedPck, config, distance=None):
         fig, axarr = plt.subplots(2, 1)
         fig.set_size_inches(10, 10)
         em.plot_fit_spec(truths=parTruth, FigAx=(fig, axarr[0]), nSamples=100,
-                         burnin=burnIn, select=True, fraction=fraction)
+                         burnin=burnIn, fraction=fraction)
         em.plot_fit(truths=parTruth, FigAx=(fig, axarr[1]), xlim=xlim, ylim=ylim,
-                    nSamples=100, burnin=burnIn, select=True, fraction=fraction)
+                    nSamples=100, burnin=burnIn, fraction=fraction)
         axarr[0].set_xlabel("")
         axarr[0].set_ylabel("")
         axarr[0].text(0.05, 0.8, targname, transform=axarr[0].transAxes, fontsize=24,
@@ -253,7 +257,7 @@ def fitter(targname, redshift, sedPck, config, distance=None):
         fig = plt.figure(figsize=(7, 7))
         ax = plt.gca()
         em.plot_fit(truths=parTruth, FigAx=(fig, ax), xlim=xlim, ylim=ylim,
-                    nSamples=100, burnin=burnIn, select=True, fraction=fraction)
+                    nSamples=100, burnin=burnIn, fraction=fraction)
         ax.text(0.05, 0.8, targname, transform=ax.transAxes, fontsize=24,
                 verticalalignment='bottom', horizontalalignment='left',
                 bbox=dict(facecolor='white', alpha=0.5, edgecolor="none"))
@@ -261,7 +265,7 @@ def fitter(targname, redshift, sedPck, config, distance=None):
     plt.close()
     #->Plot the posterior probability distribution
     em.plot_corner(filename="{0}_triangle.png".format(targname), burnin=burnIn,
-                   nuisance=nuisance, truths=parTruth, select=True, fraction=fraction,
+                   nuisance=nuisance, truths=parTruth, fraction=fraction,
                    quantiles=[psLow/100., psCenter/100., psHigh/100.], show_titles=True,
                    title_kwargs={"fontsize": 20})
     print("Post-processed!")

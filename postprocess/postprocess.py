@@ -150,9 +150,9 @@ if sedData.check_csData():
     fig, axarr = plt.subplots(2, 1)
     fig.set_size_inches(10, 10)
     em.plot_fit_spec(truths=parTruth, FigAx=(fig, axarr[0]), nSamples=100,
-                     burnin=burnIn, select=True, fraction=fraction, ps=ps)
+                     burnin=burnIn, fraction=fraction, ps=ps)
     em.plot_fit(truths=parTruth, FigAx=(fig, axarr[1]), xlim=xlim, ylim=ylim,
-                nSamples=100, burnin=burnIn, select=True, fraction=fraction, ps=ps)
+                nSamples=100, burnin=burnIn, fraction=fraction, ps=ps)
     axarr[0].set_xlabel("")
     axarr[0].set_ylabel("")
     axarr[0].text(0.05, 0.8, targname,
@@ -163,14 +163,14 @@ else:
     fig = plt.figure(figsize=(7, 7))
     ax = plt.gca()
     em.plot_fit(truths=parTruth, FigAx=(fig, ax), xlim=xlim, ylim=ylim, nSamples=100,
-                burnin=burnIn, select=True, fraction=fraction, ps=ps)
+                burnin=burnIn, fraction=fraction, ps=ps)
 plt.savefig("{0}_result.png".format(targname), bbox_inches="tight")
 plt.close()
 print("Best fit plot finished!")
 
 #Plot the corner diagram
 em.plot_corner(filename="{0}_triangle.png".format(targname), burnin=burnIn, ps=ps,
-               nuisance=nuisance, truths=parTruth,  select=True, fraction=fraction,
+               nuisance=nuisance, truths=parTruth,  fraction=fraction,
                quantiles=[psLow/100., psCenter/100., psHigh/100.], show_titles=True,
                title_kwargs={"fontsize": 20})
 print("Triangle plot finished!")
