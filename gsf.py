@@ -203,9 +203,6 @@ def fitter(targname, redshift, sedPck, config, distance=None):
         "redshift": redshift,
         "distance": sedData.dl,
         "sedPck": sedPck,
-        "sedband": sedband,
-        "sedName": sedName,
-        "spcName": spcName,
         "dataDict": dataDict
     }
     modelPck = {
@@ -232,11 +229,13 @@ def fitter(targname, redshift, sedPck, config, distance=None):
     #->Plot the chain of the final run
     em.plot_chain(filename="{0}_chain.png".format(targname), truths=parTruth)
     #->Plot the SED fitting result figure
-    xmin = np.min([np.min(sedwave), np.min(spcwave)]) * 0.9
-    xmax = np.max([np.max(sedwave), np.max(spcwave)]) * 1.1
+    sedwave = sedPck["sed"][0]
+    sedflux = sedPck["sed"][1]
+    xmin = np.min(sedwave) * 0.9
+    xmax = np.max(sedwave) * 1.1
     xlim = [xmin, xmax]
-    ymin = np.min([np.min(sedflux), np.min(spcflux)]) * 0.5
-    ymax = np.max([np.max(sedflux), np.max(spcflux)]) * 2.0
+    ymin = np.min(sedflux) * 0.5
+    ymax = np.max(sedflux) * 2.0
     ylim = [ymin, ymax]
     if sedData.check_csData():
         fig, axarr = plt.subplots(2, 1)

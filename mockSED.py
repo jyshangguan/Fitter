@@ -113,6 +113,7 @@ def mocker(sedData, sedModel, sysUnc=None, uncModel=None, silent=True,
     mockPhtSigma = np.array(sedData.get_dsList("e"))
     fltr_sigma = mockPht0 < 3.0*mockPhtSigma #sedsigma
     if np.any(fltr_sigma):
+        print("[mocker] Warning: There are some bands with flux less than 3*sigma!")
         mockPhtSigma[fltr_sigma] = mockPht0[fltr_sigma] / 3.0
     mockPht = dataPerturb(mockPht0, mockPhtSigma, pert)
     #For spectroscopic data
@@ -324,10 +325,10 @@ def gsm_mocker(configName, targname=None, redshift=None, distance=None, sedFile=
     result = [mock]
     #->Calculate the lnlike
     mockDict = {
-        "phtName": "Phot",
-        "spcName": "IRS",
-        "bandList_use": [],
-        "bandList_ignore":["WISE_w3", "WISE_w4"],
+        "phtName": dataDict["phtName"],
+        "spcName": dataDict["spcName"],
+        "bandList_use": dataDict["bandList_use"],
+        "bandList_ignore": dataDict["bandList_ignore"],
         "frame": "obs",
     }
     mockPck = {
