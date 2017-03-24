@@ -233,8 +233,8 @@ def fitter(targname, redshift, sedPck, config, distance=None):
     #->Plot the chain of the final run
     em.plot_chain(filename="{0}_chain.png".format(targname), truths=parTruth)
     #->Plot the SED fitting result figure
-    sedwave = sedPck["sed"][0]
-    sedflux = sedPck["sed"][1]
+    sedwave = sedData.get_List("x")
+    sedflux = sedData.get_List("y")
     xmin = np.min(sedwave) * 0.9
     xmax = np.max(sedwave) * 1.1
     xlim = [xmin, xmax]
