@@ -406,24 +406,24 @@ def Load_SED(sedfile):
     sigma = sedtb["sigma"].data
     band  = sedtb["band"].data
     fltr_spc = band == "0"
-    fltr_sed = np.logical_not(fltr_spc)
-    sedwave  = wave[fltr_sed]
-    sedflux  = flux[fltr_sed]
-    sedsigma = sigma[fltr_sed]
-    sedband  = band[fltr_sed]
+    fltr_pht = np.logical_not(fltr_spc)
+    phtwave  = wave[fltr_pht]
+    phtflux  = flux[fltr_pht]
+    phtsigma = sigma[fltr_pht]
+    phtband  = band[fltr_pht]
     spcwave  = wave[fltr_spc]
     spcflux  = flux[fltr_spc]
     spcsigma = sigma[fltr_spc]
 
-    wave_cb = np.concatenate([sedwave, spcwave])
-    flux_cb = np.concatenate([sedflux, spcflux])
-    sigma_cb = np.concatenate([sedsigma, spcsigma])
-    sed_cb = (list(wave_cb), list(flux_cb), list(sigma_cb))
-    sed = (list(sedwave), list(sedflux), list(sedsigma), list(sedband))
+    sedwave  = np.concatenate([phtwave, spcwave])
+    sedflux  = np.concatenate([phtflux, spcflux])
+    sedsigma = np.concatenate([phtsigma, spcsigma])
+    sed  = (list(sedwave), list(sedflux), list(sedsigma))
+    pht = (list(phtwave), list(phtflux), list(phtsigma), list(phtband))
     spc = (list(spcwave), list(spcflux), list(spcsigma))
     sed_package = {
-        'sed_cb':sed_cb,
         'sed':sed,
+        'pht':pht,
         'spc':spc,
     }
     return sed_package
@@ -514,6 +514,8 @@ def SED_to_restframe(sed, redshift):
     wave  = np.array(sed[0])
     flux  = np.array(sed[1])
     sigma = np.array(sed[2])
+    fltr  = sigma == -1
+    sigma[fltr] = sigma[fltr] / (1 + redshift)
     sed_rest = list(sed)
     sed_rest[0] = list( wave / (1 + redshift) )
     sed_rest[1] = list( flux * (1 + redshift) )
@@ -551,6 +553,8 @@ def SED_to_obsframe(sed, redshift):
     wave  = np.array(sed[0])
     flux  = np.array(sed[1])
     sigma = np.array(sed[2])
+    fltr  = sigma == -1
+    sigma[fltr] = sigma[fltr] * (1 + redshift)
     sed_obs = list(sed)
     sed_obs[0] = list( wave * (1 + redshift) )
     sed_obs[1] = list( flux / (1 + redshift) )

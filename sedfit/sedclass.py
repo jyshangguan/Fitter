@@ -8,6 +8,7 @@ from . import bandfunc as bf
 from .dir_list import filter_path
 from scipy.interpolate import splrep, splev
 from collections import OrderedDict
+import sedfit.SED_Toolkit as sedt
 
 class SedClass(bc.DataSet):
     """
@@ -73,7 +74,7 @@ class SedClass(bc.DataSet):
             self.dl = Dist
 
     def pht_plotter(self, wave, flux, sigma, flag, FigAx=None, linewidth='1.5',
-                    symbolColor='k', symbolSize=6, label=None, zorder=4, Quiet=True):
+                    phtColor='k', phtSize=6, label=None, zorder=4, Quiet=True):
         wave = np.array(wave)
         flux = np.array(flux)
         sigma = np.array(sigma)
@@ -97,9 +98,9 @@ class SedClass(bc.DataSet):
             psigu = psedu/3.0
             uplims = np.ones(len(psedu), dtype=bool)
             ax.errorbar(pwavu, psedu, yerr=psigu, uplims=uplims, linestyle='none',
-                        color=symbolColor, fmt='o', mfc='none', mec=symbolColor,
+                        color=phtColor, fmt='o', mfc='none', mec=phtColor,
                         mew=linewidth, elinewidth=linewidth, label=label,
-                        ms=symbolSize, zorder=zorder)
+                        ms=phtSize, zorder=zorder)
         elif(nup > 0): # If there are some upper limits.
             fltr_upperlimit = (sigma<0)
             fltr_detection = np.logical_not(fltr_upperlimit)
@@ -110,20 +111,20 @@ class SedClass(bc.DataSet):
             psedu = flux[fltr_upperlimit]
             psigu = psedu/3.0
             uplims = np.ones(len(psedu), dtype=bool)
-            ax.errorbar(pwav, psed, yerr=psig, linestyle='none', color=symbolColor,
-                        fmt='o', mfc='none', mec=symbolColor, mew=linewidth,
-                        elinewidth=linewidth, label=label, ms=symbolSize, zorder=zorder)
+            ax.errorbar(pwav, psed, yerr=psig, linestyle='none', color=phtColor,
+                        fmt='o', mfc='none', mec=phtColor, mew=linewidth,
+                        elinewidth=linewidth, label=label, ms=phtSize, zorder=zorder)
             ax.errorbar(pwavu, psedu, yerr=psigu, uplims=uplims, linestyle='none',
-                        color=symbolColor, fmt='o', mfc='none', mec=symbolColor,
-                        mew=linewidth, elinewidth=linewidth, ms=symbolSize,
+                        color=phtColor, fmt='o', mfc='none', mec=phtColor,
+                        mew=linewidth, elinewidth=linewidth, ms=phtSize,
                         zorder=zorder)
         else:
             pwav = wave
             psed = flux
             psig = sigma
-            ax.errorbar(pwav, psed, yerr = psig, linestyle='none', color=symbolColor,
-                        fmt='o', mfc='none', mec=symbolColor, mew=linewidth,
-                        elinewidth=linewidth, label=label, ms=symbolSize, zorder=zorder)
+            ax.errorbar(pwav, psed, yerr = psig, linestyle='none', color=phtColor,
+                        fmt='o', mfc='none', mec=phtColor, mew=linewidth,
+                        elinewidth=linewidth, label=label, ms=phtSize, zorder=zorder)
         str_xlabel = r'$\lambda \, \mathrm{(\mu m)}$'
         ax.set_xlabel(str_xlabel, fontsize=18)
         ax.set_ylabel(r'$f_\nu \, \mathrm{(mJy)}$', fontsize=18)
@@ -132,7 +133,7 @@ class SedClass(bc.DataSet):
         ax.tick_params(labelsize=16)
         return (fig, ax)
 
-    def plot_pht(self, FigAx=None, linewidth='1.5', symbolColor='k', symbolSize=6, **kwargs):
+    def plot_pht(self, FigAx=None, linewidth='1.5', phtColor='k', phtSize=6, **kwargs):
         dataDict = self.get_dsArrays()
         for name in dataDict.keys():
             wave = dataDict[name][0]
@@ -140,11 +141,11 @@ class SedClass(bc.DataSet):
             sigma = dataDict[name][2]
             flag = dataDict[name][3]
             FigAx = self.pht_plotter(wave, flux, sigma, flag, FigAx, linewidth,
-                                       symbolColor, symbolSize, name)
+                                     phtColor, phtSize, name)
         return FigAx
 
     def spc_plotter(self, wave, flux, sigma, FigAx=None, linewidth=1.,
-                    color='grey', label=None, zorder=4, Quiet=True):
+                    spcColor='grey', label=None, zorder=4, Quiet=True):
         if(len(wave) == 0):
             if Quiet is False:
                 print 'There is no data in the SED!'
@@ -155,19 +156,19 @@ class SedClass(bc.DataSet):
         else:
             fig = FigAx[0]
             ax = FigAx[1]
-        ax.errorbar(wave, flux, yerr=sigma, color=color, linewidth=linewidth,
+        ax.errorbar(wave, flux, yerr=sigma, color=spcColor, linewidth=linewidth,
                     label=label, zorder=zorder)
         ax.set_xscale('log')
         ax.set_yscale('log')
         return (fig, ax)
 
-    def plot_spc(self, FigAx=None, linewidth=1., color='grey', **kwargs):
+    def plot_spc(self, FigAx=None, linewidth=1., spcColor='grey', **kwargs):
         dataDict = self.get_csArrays()
         for name in dataDict.keys():
             wave = dataDict[name][0]
             flux = dataDict[name][1]
             sigma = dataDict[name][2]
-            FigAx = self.spc_plotter(wave, flux, sigma, FigAx, linewidth, color, name)
+            FigAx = self.spc_plotter(wave, flux, sigma, FigAx, linewidth, spcColor, name)
         return FigAx
 
     def plot_sed(self, FigAx=None, **kwargs):
@@ -312,3 +313,95 @@ class SedClass(bc.DataSet):
 
     def __setstate__(self, dict):
         self.__dict__ = dict
+
+
+def setSedData(targname, redshift, distance, dataDict, sedPck, silent=True):
+    """
+    Setup sedData.
+
+    Parameters
+    ----------
+    targname : string
+        The name of the target.
+    redshift : float
+        The redshift of the object.
+    distance : float
+        The distance of the object.
+    dataDict : dict
+        The information of the data.
+            phtName : the name of the photometric data.
+            spcName : the name of the spectroscopic data.
+            bandList_use : the list of bands to be used; use all bands if empty.
+            bandList_ignore : the list of bands to be ignored.
+            frame : the frame of the input data is in; "rest" or "obs".
+    sedPck : dict
+        The data package of the SED.
+            sed : concatenated SED.
+            pht : photometric data.
+            spc : spectroscopic data.
+        All the three items are tuple of ("wave", "flux", "sigma"), with "pht"
+        having an extra component "band" in the end.
+    silent : bool
+        The toggle not to print some information if True.
+
+    Returns
+    -------
+    sedData : SEDClass object
+        The data set of SED.
+    """
+    pht = sedPck["pht"]
+    spc = sedPck["spc"]
+    #->Settle into the rest frame
+    frame = dataDict.get("frame", "rest") #The coordinate frame of the SED; "rest"
+                                          #by default.
+    if frame == "obs":
+        pht = sedt.SED_to_restframe(pht, redshift)
+        spc = sedt.SED_to_restframe(spc, redshift)
+        if not silent:
+            print("[setSedData]: The input SED is in the observed frame!")
+    elif frame == "frame":
+        if not silent:
+            print("[setSedData]: The input SED is in the rest frame!")
+    else:
+        if not silent:
+            print("[setSedData]: The input SED frame ({0}) is not recognised!".format(frame))
+    #->Select bands
+    bandList_use = dataDict.get("bandList_use", []) #The list of bands to incorporate;
+                                                    #use all the available bands if empty.
+    bandList_ignore = dataDict.get("bandList_ignore", []) #The list of bands to be
+                                                          #ignored from the bands to use.
+    pht = sedt.SED_select_band(pht, bandList_use, bandList_ignore, silent)
+    phtwave  = pht[0]
+    phtflux  = pht[1]
+    phtsigma = pht[2]
+    phtband  = pht[3]
+    spcwave  = spc[0]
+    spcflux  = spc[1]
+    spcsigma = spc[2]
+    if not silent:
+        print("[setSedData]: The incorporated bands are: {0}".format(phtband))
+    #->Check data
+    chck_pht = np.sum(np.isnan(phtflux)) + np.sum(np.isnan(phtsigma))
+    chck_spc = np.sum(np.isnan(spcflux)) + np.sum(np.isnan(spcsigma))
+    if chck_pht:
+        raise ValueError("The photometry contains bad data!")
+    if chck_spc:
+        raise ValueError("The spectrum contains bad data!")
+    #->Put into the sedData
+    phtName = dataDict.get("phtName", None)
+    if not phtName is None:
+        phtflag = np.ones_like(phtwave)
+        phtDataType = ["name", "wavelength", "flux", "error", "flag"]
+        phtData = {phtName: bc.DiscreteSet(phtband, phtwave, phtflux, phtsigma, phtflag, phtDataType)}
+    else:
+        phtData = {}
+    spcName = dataDict.get("spcName", None)
+    if not spcName is None:
+        spcflag = np.ones_like(spcwave)
+        spcDataType = ["wavelength", "flux", "error", "flag"]
+        spcData = {"IRS": bc.ContinueSet(spcwave, spcflux, spcsigma, spcflag, spcDataType)}
+    else:
+        spcData = {}
+    sedData = SedClass(targname, redshift, distance, phtDict=phtData, spcDict=spcData)
+    sedData.set_bandpass(phtband, phtwave, silent)
+    return sedData

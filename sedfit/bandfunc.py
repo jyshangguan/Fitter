@@ -253,8 +253,8 @@ class BandPass(object):
         Notes
         -----
         To convert the relative spectral response from electron/photon to
-        energy/photon is simply:
-            S(energy/photon) = S(electron/photon) / nu
+        electron/energy is simply:
+            S(electron/energy) = S(electron/photon) / nu
         where nu is the corresponding frequency (Bessell & Murphy 2012).
         """
         waveMin = self.__waveList[0]
@@ -417,8 +417,8 @@ if __name__ == "__main__":
     from dir_list import filter_path as bandPath
     import matplotlib.pyplot as plt
     z = 1.5
-    bn = "PACS_70"
-    bandFile = "/{0}.dat".format(bn)
+    bn = "Herschel_SPIRE_500"
+    bandFile = "{0}.dat".format(bn)
     bandPck = np.genfromtxt(bandPath+bandFile)
     bandWave = bandPck[:, 0]
     bandRsr = bandPck[:, 1]

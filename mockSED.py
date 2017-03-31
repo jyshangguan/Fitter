@@ -3,10 +3,15 @@ import sys
 import types
 import importlib
 import numpy as np
+#np.seterr(all="ignore")
 import george
 from george import kernels
+import matplotlib
 import matplotlib.pyplot as plt
-import rel_SED_Toolkit as sedt
+matplotlib_version = eval(matplotlib.__version__.split(".")[0])
+if matplotlib_version > 1:
+    plt.style.use("classic")
+import sedfit.SED_Toolkit as sedt
 from astropy.table import Table
 from sedfit.fitter import basicclass as bc
 from sedfit import sedclass as sedsc
@@ -55,8 +60,8 @@ def randomRange(low, high):
     r = low + rg * np.random.rand()
     return r
 
-def mocker(targname, redshift, sedPck, mockPars, config, Dist=0,
-           sysUnc=None, uncModel=None, pert=True, nonDetect=True, plot=False):
+def mocker(sedData, sedModel, sysUnc=None, uncModel=None, silent=True,
+           pert=True, nonDetect=True):
     """
     This function is to generate a mock SED according to a given observed SED.
     Basically, the flux densities will be replaced by the model value while the
@@ -64,21 +69,10 @@ def mocker(targname, redshift, sedPck, mockPars, config, Dist=0,
 
     Parameters
     ----------
-    targname : str
-        The name of the target.
-    redshift : float
-        The redshift of the target.
-    sedPck: dict
-        {
-            sed : tuple
-                (wave, flux, sigma) of SED photometric data.
-            spc : tuple
-                (wave, flux, sigma) of SED spectral data.
-        }
-    config : module or class
-        The configuration information for the fitting.
-    Dist : float
-        The physical distance. It should be provided if the redshift is 0.
+    sedData : SEDClass object
+        The data set of SED.
+    sedModel : ModelCombiner object
+        The combined model. The parameters are set to generate the mock SED.
     sysUnc : dict or None, by default
         {
             "pht": [([nBgn, nEnd], frac), ([nBgn, nEnd], frac), ...],
@@ -95,93 +89,22 @@ def mocker(targname, redshift, sedPck, mockPars, config, Dist=0,
         }
     pert : bool, default: True
         Perturb the data according to the uncertainty if True.
-    plot : bool, default: False
-        Plot the SED to visually check if True.
+    nonDetect : bool, default: True
+        Replace the upperlimits of the sedData to the mock SED.
 
     Returns
     -------
-    (mock, lnlike) : (dict, float)
-        mock : The dict of mock data, with wave, flux and sigma inside.
-        lnlike : The likelihood calculated with the input model and the mock data.
-
-    Notes
-    -----
-    None.
+    mockPck : dict
+        The dict of mock data.
+            sed : the concatenated wave, flux and sigma of the SED.
+            pht : the photometric wave, flux, sigma and band.
+            spc : the spectra wave, flux and sigma.
     """
     ################################################################################
     #                                    Data                                      #
     ################################################################################
-    sedwave = sedPck["sed"][0]
-    sedflux = sedPck["sed"][1]
-    sedsigma = sedPck["sed"][2]
-    spcwave = sedPck["spc"][0]
-    spcflux = sedPck["spc"][1]
-    spcsigma = sedPck["spc"][2]
-    ##Check data
-    chck_sed = np.sum(np.isnan(sedflux)) + np.sum(np.isnan(sedsigma))
-    chck_spc = np.sum(np.isnan(spcflux)) + np.sum(np.isnan(spcsigma))
-    if chck_sed:
-        raise ValueError("The photometry contains bad data!")
-    if chck_spc:
-        raise ValueError("The spectrum contains bad data!")
-
-    ## Put into the sedData
-    bandList = config.bandList
-    sedName  = config.sedName
-    spcName  = config.spcName
-    if not sedName is None:
-        sedflag = np.ones_like(sedwave)
-        sedDataType = ["name", "wavelength", "flux", "error", "flag"]
-        phtData = {sedName: bc.DiscreteSet(bandList, sedwave, sedflux, sedsigma, sedflag, sedDataType)}
-    else:
-        phtData = {}
-    if not spcName is None:
-        spcflag = np.ones_like(spcwave)
-        spcDataType = ["wavelength", "flux", "error", "flag"]
-        spcData = {"IRS": bc.ContinueSet(spcwave, spcflux, spcsigma, spcflag, spcDataType)}
-    else:
-        spcData = {}
-    sedData = sedsc.SedClass(targname, redshift, Dist=Dist, phtDict=phtData, spcDict=spcData)
-    if not bandList is None:
-        sedData.set_bandpass(bandList)
-
-    ################################################################################
-    #                                   Model                                      #
-    ################################################################################
-    modelDict = config.modelDict
-    print("The model info:")
-    parCounter = 0
-    for modelName in modelDict.keys():
-        print("[{0}]".format(modelName))
-        model = modelDict[modelName]
-        for parName in model.keys():
-            param = model[parName]
-            if not isinstance(param, types.DictType):
-                continue
-            elif param["vary"]:
-                print("-- {0}, {1}".format(parName, param["type"]))
-                parCounter += 1
-            else:
-                pass
-    print("Varying parameter number: {0}".format(parCounter))
-    print("#--------------------------------#")
-
-    #Build up the model#
-    #------------------#
-    try:
-        parAddDict_all = config.parAddDict_all
-    except:
-        parAddDict_all = {}
-    parAddDict_all["DL"]    = sedData.dl
-    parAddDict_all["z"]     = redshift
-    parAddDict_all["frame"] = "rest"
-    funcLib    = sedmf.funcLib
-    waveModel = config.waveModel
-    sedModel = bc.Model_Generator(modelDict, funcLib, waveModel, parAddDict_all)
-    sedModel.updateParList(mockPars)
-    #print sedModel.get_parVaryNames(latex=False)
-    #print sedModel.get_parVaryList()
     #->Generate the mock data
+    waveModel = sedModel.get_xList()
     fluxModel = sedModel.combineResult()
     mockPht0 = np.array(sedData.model_pht(waveModel, fluxModel))
     mockSpc0 = np.array(sedData.model_spc(sedModel.combineResult))
@@ -190,6 +113,7 @@ def mocker(targname, redshift, sedPck, mockPars, config, Dist=0,
     mockPhtSigma = np.array(sedData.get_dsList("e"))
     fltr_sigma = mockPht0 < 3.0*mockPhtSigma #sedsigma
     if np.any(fltr_sigma):
+        print("[mocker] Warning: There are some bands with flux less than 3*sigma!")
         mockPhtSigma[fltr_sigma] = mockPht0[fltr_sigma] / 3.0
     mockPht = dataPerturb(mockPht0, mockPhtSigma, pert)
     #For spectroscopic data
@@ -226,65 +150,58 @@ def mocker(targname, redshift, sedPck, mockPars, config, Dist=0,
             mockSpc += gp.sample(mockSpcWave)
     #->Add the upperlimits
     if nonDetect:
-        fltr_undct = sedsigma < 0
-        mockPht[fltr_undct] = sedflux[fltr_undct]
-    #->Add systematic uncertainty
-    mockSED = np.concatenate([mockPht, mockSpc])
-    mockWav = np.concatenate([mockPhtWave, mockSpcWave])
-    mockSig = np.concatenate([mockPhtSigma, mockSpcSigma])
-    mock = {
-        "sed": mockSED,
-        "wave": mockWav,
-        "sigma": mockSig
+        phtflux = np.array(sedData.get_dsList("y"))
+        phtsigma = np.array(sedData.get_dsList("e"))
+        fltr_undct = phtsigma < 0
+        mockPht[fltr_undct] = phtflux[fltr_undct]
+    mockSedFlux  = np.concatenate([mockPht, mockSpc])
+    mockSedWave  = np.concatenate([mockPhtWave, mockSpcWave])
+    mockSedSigma = np.concatenate([mockPhtSigma, mockSpcSigma])
+    mockPhtBand = sedData.get_unitNameList()
+    mockPck = {
+        "sed": (mockSedWave, mockSedFlux, mockSedSigma),
+        "pht": (mockPhtWave, mockPht, mockPhtSigma, mockPhtBand),
+        "spc": (mockSpcWave, mockSpc, mockSpcSigma),
     }
-    #->Calculate the lnprob
-    if sedData.check_dsData():
-        mockPhtFlag = np.ones_like(mockPhtWave)
-        phtData = {sedName: bc.DiscreteSet(bandList, mockPhtWave, mockPht, mockPhtSigma, mockPhtFlag, sedDataType)}
-    else:
-        phtData = {}
-    if sedData.check_csData():
-        mockSpcFlag = np.ones_like(mockSpcWave)
-        spcData = {"IRS": bc.ContinueSet(mockSpcWave, mockSpc, mockSpcSigma, mockSpcFlag, spcDataType)}
-    else:
-        spcData = {}
-    mckData = sedsc.SedClass(targname, redshift, phtDict=phtData, spcDict=spcData)
-    mckData.set_bandpass(bandList)
+    return mockPck
+
+def sedLnLike(sedData, sedModel, uncModel):
+    """
+    Calculate the lnlike of the SED
+    """
+    mockPars = sedModel.get_parVaryList()
     if uncModel is None:
-        lnlike = logLFunc(mockPars, mckData, sedModel)
+        lnlike = logLFunc(mockPars, sedData, sedModel)
     else:
         mockPars = list(mockPars)
         mockPars.append(uncModel["lnf"])
         mockPars.append(uncModel["lna"])
         mockPars.append(uncModel["lntau"])
-        lnlike = logLFunc_gp(mockPars, mckData, sedModel)
+        lnlike = logLFunc_gp(mockPars, sedData, sedModel)
+    return lnlike
 
-    if plot:
-        xmin = np.min(waveModel)
-        xmax = np.max(waveModel)
-        ymin = np.min(mockSED) / 10.0
-        ymax = np.max(mockSED) * 10.0
-        FigAx = sedData.plot_sed()
-        FigAx = sedModel.plot(FigAx=FigAx)
-        if sedData.check_dsData():
-            plt.errorbar(mockPhtWave, mockPht, yerr=mockPhtSigma, linestyle="none", marker="s",
-                         mfc="none", mec="r", color="r", alpha=0.5)
-        if sedData.check_csData():
-            plt.errorbar(mockSpcWave, mockSpc, yerr=mockSpcSigma, linestyle="-", color="r", alpha=0.5)
-        fig, ax = FigAx
-        ax.set_xlim([xmin, xmax])
-        ax.set_ylim([ymin, ymax])
-    return (mock, lnlike)
+def PlotMockSED(sedData, mockData, sedModel):
+    waveModel = sedModel.get_xList()
+    sedPhtFlux = sedData.get_List("y")
+    xmin = np.min(waveModel)
+    xmax = np.max(waveModel)
+    ymin = np.min(sedPhtFlux) / 10.0
+    ymax = np.max(sedPhtFlux) * 10.0
+    FigAx = sedData.plot_sed()
+    FigAx = mockData.plot_sed(FigAx=FigAx, phtColor="r", spcColor="r")
+    FigAx = sedModel.plot(FigAx=FigAx)
+    fig, ax = FigAx
+    ax.set_xlim([xmin, xmax])
+    ax.set_ylim([ymin, ymax])
+    return (fig, ax)
 
-    #sedModel.plot()
-
-def gsm_mocker(configName, targname=None, redshift=None, sedFile=None,
-               mockPars=None, **kwargs):
+def gsm_mocker(configName, targname=None, redshift=None, distance=None, sedFile=None,
+               mockPars=None, uncModel=None, plot=False, cal_lnlike=False, **kwargs):
     """
-    The wrapper of mocker() function. If the targname, redshift, sedFile and
-    mockPars are provided as arguments, they will be used overriding the values
-    in the config file saved in configName. If they are not provided, then, the
-    values in the config file will be used.
+    The wrapper of mocker() function. If the targname, redshift and sedFile
+    are provided as arguments, they will be used overriding the values in the
+    config file saved in configName. If they are not provided, then, the values
+    in the config file will be used.
 
     Parameters
     ----------
@@ -292,16 +209,34 @@ def gsm_mocker(configName, targname=None, redshift=None, sedFile=None,
         The full path of the config file.
     targname : str or None by default
         The name of the target.
-    redshift : float or None by default
+    redshift : float (optional)
         The redshift of the target.
+    distance : float (optional)
+        The distance of the target.
     sedFile : str or None by default
         The full path of the sed data file.
     mockPars : list
         The parameters to generate the mock SED.
+    uncModel : dict or None, by default
+        {
+            "lnf" : float, (-inf, 0]
+                The ln of f, the imperfectness of the model.
+            "lna" : float, (-inf, 1]
+                The ln of a, the amplitude of the residual correlation.
+            "lntau" : float, (-inf, 1]
+                The ln of tau, the scale length of the residual correlation.
+        }
+    plot : bool, default: False
+        Plot the SED to visually check if True.
 
     Returns
     -------
-    None.
+    mock : tuple
+        The (wavelength, flux, sigma, band) of the mock data in the observed frame.
+    lnlike : float (optional)
+        The lnlikelihood of the mock SED and the model.
+    FigAx : tuple (optional)
+        The (fig, ax) of the SED figure, if plot is True.
 
     Notes
     -----
@@ -311,36 +246,118 @@ def gsm_mocker(configName, targname=None, redshift=None, sedFile=None,
     if targname is None:
         assert redshift is None
         assert sedFile is None
-        #assert mockPars is None
         targname = config.targname
         redshift = config.redshift
         sedFile  = config.sedFile
     else:
         assert not redshift is None
         assert not sedFile is None
-        #assert not mockPars is None
     print("#--------------------------------#")
     print("Target: {0}".format(targname))
     print("SED file: {0}".format(sedFile))
     print("Config file: {0}".format(configName))
     print("#--------------------------------#")
-    sedPck = sedt.Load_SED(sedFile, config.sedRng, config.spcRng, config.spcRebin)
-    mock = mocker(targname, redshift, sedPck, mockPars, config, **kwargs)
-    return mock
+
+    try:
+        silent = config.silent
+    except:
+        silent = False
+    ############################################################################
+    #                                 Data                                     #
+    ############################################################################
+    dataDict = config.dataDict
+    sedPck = sedt.Load_SED(sedFile)
+    sedData = sedsc.setSedData(targname, redshift, distance, dataDict, sedPck, silent)
+
+    ############################################################################
+    #                                 Model                                    #
+    ############################################################################
+    modelDict = config.modelDict
+    print("The model info:")
+    parCounter = 0
+    for modelName in modelDict.keys():
+        print("[{0}]".format(modelName))
+        model = modelDict[modelName]
+        for parName in model.keys():
+            param = model[parName]
+            if not isinstance(param, types.DictType):
+                continue
+            elif param["vary"]:
+                print("-- {0}, {1}".format(parName, param["type"]))
+                parCounter += 1
+            else:
+                pass
+    print("Varying parameter number: {0}".format(parCounter))
+    print("#--------------------------------#")
+
+    #->Build up the model
+    funcLib   = sedmf.funcLib
+    waveModel = config.waveModel
+    try:
+        parAddDict_all = config.parAddDict_all
+    except:
+        parAddDict_all = {}
+    parAddDict_all["DL"]    = sedData.dl
+    parAddDict_all["z"]     = redshift
+    parAddDict_all["frame"] = "rest"
+    sedModel  = bc.Model_Generator(modelDict, funcLib, waveModel, parAddDict_all)
+    sedModel.updateParList(mockPars) #Set the model with the desiring parameters.
+
+    ############################################################################
+    #                                  Mock                                    #
+    ############################################################################
+    mockPck = mocker(sedData, sedModel, **kwargs)
+    #->Reform the result and switch back to the observed frame
+    sed = mockPck["sed"]
+    pht = mockPck["pht"]
+    spc = mockPck["spc"]
+    sed = sedt.SED_to_obsframe(sed, redshift)
+    pht = sedt.SED_to_obsframe(pht, redshift)
+    spc = sedt.SED_to_obsframe(spc, redshift)
+    phtwave = pht[0]
+    phtband = pht[3]
+    spcwave = spc[0]
+    mockSedWave = sed[0]
+    mockSedFlux = sed[1]
+    mockSedSigma = sed[2]
+    mockSedBand = np.concatenate([phtband, np.zeros_like(spcwave, dtype="int")])
+    mock = (mockSedWave, mockSedFlux, mockSedSigma, mockSedBand)
+    result = [mock]
+    #->Calculate the lnlike
+    mockDict = {
+        "phtName": dataDict["phtName"],
+        "spcName": dataDict["spcName"],
+        "bandList_use": dataDict["bandList_use"],
+        "bandList_ignore": dataDict["bandList_ignore"],
+        "frame": "obs",
+    }
+    mockPck = {
+        "sed": sed,
+        "pht": pht,
+        "spc": spc
+    }
+    mockData = sedsc.setSedData(targname, redshift, distance, mockDict, mockPck, silent)
+    if cal_lnlike:
+        lnlike = sedLnLike(mockData, sedModel, uncModel)
+        result.append(lnlike)
+    #->Plot
+    if plot:
+        FigAx = PlotMockSED(sedData, mockData, sedModel)
+        result.append(FigAx)
+    return result
 
 if __name__ == "__main__":
     #-->Generate Mock Data
-    parTable = Table.read("/Volumes/Transcend/Work/PG_MCMC/pg_sil/compile_sil.ipac", format="ascii.ipac")
+    parTable = Table.read("/Volumes/Transcend/Work/PG_MCMC/pg_clu_qpahVar/compile_pg_clu.ipac", format="ascii.ipac")
     infoTable = Table.read("targlist/targlist_rq.ipac", format="ascii.ipac")
     #print parTable.colnames
     if os.path.isdir("configs"):
         sys.path.append("configs/")
-    configName = "config_sil"
-    mockSub = "sil"
+    configName = "config_mock_clu"
+    mockSub = "test"
 
-    parNameList = ['sizeSil', 'T1Sil', 'T2Sil', 'logM1Sil', 'logM2Sil', 'sizeGra',
-                   'T1Gra', 'T2Gra', 'R1G2S', 'R2G2S', 'logumin', 'qpah', 'gamma',
-                   'logMd']
+    parNameList = ['logMs', 'logOmega', 'T', 'logL', 'i', 'tv', 'q', 'N0', 'sigma', 'Y',
+                   'logumin', 'qpah', 'gamma', 'logMd']
     comments = """
 #This mock SED is created from {0} at redshift {1}.
 #The uncertainties of the data are the real uncertainties of the sources.
@@ -358,34 +375,39 @@ if __name__ == "__main__":
         "pht": [([0, 2], 0.00), ([2, 5], 0.00), ([5, 8], 0.00)] #Check for the accurate case
     }
     #loop_T = 0
-    nRuns = len(parTable)
+    nRuns = 1 #len(parTable)
     for loop_T in range(nRuns):
-        targname = parTable["Name"][loop_T]
-        fltr_Target = infoTable["Name"]==targname
-        redshift = infoTable["z"][fltr_Target][0]
-        sedFile = infoTable["sed"][fltr_Target][0]
+        targname = infoTable["Name"][loop_T]
+        redshift = infoTable["z"][loop_T]
+        sedFile = infoTable["sed"][loop_T]
+        fltr_Target = parTable["Name"]==targname
         #Load the mock parameters
         mockPars = []
         for parName in parNameList:
-            mockPars.append(parTable["{0}_C".format(parName)][loop_T])
+            mockPars.append(parTable["{0}_C".format(parName)][fltr_Target][0])
         #print parTable[loop_T]
-        mock, lnlike = gsm_mocker(configName, targname, redshift, sedFile, mockPars,
-                        sysUnc=sysUnc, #uncModel=[-np.inf, -np.inf, -np.inf],
-                        pert=False, plot=True)
-        print("--------lnlike={0:.5f}".format(lnlike))
-        plt.savefig("mock/{0}_mock.png".format(targname))
+        gsmPck = gsm_mocker(configName, targname, redshift, sedFile=sedFile,
+                            mockPars=mockPars, sysUnc=sysUnc, #uncModel=[-np.inf, -np.inf, -np.inf],
+                            pert=False, plot=True, cal_lnlike=True)
+        mock, lnlike, FigAx = gsmPck
+        plt.savefig("mock/{0}_mock.png".format(targname), bbox_inches="tight")
         plt.close()
+        print("--------lnlike={0:.5f}".format(lnlike))
 
         #->Save mock file
-        wave = mock["wave"]
-        flux = mock["sed"]
-        sigma = mock["sigma"]
-        data = np.transpose(np.array([wave, flux, sigma]))
-        mockName = targname
+        wave = mock[0]
+        flux = mock[1]
+        sigma = mock[2]
+        band = mock[3]
+        mockTable = Table([wave, flux, sigma, band],
+                          names=['wavelength', 'flux', 'sigma', "band"])
+        mockTable["wavelength"].format = "%.3f"
+        mockTable["flux"].format = "%.3f"
+        mockTable["sigma"].format = "%.3f"
+        mockName = "mock/{0}_{1}.msed".format(targname, mockSub)
+        mockTable.write(mockName, format="ascii", delimiter="\t", overwrite=True)
         #f = open("mock/{0}_{1}.msed".format(mockName, mockSub), "w")
-        f = open("mock/{0}_{1}_ex.msed".format(mockName, mockSub), "w")
-        f.writelines("wavelength\tflux\tsigma\n")
-        np.savetxt(f, data, fmt="%.2f", delimiter="\t")
+        f = open(mockName, "a")
         suList = [sysUnc["pht"][0][1], sysUnc["pht"][1][1], sysUnc["pht"][2][1], sysUnc["spc"]]
         cmnt = comments.format(targname, redshift, configName, lnlike, parNameList, mockPars, S=suList)
         f.writelines(cmnt)
