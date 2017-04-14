@@ -126,7 +126,7 @@ def fitter(sedData, sedModel, unctDict, parTruth, emceeDict):
         em.diagnose()
         pmax = em.p_logl_max()
         em.print_parameters(truths=parTruth, burnin=0)
-        em.plot_lnlike(filename="gsf_lnprob.png", histtype="step")
+        em.plot_lnlike(filename="gsf_temp_lnprob.png", histtype="step")
         print( "**Time ellapse: {0:.3f} hour".format( (time() - t0)/3600. ) )
         em.reset()
         p0 = em.p_ball(pmax, ratio=ballR)
@@ -161,7 +161,7 @@ def fitter(sedData, sedModel, unctDict, parTruth, emceeDict):
         em.diagnose()
         pmax = em.p_logl_max()
         em.print_parameters(truths=parTruth, burnin=burnIn, low=psLow, center=psCenter, high=psHigh)
-        em.plot_lnlike(filename="gsf_lnprob.png", histtype="step")
+        em.plot_lnlike(filename="gsf_temp_lnprob.png", histtype="step")
         print( "**Time ellapse: {0:.3f} hour".format( (time() - t0)/3600. ) )
     return em
 

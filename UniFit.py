@@ -8,11 +8,6 @@ import numpy as np
 from optparse import OptionParser
 from astropy.table import Table
 
-#Include the config directory#
-#----------------------------#
-if os.path.isdir("configs"):
-    sys.path.append("configs/")
-
 #Parse the commands#
 #-------------------#
 parser = OptionParser()
@@ -37,9 +32,8 @@ else:
     warnings.simplefilter("ignore")
 
 targetList = options.list
-configFile = args[0]
+configName = args[0] #Get the input configure file information.
 if targetList is None: #If the target list is not provided, only fit one target according to the config file.
-    configName = configFile.split("/")[-1].split(".")[0]
     gsf.gsf_fitter(configName)
 else: #If the target list is provided, fit the targets one by one.
     if len(args) == 2:

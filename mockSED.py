@@ -190,11 +190,12 @@ def mocker(sedData, sedModel, sysUnc=None, uncModel=None, silent=True,
         "pht": (mockPhtWave, mockPht, mockPhtSigma, mockPhtBand),
         "spc": (mockSpcWave, mockSpc, mockSpcSigma, mockSpcBand),
     }
+    print "mockPht", mockPht
     return mockPck
 
 def sedLnLike(sedData, sedModel, uncModel):
     """
-    Calculate the lnlike of the SED
+    Calculate the lnlike of the SED.
     """
     mockPars = sedModel.get_parVaryList()
     if uncModel is None:
@@ -365,6 +366,7 @@ def gsm_mocker(configName, targname=None, redshift=None, distance=None, sedFile=
         "spc": spc
     }
     mockData = sedsc.setSedData(targname, redshift, distance, mockDict, mockPck, silent)
+    print "y", mockData.get_dsList("y")
     if cal_lnlike:
         lnlike = sedLnLike(mockData, sedModel, uncModel)
         result.append(lnlike)
