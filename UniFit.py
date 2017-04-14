@@ -53,7 +53,7 @@ else: #If the target list is provided, fit the targets one by one.
             distance = targTable["DL"][loop]
         else:
             distance = None
-        config   = configFile.split("/")[-1].split(".")[0]
+        configUse = configName
         if not options.refit: #Omit the target if there is a fitting result.
             fileList = os.listdir(".")
             if "{0}_bestfit.txt".format(targname) in fileList:
@@ -63,10 +63,10 @@ else: #If the target list is provided, fit the targets one by one.
             fileList = os.listdir(".")
             configTry = "config_{0}.py".format(targname)
             if configTry in fileList:
-                config = configTry.split(".")[0]
+                configUse = configTry
         sedFile = sedPath + sedname
         try:
-            gsf.gsf_fitter(config, targname, redshift, distance, sedFile)
+            gsf.gsf_fitter(configUse, targname, redshift, distance, sedFile)
         except:
             print("\n---------------------------")
             print("***Fitting {0} is failed!".format(targname))
