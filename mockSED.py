@@ -366,7 +366,6 @@ def gsm_mocker(configName, targname=None, redshift=None, distance=None, sedFile=
         "spc": spc
     }
     mockData = sedsc.setSedData(targname, redshift, distance, mockDict, mockPck, silent)
-    print "y", mockData.get_dsList("y")
     if cal_lnlike:
         lnlike = sedLnLike(mockData, sedModel, uncModel)
         result.append(lnlike)
