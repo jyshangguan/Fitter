@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 matplotlib_version = eval(matplotlib.__version__.split(".")[0])
 if matplotlib_version > 1:
     plt.style.use("classic")
+import sys
 import types
 import numpy as np
 import importlib
@@ -16,95 +17,69 @@ from sedfit.mcmc import mcmc_emcee as mcmc
 from sedfit import sedclass as sedsc
 from sedfit import model_functions as sedmf
 
-#The code starts#
-#---------------#
+#The starter of this module#
+#--------------------------#
 print("############################")
 print("# Galaxy SED Fitter starts #")
 print("############################")
 
-def fitter(targname, redshift, sedPck, config, distance=None):
+def configImporter(configfile):
     """
-    This function is the main routine to do the SED fitting. The code will
-    produce the final fitting results.
+    This function import the provided configure file.
 
     Parameters
     ----------
-    targname : str
-        The name of the target.
-    redshift : float
-        The redshift of the target.
-    sedPck: dict
-        {
-            sed : tuple
-                (wave, flux, sigma) of SED photometric data.
-            spc : tuple
-                (wave, flux, sigma) of SED spectral data.
-        }
-    config : module or class
-        The configuration information for the fitting.
-    distance : float (optional)
-        The physical (or luminosity) distance of the source. If not provided, the
-        value will be estimated from the redshift. Unit: Mpc.
+    configfile : string
+        The name of the configure file (with the path).
 
     Returns
     -------
-    None.
+    config : module object
+        The imported module.
 
     Notes
     -----
     None.
     """
-    try:
-        silent = config.silent
-    except:
-        silent = False
-    ################################################################################
-    #                                    Data                                      #
-    ################################################################################
-    dataDict = config.dataDict
-    sedData = sedsc.setSedData(targname, redshift, distance, dataDict, sedPck, silent)
+    pathList = configfile.split("/")
+    configPath = "/".join(pathList[0:-1])
+    sys.path.append(configPath)
+    configName = pathList[-1].split(".")[0]
+    config = importlib.import_module(configName)
+    return config
 
-    ################################################################################
-    #                                   Model                                      #
-    ################################################################################
-    modelDict = config.modelDict
-    print("The model info:")
-    parCounter = 0
-    for modelName in modelDict.keys():
-        print("[{0}]".format(modelName))
-        model = modelDict[modelName]
-        for parName in model.keys():
-            param = model[parName]
-            if not isinstance(param, types.DictType):
-                continue
-            elif param["vary"]:
-                print("-- {0}, {1}".format(parName, param["type"]))
-                parCounter += 1
-            else:
-                pass
-    print("Varying parameter number: {0}".format(parCounter))
-    print("#--------------------------------#")
+def fitter(sedData, sedModel, unctDict, parTruth, emceeDict):
+    """
+    This function is run the SED fitting with the MCMC method.
 
-    #Build up the model#
-    #------------------#
-    funcLib   = sedmf.funcLib
-    waveModel = config.waveModel
-    try:
-        parAddDict_all = config.parAddDict_all
-    except:
-        parAddDict_all = {}
-    parAddDict_all["DL"]    = sedData.dl
-    parAddDict_all["z"]     = redshift
-    parAddDict_all["frame"] = "rest"
-    sedModel  = bc.Model_Generator(modelDict, funcLib, waveModel, parAddDict_all)
-    modelUnct = config.modelUnct #Whether to consider the model uncertainty in the fitting
-    parTruth  = config.parTruth  #Whether to provide the truth of the model
+    Parameters
+    ----------
+    sedData : SEDClass object
+        The data set of SED.
+    sedModel : ModelCombiner object
+        The combined model. The parameters are set to generate the mock SED.
+    unctDict : dict or None, by default
+        {
+            "lnf" : float, (-inf, lnf_max]
+                The ln of f, the imperfectness of the model.
+            "lna" : float, (-inf, lnf_max]
+                The ln of a, the amplitude of the residual correlation.
+            "lntau" : float, (-inf, lnf_max]
+                The ln of tau, the scale length of the residual correlation.
+        }
+    parTruth : bool
+        The toggle whether to provide the truth of the model.
 
-    ################################################################################
-    #                                   emcee                                      #
-    ################################################################################
-    unctDict = config.unctDict
-    emceeDict = config.emceeDict
+    Returns
+    -------
+    em : EmceeModel object
+        The object of EmceeModel.
+
+    Notes
+    -----
+    None.
+    """
+
     print("emcee setups:")
     for keys in emceeDict["Setup"].keys():
         print("{0}: {1}".format(keys, emceeDict["Setup"][keys]))
@@ -128,6 +103,10 @@ def fitter(targname, redshift, sedPck, config, distance=None):
     thin        = emceeDict["Burnin"]["thin"]
     ballR       = emceeDict["Burnin"]["ball-r"]
 
+    if unctDict is None:
+        modelUnct = False
+    else:
+        modelUnct = True
     em = mcmc.EmceeModel(sedData, sedModel, modelUnct, unctDict, SamplerType)
     if SamplerType == "EnsembleSampler":
         p0 = [em.from_prior() for i in range(nwalkers)]
@@ -147,7 +126,7 @@ def fitter(targname, redshift, sedPck, config, distance=None):
         em.diagnose()
         pmax = em.p_logl_max()
         em.print_parameters(truths=parTruth, burnin=0)
-        em.plot_lnlike(filename="{0}_lnprob.png".format(targname), histtype="step")
+        em.plot_lnlike(filename="gsf_temp_lnprob.png", histtype="step")
         print( "**Time ellapse: {0:.3f} hour".format( (time() - t0)/3600. ) )
         em.reset()
         p0 = em.p_ball(pmax, ratio=ballR)
@@ -173,8 +152,6 @@ def fitter(targname, redshift, sedPck, config, distance=None):
     elif SamplerType == "PTSampler":
         ntemps = emceeDict["Final"]["ntemps"]
         sampler = em.PTSampler(ntemps, nwalkers, threads=threads)
-    #t0 = time()
-    #print("[gsf test]: {0}".format(np.array(p0).shape))
     for i in range(len(iteration)):
         steps = iteration[i]
         print( "\n{:*^35}".format(" {0}th Final ".format(i)) )
@@ -184,13 +161,113 @@ def fitter(targname, redshift, sedPck, config, distance=None):
         em.diagnose()
         pmax = em.p_logl_max()
         em.print_parameters(truths=parTruth, burnin=burnIn, low=psLow, center=psCenter, high=psHigh)
-        em.plot_lnlike(filename="{0}_lnprob.png".format(targname), histtype="step")
+        em.plot_lnlike(filename="gsf_temp_lnprob.png", histtype="step")
         print( "**Time ellapse: {0:.3f} hour".format( (time() - t0)/3600. ) )
+    return em
 
 
-    ################################################################################
-    #                                  Post process                                #
-    ################################################################################
+def gsf_fitter(configName, targname=None, redshift=None, distance=None, sedFile=None):
+    """
+    The wrapper of fitter() function. If the targname, redshift and sedFile are
+    provided as arguments, they will be used overriding the values in the config
+    file saved in configName. If they are not provided, then, the values in the
+    config file will be used.
+
+    Parameters
+    ----------
+    configName : str
+        The full path of the config file.
+    targname : str or None by default
+        The name of the target.
+    redshift : float or None by default
+        The redshift of the target.
+    distance : float or None by default
+        The distance of the source from the Sun.
+    sedFile : str or None by default
+        The full path of the sed data file.
+
+    Returns
+    -------
+    None.
+
+    Notes
+    -----
+    None.
+    """
+    ############################################################################
+    #                                Setup                                     #
+    ############################################################################
+    config = configImporter(configName)
+    if targname is None:
+        assert redshift is None
+        assert distance is None
+        assert sedFile is None
+        targname = config.targname
+        redshift = config.redshift
+        distance = config.distance
+        sedFile  = config.sedFile
+    else:
+        assert not redshift is None
+        assert not sedFile is None
+    print("#--------------------------------#")
+    print("Target:      {0}".format(targname))
+    print("Redshift:    {0}".format(redshift))
+    print("Distance:    {0}".format(distance))
+    print("SED file:    {0}".format(sedFile))
+    print("Config file: {0}".format(configName))
+    print("#--------------------------------#")
+
+    try:
+        silent = config.silent
+    except:
+        silent = False
+
+    #->Setup the data Data
+    dataDict = config.dataDict
+    sedPck = sedt.Load_SED(sedFile)
+    sedData = sedsc.setSedData(targname, redshift, distance, dataDict, sedPck, silent)
+
+    #->Setup the model
+    modelDict = config.modelDict
+    print("The model info:")
+    parCounter = 0
+    for modelName in modelDict.keys():
+        print("[{0}]".format(modelName))
+        model = modelDict[modelName]
+        for parName in model.keys():
+            param = model[parName]
+            if not isinstance(param, types.DictType):
+                continue
+            elif param["vary"]:
+                print("-- {0}, {1}".format(parName, param["type"]))
+                parCounter += 1
+            else:
+                pass
+    print("Varying parameter number: {0}".format(parCounter))
+    print("#--------------------------------#")
+    funcLib   = sedmf.funcLib
+    waveModel = config.waveModel
+    try:
+        parAddDict_all = config.parAddDict_all
+    except:
+        parAddDict_all = {}
+    parAddDict_all["DL"]    = sedData.dl
+    parAddDict_all["z"]     = redshift
+    parAddDict_all["frame"] = "rest"
+    sedModel  = bc.Model_Generator(modelDict, funcLib, waveModel, parAddDict_all)
+
+    ############################################################################
+    #                                   Fit                                    #
+    ############################################################################
+    modelUnct = config.modelUnct #Whether to consider the model uncertainty in the fitting
+    parTruth  = config.parTruth  #Whether to provide the truth of the model
+    unctDict = config.unctDict
+    emceeDict = config.emceeDict
+    em = fitter(sedData, sedModel, unctDict, parTruth, emceeDict)
+
+    ############################################################################
+    #                              Post process                                #
+    ############################################################################
     try:
         ppDict = config.ppDict
     except:
@@ -201,6 +278,7 @@ def fitter(targname, redshift, sedPck, config, distance=None):
     psHigh   = ppDict.get("high", 84)
     nuisance = ppDict.get("nuisance", True)
     fraction = ppDict.get("fraction", 0)
+    burnIn   = emceeDict["Final"]["burn-in"]
 
     dataPck = {
         "targname": targname,
@@ -221,8 +299,8 @@ def fitter(targname, redshift, sedPck, config, distance=None):
         "modelPck": modelPck,
         "ppDict": ppDict,
         "posterior_sample": em.posterior_sample(burnin=burnIn, fraction=fraction),
-        "chain": sampler.chain,
-        "lnprobability": sampler.lnprobability
+        "chain": em.sampler.chain,
+        "lnprobability": em.sampler.lnprobability
     }
     fp = open("{0}.fitrs".format(targname), "w")
     pickle.dump(fitrs, fp)
@@ -269,53 +347,3 @@ def fitter(targname, redshift, sedPck, config, distance=None):
                    quantiles=[psLow/100., psCenter/100., psHigh/100.], show_titles=True,
                    title_kwargs={"fontsize": 20})
     print("Post-processed!")
-
-def gsf_fitter(configName, targname=None, redshift=None, distance=None, sedFile=None):
-    """
-    The wrapper of fitter() function. If the targname, redshift and sedFile are
-    provided as arguments, they will be used overriding the values in the config
-    file saved in configName. If they are not provided, then, the values in the
-    config file will be used.
-
-    Parameters
-    ----------
-    configName : str
-        The full path of the config file.
-    targname : str or None by default
-        The name of the target.
-    redshift : float or None by default
-        The redshift of the target.
-    distance : float or None by default
-        The distance of the source from the Sun.
-    sedFile : str or None by default
-        The full path of the sed data file.
-
-    Returns
-    -------
-    None.
-
-    Notes
-    -----
-    None.
-    """
-    config = importlib.import_module(configName)
-    if targname is None:
-        assert redshift is None
-        assert distance is None
-        assert sedFile is None
-        targname = config.targname
-        redshift = config.redshift
-        distance = config.distance
-        sedFile  = config.sedFile
-    else:
-        assert not redshift is None
-        assert not sedFile is None
-    print("#--------------------------------#")
-    print("Target:      {0}".format(targname))
-    print("Redshift:    {0}".format(redshift))
-    print("Distance:    {0}".format(distance))
-    print("SED file:    {0}".format(sedFile))
-    print("Config file: {0}".format(configName))
-    print("#--------------------------------#")
-    sedPck = sedt.Load_SED(sedFile)
-    fitter(targname, redshift, sedPck, config, distance)

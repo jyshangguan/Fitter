@@ -60,6 +60,31 @@ def randomRange(low, high):
     r = low + rg * np.random.rand()
     return r
 
+def configImporter(configfile):
+    """
+    This function import the provided configure file.
+
+    Parameters
+    ----------
+    configfile : string
+        The name of the configure file (with the path).
+
+    Returns
+    -------
+    config : module object
+        The imported module.
+
+    Notes
+    -----
+    None.
+    """
+    pathList = configfile.split("/")
+    configPath = "/".join(pathList[0:-1])
+    sys.path.append(configPath)
+    configName = pathList[-1].split(".")[0]
+    config = importlib.import_module(configName)
+    return config
+
 def mocker(sedData, sedModel, sysUnc=None, uncModel=None, silent=True,
            pert=True, nonDetect=True):
     """
@@ -158,16 +183,19 @@ def mocker(sedData, sedModel, sysUnc=None, uncModel=None, silent=True,
     mockSedWave  = np.concatenate([mockPhtWave, mockSpcWave])
     mockSedSigma = np.concatenate([mockPhtSigma, mockSpcSigma])
     mockPhtBand = sedData.get_unitNameList()
+    mockSpcBand = np.zeros_like(mockSpcWave)
+    mockSedBand = np.concatenate([mockPhtBand, mockSpcBand])
     mockPck = {
-        "sed": (mockSedWave, mockSedFlux, mockSedSigma),
+        "sed": (mockSedWave, mockSedFlux, mockSedSigma, mockSedBand),
         "pht": (mockPhtWave, mockPht, mockPhtSigma, mockPhtBand),
-        "spc": (mockSpcWave, mockSpc, mockSpcSigma),
+        "spc": (mockSpcWave, mockSpc, mockSpcSigma, mockSpcBand),
     }
+    print "mockPht", mockPht
     return mockPck
 
 def sedLnLike(sedData, sedModel, uncModel):
     """
-    Calculate the lnlike of the SED
+    Calculate the lnlike of the SED.
     """
     mockPars = sedModel.get_parVaryList()
     if uncModel is None:
@@ -242,7 +270,8 @@ def gsm_mocker(configName, targname=None, redshift=None, distance=None, sedFile=
     -----
     None.
     """
-    config = importlib.import_module(configName.split(".")[0])
+    #config = importlib.import_module(configName.split(".")[0])
+    config = configImporter(configName)
     if targname is None:
         assert redshift is None
         assert sedFile is None
@@ -347,6 +376,12 @@ def gsm_mocker(configName, targname=None, redshift=None, distance=None, sedFile=
     return result
 
 if __name__ == "__main__":
+    filename = "haha/aaa/bbb"
+    pathList = filename.split("/")
+    print pathList
+    configPath = "/".join(pathList[0:-1])
+    print configPath
+    '''
     #-->Generate Mock Data
     parTable = Table.read("/Volumes/Transcend/Work/PG_MCMC/pg_clu_qpahVar/compile_pg_clu.ipac", format="ascii.ipac")
     infoTable = Table.read("targlist/targlist_rq.ipac", format="ascii.ipac")
@@ -412,3 +447,4 @@ if __name__ == "__main__":
         cmnt = comments.format(targname, redshift, configName, lnlike, parNameList, mockPars, S=suList)
         f.writelines(cmnt)
         f.close()
+    '''
