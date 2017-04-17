@@ -40,3 +40,4 @@ if not pool.is_master():
 targetList = options.list
 configName = args[0] #Get the input configure file information.
 gsf.gsf_fitter(configName, pool)
+pool.close()
