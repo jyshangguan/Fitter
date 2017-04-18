@@ -24,7 +24,7 @@ def makeCommand(cDict):
 parser = OptionParser()
 parser.add_option("-l", "--list", dest="list", default=None, #metavar="FILE",
                   help="Provide a list of target info to fit.")
-parser.add_option("-m", "--mpi_ncore", dest="ncores", default=1,
+parser.add_option("-m", "--mpi_ncore", dest="ncores", default="1",
                   help="Run the code with MPI using the ")
 parser.add_option("-r", "--refit", dest="refit",
                   action="store_true", default=False,
@@ -45,17 +45,18 @@ elif ncores > 1:
     commandHead = "mpirun -np {0} python gsf_mpi.py".format(ncores)
 commandDict = {
     "head": commandHead,
-    "args": args,
-    "options": [],
+    #"options": [],
+    #"args": args,
 }
-if options.overwrite:
-    commandDict["options"].append("-o")
-if options.warning:
-    commandDict["options"].append("-w")
-commandLine = makeCommand(commandDict)
-print(commandLine)
-"""
+#print(commandLine)
 targetList = options.list
 if targetList is None:
-    os.system("ls -l")
-"""
+    commandDict["options"] = []
+    commandDict["args"] = args
+    if options.overwrite:
+        commandDict["options"].append("-o")
+    if options.warning:
+        commandDict["options"].append("-w")
+    commandLine = makeCommand(commandDict)
+    print(commandLine)
+    os.system(commandLine)
