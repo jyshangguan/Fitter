@@ -61,7 +61,6 @@ if targetList is None:
     if options.warning:
         commandDict["options"].append("-w")
     commandLine = makeCommand(commandDict)
-    print(commandLine)
     os.system(commandLine)
 else: #If the target list is provided, fit the targets one by one.
     sedPath = options.path
