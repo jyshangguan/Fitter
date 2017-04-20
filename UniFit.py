@@ -27,20 +27,18 @@ parser.add_option("-l", "--list", dest="list", default=None,
                   help="Provide a list of target info to fit.")
 parser.add_option("-f", "--list_format", dest="list_format", default="ascii.ipac",
                   help="Provide a list of target info to fit.")
+parser.add_option("-r", "--refit", dest="refit", action="store_true", default=False,
+                  help="Refit the SED though there is a result found. Only works with -l assigned.")
 parser.add_option("-c", "--config", dest="config", default=None,
                   help="Assign the config file for a list of objects.")
 parser.add_option("-p", "--path", dest="path", default=None,
                   help="Assign the path of the SED data for a list of objects.")
-parser.add_option("-r", "--refit", dest="refit", action="store_true", default=False,
-                  help="Refit the SED though there is a result found. Only works with -l assigned.")
 (options, args) = parser.parse_args()
 if options.list is None:
     if not options.config is None:
         parser.error("Option -c only works with -l.")
     if not options.path is None:
         parser.error("Option -p only works with -l.")
-    if not options.refit is None:
-        parser.error("Option -r only works with -l.")
 
 #->Determine whether use MPI or not.
 commandDict = {}
