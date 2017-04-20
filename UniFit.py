@@ -103,7 +103,6 @@ else: #If the target list is provided, fit the targets one by one.
         commandDict["args"] = commandArgs
         commandLine = makeCommand(commandDict)
         try:
-            print(commandLine)
-            #os.system(commandLine)
+            os.system(commandLine)
         except:
             print("***Fail to run:\n    '{0}'!".format(commandLine))
