@@ -79,102 +79,76 @@ def fitter(sedData, sedModel, unctDict, parTruth, emceeDict, mpi_pool=None):
     -----
     None.
     """
-
-    print("emcee setups:")
-    for keys in emceeDict["Setup"].keys():
-        print("{0}: {1}".format(keys, emceeDict["Setup"][keys]))
-    print("#--------------------------------#")
-    threads     = emceeDict["Setup"]["threads"]
-    printFrac   = emceeDict["Setup"]["printfrac"]
-    psLow       = emceeDict["Setup"]["pslow"]
-    psCenter    = emceeDict["Setup"]["pscenter"]
-    psHigh      = emceeDict["Setup"]["pshigh"]
-
-    #Burn-in runs#
-    #------------#
-    print( "\n{:*^50}".format(" Burn-in Sampling ") )
-    for keys in emceeDict["Burnin"].keys():
-        print("{0}: {1}".format(keys, emceeDict["Burnin"][keys]))
-    print("#--------------------------------#")
-
-    SamplerType = emceeDict["Burnin"]["sampler"]
-    nwalkers    = emceeDict["Burnin"]["nwalkers"]
-    iteration   = emceeDict["Burnin"]["iteration"]
-    thin        = emceeDict["Burnin"]["thin"]
-    ballR       = emceeDict["Burnin"]["ball-r"]
-
-    if unctDict is None:
-        modelUnct = False
-    else:
-        modelUnct = True
-    em = mcmc.EmceeModel(sedData, sedModel, modelUnct, unctDict, SamplerType)
-    if SamplerType == "EnsembleSampler":
-        p0 = [em.from_prior() for i in range(nwalkers)]
-        if mpi_pool is None:
-            sampler = em.EnsembleSampler(nwalkers, threads=threads)
-        else:
-            sampler = em.EnsembleSampler(nwalkers, pool=mpi_pool)
-    elif SamplerType == "PTSampler":
-        ntemps = emceeDict["Burnin"]["ntemps"]
-        p0 = []
-        for i in range(ntemps):
-            p0.append([em.from_prior() for i in range(nwalkers)])
-        if mpi_pool is None:
-            sampler = em.PTSampler(ntemps, nwalkers, threads=threads)
-        else:
-            sampler = em.PTSampler(ntemps, nwalkers, pool=mpi_pool)
-
+    #->Prepare to run the iteration
     t0 = time()
-    for i in range(len(iteration)):
-        steps = iteration[i]
-        print( "\n{:*^35}".format(" {0}th Burn-in ".format(i)) )
-        em.run_mcmc(p0, iterations=steps, printFrac=printFrac, thin=thin)
-        em.diagnose()
-        pmax = em.p_logl_max()
-        em.print_parameters(truths=parTruth, burnin=0)
-        em.plot_lnlike(filename="gsf_temp_lnprob.png", histtype="step")
-        print( "**Time ellapse: {0:.3f} hour".format( (time() - t0)/3600. ) )
-        em.reset()
-        p0 = em.p_ball(pmax, ratio=ballR)
-    del(em)
-
-    #Final runs#
-    #----------#
-    print( "\n{:*^50}".format(" Final Sampling ") )
-    for keys in emceeDict["Final"].keys():
-        print("{0}: {1}".format(keys, emceeDict["Final"][keys]))
-    print("#--------------------------------#")
-
-    SamplerType = emceeDict["Final"]["sampler"]
-    nwalkers    = emceeDict["Final"]["nwalkers"]
-    iteration   = emceeDict["Final"]["iteration"]
-    thin        = emceeDict["Final"]["thin"]
-    burnIn      = emceeDict["Final"]["burn-in"]
-    ballR       = emceeDict["Final"]["ball-r"]
-
-    em = mcmc.EmceeModel(sedData, sedModel, modelUnct, unctDict, SamplerType)
-    if SamplerType == "EnsembleSampler":
-        if mpi_pool is None:
-            sampler = em.EnsembleSampler(nwalkers, threads=threads)
+    setupKeys = emceeDict["Setup"].keys()
+    if not mpi_pool is None:
+        setupKeys.remove("threads")
+    print( "\n#{:-^50}#".format("emcee Setups") )
+    for keys in setupKeys:
+        print("{0}: {1}".format(keys, emceeDict["Setup"][keys]))
+    threads   = emceeDict["Setup"]["threads"]
+    printFrac = emceeDict["Setup"]["printfrac"]
+    psLow     = emceeDict["Setup"]["pslow"]
+    psCenter  = emceeDict["Setup"]["pscenter"]
+    psHigh    = emceeDict["Setup"]["pshigh"]
+    #->Start the iteration
+    runList = emceeDict.keys()
+    runList.remove("Setup")
+    for loop_run in range(len(runList)):
+        runName = runList[loop_run]
+        #->Print the fitting stage.
+        runDict = emceeDict[runName]
+        runKeys = runDict.keys()
+        SamplerType = runDict.get("sampler", "EnsembleSampler")
+        nwalkers    = runDict.get("nwalkers", 100)
+        iteration   = runDict.get("iteration", [500, 500])
+        thin        = runDict.get("thin", 1)
+        ballR       = runDict.get("ball-r", 0.1)
+        print( "\n#{:-^50}#".format( " {0} ".format(runName) ) )
+        if (SamplerType == "EnsembleSampler") & ("ntemps" in runKeys):
+            runKeys.remove("ntemps")
+        for keys in runKeys:
+            print("{0}: {1}".format(keys, runDict[keys]))
+        #->Setup the sampler
+        if unctDict is None:
+            modelUnct = False
         else:
-            sampler = em.EnsembleSampler(nwalkers, pool=mpi_pool)
-    elif SamplerType == "PTSampler":
-        ntemps = emceeDict["Final"]["ntemps"]
-        if mpi_pool is None:
-            sampler = em.PTSampler(ntemps, nwalkers, threads=threads)
-        else:
-            sampler = em.PTSampler(ntemps, nwalkers, pool=mpi_pool)
-    for i in range(len(iteration)):
-        steps = iteration[i]
-        print( "\n{:*^35}".format(" {0}th Final ".format(i)) )
-        em.reset()
-        p0 = em.p_ball(pmax, ratio=ballR) #->Initialize the walkers
-        em.run_mcmc(p0, iterations=steps, printFrac=printFrac, thin=thin)
-        em.diagnose()
-        pmax = em.p_logl_max()
-        em.print_parameters(truths=parTruth, burnin=burnIn, low=psLow, center=psCenter, high=psHigh)
-        em.plot_lnlike(filename="gsf_temp_lnprob.png", histtype="step")
-        print( "**Time ellapse: {0:.3f} hour".format( (time() - t0)/3600. ) )
+            modelUnct = True
+        em = mcmc.EmceeModel(sedData, sedModel, modelUnct, unctDict, SamplerType)
+        if SamplerType == "EnsembleSampler":
+            if mpi_pool is None:
+                sampler = em.EnsembleSampler(nwalkers, threads=threads)
+            else:
+                sampler = em.EnsembleSampler(nwalkers, pool=mpi_pool)
+            if loop_run == 0: #If it is the first iteration, the initial position of the walkers are set.
+                p0 = [em.from_prior() for i in range(nwalkers)]
+            else:
+                p0 = em.p_ball(pmax, ratio=ballR)
+        elif SamplerType == "PTSampler":
+            ntemps = runDict["ntemps"]
+            if mpi_pool is None:
+                sampler = em.PTSampler(ntemps, nwalkers, threads=threads)
+            else:
+                sampler = em.PTSampler(ntemps, nwalkers, pool=mpi_pool)
+            if loop_run == 0:#If it is the first iteration, the initial position of the walkers are set.
+                p0 = []
+                for i in range(ntemps):
+                    p0.append([em.from_prior() for i in range(nwalkers)])
+            else:
+                p0 = em.p_ball(pmax, ratio=ballR)
+        #->Run the MCMC sampling
+        for i in range(len(iteration)):
+            em.reset()
+            steps = iteration[i]
+            print( "\n{:*^35}".format(" {0}th {1} ".format(i, runName)) )
+            em.run_mcmc(p0, iterations=steps, printFrac=printFrac, thin=thin)
+            em.diagnose()
+            pmax = em.p_logl_max()
+            em.print_parameters(truths=parTruth, burnin=0)
+            em.plot_lnlike(filename="gsf_temp_lnprob.png", histtype="step")
+            print( "**Time ellapse: {0:.3f} hour".format( (time() - t0)/3600. ) )
+            p0 = em.p_ball(pmax, ratio=ballR)
     return em
 
 
@@ -292,7 +266,7 @@ def gsf_fitter(configName, targname=None, redshift=None, distance=None, sedFile=
     psHigh   = ppDict.get("high", 84)
     nuisance = ppDict.get("nuisance", True)
     fraction = ppDict.get("fraction", 0)
-    burnIn   = emceeDict["Final"]["burn-in"]
+    burnIn   = ppDict.get("burn-in", 50)
 
     dataPck = {
         "targname": targname,
