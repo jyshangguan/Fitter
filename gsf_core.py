@@ -82,9 +82,10 @@ def fitter(sedData, sedModel, unctDict, parTruth, emceeDict, mpi_pool=None):
     #->Prepare to run the iteration
     t0 = time()
     setupKeys = emceeDict["Setup"].keys()
+    print( "\n#{:-^50}#".format("emcee Setups") )
     if not mpi_pool is None:
         setupKeys.remove("threads")
-    print( "\n#{:-^50}#".format("emcee Setups") )
+        print("**MPI mode")
     for keys in setupKeys:
         print("{0}: {1}".format(keys, emceeDict["Setup"][keys]))
     threads   = emceeDict["Setup"]["threads"]
