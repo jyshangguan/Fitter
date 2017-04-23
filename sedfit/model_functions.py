@@ -55,7 +55,7 @@ funcLib = {
     "DL07": {
         "function": DL07,
         "x_name": "wave",
-        "param_fit": ["logumin", "logumax", "qpah", "gamma", "logMd"],
+        "param_fit": ["logumin", "logumax", "qpah", "loggamma", "logMd"],
         "param_add": ["t", "DL", "z", "frame"]
     },
     "BlackBody": {
