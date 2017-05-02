@@ -620,7 +620,7 @@ class EmceeModel(object):
         #ax.yaxis.set_ticks(yTickRange[1:-1])
         ax.xaxis.set_tick_params(which="major", labelsize=18)
         ax.yaxis.set_tick_params(which="major", labelsize=18)
-        ax.legend(loc="lower right", framealpha=0.3, fontsize=16)
+        ax.legend(loc="upper left", framealpha=0.3, fontsize=16)
         if filename is None:
             return (fig, ax)
         else:

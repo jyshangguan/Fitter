@@ -13,7 +13,7 @@ import numpy as np
 import cPickle as pickle
 import sedfit.SED_Toolkit as sedt
 from sedfit.fitter import basicclass as bc
-from sedfit.fitter import mcmc_emcee as mcmc
+from sedfit.mcmc import mcmc_emcee as mcmc
 from sedfit import sedclass as sedsc
 from sedfit import model_functions as sedmf
 
@@ -39,53 +39,7 @@ redshift = dataPck["redshift"]
 distance = dataPck["distance"]
 dataDict = dataPck["dataDict"]
 sedPck = dataPck["sedPck"]
-sed = sedPck["sed"]
-spc = sedPck["spc"]
-#->Settle into the rest frame
-frame = dataDict.get("frame", "rest") #The coordinate frame of the SED; "rest"
-                                      #by default.
-if frame == "obs":
-    sed = sedt.SED_to_restframe(sed, redshift)
-    spc = sedt.SED_to_restframe(spc, redshift)
-    print("[gsf]: The input SED is in the observed frame!")
-else:
-    print("[gsf]: The input SED is in the rest frame!")
-#->Select bands
-bandList_use = dataDict.get("bandList_use", []) #The list of bands to incorporate;
-                                                #use all the available bands if empty.
-bandList_ignore = dataDict.get("bandList_ignore", []) #The list of bands to be
-                                                      #ignored from the bands to use.
-sed = sedt.SED_select_band(sed, bandList_use, bandList_ignore)
-sedwave  = sed[0]
-sedflux  = sed[1]
-sedsigma = sed[2]
-sedband  = sed[3]
-spcwave  = spc[0]
-spcflux  = spc[1]
-spcsigma = spc[2]
-print("[gsf]: The incorporated bands are: {0}".format(sedband))
-print("#--------------------------------#")
-print("Target: {0}".format(targname))
-print("Redshift: {0}".format(redshift))
-print("#--------------------------------#")
-
-## Put into the sedData
-sedName  = dataPck["sedName"]
-spcName  = dataPck["spcName"]
-if not sedName is None:
-    sedflag = np.ones_like(sedwave)
-    sedDataType = ["name", "wavelength", "flux", "error", "flag"]
-    phtData = {sedName: bc.DiscreteSet(sedband, sedwave, sedflux, sedsigma, sedflag, sedDataType)}
-else:
-    phtData = {}
-if not spcName is None:
-    spcflag = np.ones_like(spcwave)
-    spcDataType = ["wavelength", "flux", "error", "flag"]
-    spcData = {"IRS": bc.ContinueSet(spcwave, spcflux, spcsigma, spcflag, spcDataType)}
-else:
-    spcData = {}
-sedData = sedsc.SedClass(targname, redshift, distance, phtDict=phtData, spcDict=spcData)
-sedData.set_bandpass(sedband, sedwave)
+sedData = sedsc.setSedData(targname, redshift, distance, dataDict, sedPck, silent=True)
 
 
 ################################################################################
@@ -135,16 +89,18 @@ psLow    = ppDict["low"]
 psCenter = ppDict["center"]
 psHigh   = ppDict["high"]
 nuisance = ppDict["nuisance"]
-fraction = ppDict["fraction"]
-ps = fitrs["posterior_sample"]
+fraction = 0
 burnIn = 0
+ps = fitrs["posterior_sample"]
 
 #Plot the SED data and fit
-xmin = np.min([np.min(sedwave), np.min(spcwave)]) * 0.9
-xmax = np.max([np.max(sedwave), np.max(spcwave)]) * 1.1
+sedwave = sedData.get_List("x")
+sedflux = sedData.get_List("y")
+xmin = np.min(sedwave) * 0.9
+xmax = np.max(sedwave) * 1.1
 xlim = [xmin, xmax]
-ymin = np.min([np.min(sedflux), np.min(spcflux)]) * 0.5
-ymax = np.max([np.max(sedflux), np.max(spcflux)]) * 2.0
+ymin = np.min(sedflux) * 0.5
+ymax = np.max(sedflux) * 2.0
 ylim = [ymin, ymax]
 if sedData.check_csData():
     fig, axarr = plt.subplots(2, 1)
