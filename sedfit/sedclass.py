@@ -98,7 +98,7 @@ class SedClass(bc.DataSet):
             psigu = psedu/3.0
             uplims = np.ones(len(psedu), dtype=bool)
             ax.errorbar(pwavu, psedu, yerr=psigu, uplims=uplims, linestyle='none',
-                        color=phtColor, fmt='o', mfc='none', mec=phtColor,
+                        color=phtColor, fmt='o', mfc=phtColor, mec=phtColor, capsize=0,
                         mew=linewidth, elinewidth=linewidth, label=label,
                         ms=phtSize, zorder=zorder)
         elif(nup > 0): # If there are some upper limits.
@@ -112,10 +112,10 @@ class SedClass(bc.DataSet):
             psigu = psedu/3.0
             uplims = np.ones(len(psedu), dtype=bool)
             ax.errorbar(pwav, psed, yerr=psig, linestyle='none', color=phtColor,
-                        fmt='o', mfc='none', mec=phtColor, mew=linewidth,
+                        fmt='o', mfc=phtColor, mec=phtColor, mew=linewidth, capsize=0,
                         elinewidth=linewidth, label=label, ms=phtSize, zorder=zorder)
             ax.errorbar(pwavu, psedu, yerr=psigu, uplims=uplims, linestyle='none',
-                        color=phtColor, fmt='o', mfc='none', mec=phtColor,
+                        color=phtColor, fmt='o', mfc=phtColor, mec=phtColor,
                         mew=linewidth, elinewidth=linewidth, ms=phtSize,
                         zorder=zorder)
         else:
@@ -123,7 +123,7 @@ class SedClass(bc.DataSet):
             psed = flux
             psig = sigma
             ax.errorbar(pwav, psed, yerr = psig, linestyle='none', color=phtColor,
-                        fmt='o', mfc='none', mec=phtColor, mew=linewidth,
+                        fmt='o', mfc=phtColor, mec=phtColor, mew=linewidth, capsize=0,
                         elinewidth=linewidth, label=label, ms=phtSize, zorder=zorder)
         str_xlabel = r'$\lambda \, \mathrm{(\mu m)}$'
         ax.set_xlabel(str_xlabel, fontsize=18)
