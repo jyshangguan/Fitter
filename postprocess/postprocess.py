@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 matplotlib_version = eval(matplotlib.__version__.split(".")[0])
 if matplotlib_version > 1:
     plt.style.use("classic")
+plt.rc('font',family='Times New Roman')
 import sys
 import types
 import numpy as np
@@ -124,9 +125,11 @@ plt.savefig("{0}_result.png".format(targname), bbox_inches="tight")
 plt.close()
 print("Best fit plot finished!")
 
+"""
 #Plot the corner diagram
 em.plot_corner(filename="{0}_triangle.png".format(targname), burnin=burnIn, ps=ps,
                nuisance=nuisance, truths=parTruth,  fraction=fraction,
                quantiles=[psLow/100., psCenter/100., psHigh/100.], show_titles=True,
                title_kwargs={"fontsize": 20})
 print("Triangle plot finished!")
+"""
