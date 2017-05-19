@@ -15,18 +15,18 @@ from scipy.interpolate import interp1d
 #Func_bgn:
 #-------------------------------------#
 #   Created by SGJY, Dec. 13, 2015    #
-#   Modified by SGJY, Jul. 15, 2016   #
+#   Modified by SGJY, May. 19, 2016   #
 #-------------------------------------#
 #From: /PG_QSO/catalog/Data_SG/wrk_SED_Combine.ipynb
-def Plot_SED(wavelength,
-             sed,
+def Plot_SED(wave,
+             flux,
              sigma,
+             flag,
+             ebDict=None,
              TargetName=None,
              RestFrame=False,
              FigAx=None,
              gridon=True,
-             symbolColor='black',
-             linewidth=2,
              Quiet=False):
     '''
     This function is to conveniently plot the SED. The parameters are:
@@ -37,58 +37,40 @@ def Plot_SED(wavelength,
     RestFrame: if False, the xlabel would be lambda_obs, while if True, the xlabel would be lambda_rest.
     FigAx: if not None, FigAx should be a tuple with (fig, ax) in it.
     '''
-    if((len(wavelength)!=len(sed))|(len(wavelength)!=len(sigma))):
+    wave  = np.atleast_1d(wave)
+    flux  = np.atleast_1d(flux)
+    sigma = np.atleast_1d(sigma)
+    flag  = np.atleast_1d(flag)
+    if((len(wave)!=len(flux))|(len(wave)!=len(sigma))|(len(wave)!=len(flag))):
         raise Exception('Array lengths are unequal!')
         return None
-    if(len(sed) == 0):
+    if(len(wave) == 0):
         if Quiet is False:
             print 'There is no data in the SED!'
         return FigAx
-    npt = len(sed) # The number of data points
-    nup = np.sum(sigma<0) # The number of upperlimits
-    #print 'The total points are %d with %d upper limits.' % (npt, nup)
     if FigAx == None:
         fig = plt.figure(figsize=(5, 5))
         ax = fig.gca()
     else:
         fig = FigAx[0]
         ax = FigAx[1]
-        #print 'The ax is provided!'
-    if(nup == npt): # If there are all upper limits.
-        pwavu = wavelength
-        psedu = sed
-        psigu = psedu/3.0
-        uplims = np.ones(len(psedu), dtype=bool)
-        ax.errorbar(pwavu, psedu, yerr=psigu, uplims=uplims, linestyle='none',
-                    color=symbolColor, fmt='o', mfc='none', mec=symbolColor,
-                    mew=linewidth, elinewidth=linewidth)
-    elif(nup > 0): # If there are some upper limits.
-        fltr_upperlimit = (sigma<0)
-        fltr_detection = np.logical_not(fltr_upperlimit)
-        pwav = wavelength[fltr_detection]
-        psed = sed[fltr_detection]
-        psig = sigma[fltr_detection]
-        pwavu = wavelength[fltr_upperlimit]
-        psedu = sed[fltr_upperlimit]
-        psigu = psedu/3.0
-        uplims = np.ones(len(psedu), dtype=bool)
-        ax.errorbar(pwav, psed, yerr=psig, linestyle='none', color=symbolColor, fmt='o',
-                    mfc='none', mec=symbolColor, mew=linewidth, elinewidth=linewidth)
-        ax.errorbar(pwavu, psedu, yerr=psigu, uplims=uplims, linestyle='none',
-                    color=symbolColor, fmt='o', mfc='none', mec=symbolColor,
-                    mew=linewidth, elinewidth=linewidth)
-    else:
-        pwav = wavelength
-        psed = sed
-        psig = sigma
-        ax.errorbar(pwav, psed, yerr = psig, linestyle='none', color=symbolColor, fmt='o',
-                    mfc='none', mec=symbolColor, mew=linewidth, elinewidth=linewidth)
+    if ebDict is None:
+        ebDict = {
+            "linestyle": "none",
+            "ms": 6,
+            "mew": 1.5,
+            "elinewidth": 1.5,
+            "color": "black",
+            "fmt": "o",
+            "capsize": 0
+            }
+    ax.errorbar(wave, flux, yerr=sigma, uplims=flag, **ebDict)
     if(RestFrame == True):
         str_xlabel = r'$\lambda_\mathrm{rest} \, \mathrm{(\mu m)}$'
     else:
         str_xlabel = r'$\lambda_\mathrm{obs} \, \mathrm{(\mu m)}$'
-    ax.set_xlabel(str_xlabel, fontsize=18)
-    ax.set_ylabel(r'$f_\nu \, \mathrm{(mJy)}$', fontsize=18)
+    ax.set_xlabel(str_xlabel, fontsize=24)
+    ax.set_ylabel(r'$f_\nu \, \mathrm{(mJy)}$', fontsize=24)
     ax.set_xscale('log')
     ax.set_yscale('log')
     if gridon:
@@ -96,8 +78,8 @@ def Plot_SED(wavelength,
     if TargetName is not None:
         ax.text(0.45, 0.9, TargetName,
             verticalalignment='bottom', horizontalalignment='right',
-            transform=ax.transAxes, fontsize=15)
-    ax.tick_params(labelsize=16)
+            transform=ax.transAxes, fontsize=24)
+    ax.tick_params(labelsize=18)
     return fig, ax
 #Func_end
 

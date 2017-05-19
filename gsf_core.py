@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 matplotlib_version = eval(matplotlib.__version__.split(".")[0])
 if matplotlib_version > 1:
     plt.style.use("classic")
+plt.rc('font',family='Times New Roman')
 import sys
 import types
 import numpy as np
