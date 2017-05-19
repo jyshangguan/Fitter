@@ -242,12 +242,9 @@ def logLFunc(params, data, model):
     model.updateParList(params)
     y = np.array(data.get_List('y'))
     e = np.array(data.get_List('e'))
+    f = np.array(data.get_List('f'))
     ym = np.array(Model2Data(model, data))
-    fltr_non = e < 0 #Find those non-detections
-    flag = np.zeros_like(y)
-    flag[fltr_non] = 1 #Generate the flag of upperlimits.
-    e[fltr_non] = y[fltr_non] / 3.0 #In our data, the upperlimits are 3sigma.
-    logL = -0.5 * ChiSq(y, ym, e, flag)
+    logL = -0.5 * ChiSq(y, ym, e, f)
     return logL
 
 #The log_likelihood function: for SED fitting using Gaussian process regression
@@ -279,6 +276,7 @@ def logLFunc_gp(params, data, model):
     ySpc = np.array(data.get_csList("y"))
     ePht = np.array(data.get_dsList("e"))
     eSpc = np.array(data.get_csList("e"))
+    fPht = np.array(data.get_dsList("f"))
     #Calculate the model
     model.updateParList(params)
     yDict = Model2Data_gp(model, data)
@@ -289,12 +287,8 @@ def logLFunc_gp(params, data, model):
     if len(yPhtModel):
         f = np.exp(params[nParVary]) #The parameter to control the model incompleteness
         nParVary += 1
-        fltr_non = ePht < 0 #Find those non-detections
-        flag = np.zeros_like(yPht)
-        flag[fltr_non] = 1 #Generate the flag of upperlimits.
-        ePht[fltr_non] = yPht[fltr_non] / 3.0 #In our data, the upperlimits are 3sigma.
         sPht = np.sqrt(ePht**2 + (yPhtModel * f)**2)
-        lnlPht = -0.5 * ChiSq(yPht, yPhtModel, sPht, flag)
+        lnlPht = -0.5 * ChiSq(yPht, yPhtModel, sPht, fPht)
     else:
         f = 0
         lnlPht = 0

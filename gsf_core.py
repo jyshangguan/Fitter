@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 matplotlib_version = eval(matplotlib.__version__.split(".")[0])
 if matplotlib_version > 1:
     plt.style.use("classic")
+plt.rc('font',family='Times New Roman')
 import sys
 import types
 import numpy as np
@@ -125,7 +126,7 @@ def fitter(sedData, sedModel, unctDict, parTruth, emceeDict, mpi_pool=None):
             if loop_run == 0: #If it is the first iteration, the initial position of the walkers are set.
                 p0 = [em.from_prior() for i in range(nwalkers)]
             else:
-                p0 = em.p_ball(pmax, ratio=ballR)
+                p0 = em.p_ball(pcen, ratio=ballR)
         elif SamplerType == "PTSampler":
             ntemps = runDict["ntemps"]
             if mpi_pool is None:
@@ -137,7 +138,7 @@ def fitter(sedData, sedModel, unctDict, parTruth, emceeDict, mpi_pool=None):
                 for i in range(ntemps):
                     p0.append([em.from_prior() for i in range(nwalkers)])
             else:
-                p0 = em.p_ball(pmax, ratio=ballR)
+                p0 = em.p_ball(pcen, ratio=ballR)
         #->Run the MCMC sampling
         for i in range(len(iteration)):
             em.reset()
@@ -145,11 +146,11 @@ def fitter(sedData, sedModel, unctDict, parTruth, emceeDict, mpi_pool=None):
             print( "\n{:*^35}".format(" {0}th {1} ".format(i, runName)) )
             em.run_mcmc(p0, iterations=steps, printFrac=printFrac, thin=thin)
             em.diagnose()
-            pmax = em.p_logl_max()
+            pcen = em.p_logl_max() #pcen = em.p_median()
             em.print_parameters(truths=parTruth, burnin=0)
             em.plot_lnlike(filename="gsf_temp_lnprob.png", histtype="step")
             print( "**Time ellapse: {0:.3f} hour".format( (time() - t0)/3600. ) )
-            p0 = em.p_ball(pmax, ratio=ballR)
+            p0 = em.p_ball(pcen, ratio=ballR)
     return em
 
 

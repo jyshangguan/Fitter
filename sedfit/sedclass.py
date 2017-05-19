@@ -73,8 +73,7 @@ class SedClass(bc.DataSet):
         else:
             self.dl = Dist
 
-    def pht_plotter(self, wave, flux, sigma, flag, FigAx=None, linewidth='1.5',
-                    phtColor='k', phtSize=6, label=None, zorder=4, Quiet=True):
+    def pht_plotter(self, wave, flux, sigma, flag, FigAx=None, ebDict=None, Quiet=True):
         wave = np.array(wave)
         flux = np.array(flux)
         sigma = np.array(sigma)
@@ -92,39 +91,18 @@ class SedClass(bc.DataSet):
             fig = FigAx[0]
             ax = FigAx[1]
             #print 'The ax is provided!'
-        if(nup == npt): # If there are all upper limits.
-            pwavu = wave
-            psedu = flux
-            psigu = psedu/3.0
-            uplims = np.ones(len(psedu), dtype=bool)
-            ax.errorbar(pwavu, psedu, yerr=psigu, uplims=uplims, linestyle='none',
-                        color=phtColor, fmt='o', mfc=phtColor, mec=phtColor, capsize=0,
-                        mew=linewidth, elinewidth=linewidth, label=label,
-                        ms=phtSize, zorder=zorder)
-        elif(nup > 0): # If there are some upper limits.
-            fltr_upperlimit = (sigma<0)
-            fltr_detection = np.logical_not(fltr_upperlimit)
-            pwav = wave[fltr_detection]
-            psed = flux[fltr_detection]
-            psig = sigma[fltr_detection]
-            pwavu = wave[fltr_upperlimit]
-            psedu = flux[fltr_upperlimit]
-            psigu = psedu/3.0
-            uplims = np.ones(len(psedu), dtype=bool)
-            ax.errorbar(pwav, psed, yerr=psig, linestyle='none', color=phtColor,
-                        fmt='o', mfc=phtColor, mec=phtColor, mew=linewidth, capsize=0,
-                        elinewidth=linewidth, label=label, ms=phtSize, zorder=zorder)
-            ax.errorbar(pwavu, psedu, yerr=psigu, uplims=uplims, linestyle='none',
-                        color=phtColor, fmt='o', mfc=phtColor, mec=phtColor,
-                        mew=linewidth, elinewidth=linewidth, ms=phtSize,
-                        zorder=zorder)
-        else:
-            pwav = wave
-            psed = flux
-            psig = sigma
-            ax.errorbar(pwav, psed, yerr = psig, linestyle='none', color=phtColor,
-                        fmt='o', mfc=phtColor, mec=phtColor, mew=linewidth, capsize=0,
-                        elinewidth=linewidth, label=label, ms=phtSize, zorder=zorder)
+        if ebDict is None:
+            ebDict = {
+                "linestyle": "none",
+                "ms": 6,
+                "mew": 1.5,
+                "elinewidth": 1.5,
+                "color": "black",
+                "fmt": "o",
+                "capsize": 0,
+                "zorder": 4,
+                }
+        ax.errorbar(wave, flux, yerr=sigma, uplims=flag, **ebDict)
         str_xlabel = r'$\lambda \, \mathrm{(\mu m)}$'
         ax.set_xlabel(str_xlabel, fontsize=18)
         ax.set_ylabel(r'$f_\nu \, \mathrm{(mJy)}$', fontsize=18)
@@ -133,19 +111,28 @@ class SedClass(bc.DataSet):
         ax.tick_params(labelsize=16)
         return (fig, ax)
 
-    def plot_pht(self, FigAx=None, linewidth='1.5', phtColor='k', phtSize=6, **kwargs):
+    def plot_pht(self, FigAx=None, phtLW=1.5, phtColor='k', phtMS=6, zorder=4, **kwargs):
         dataDict = self.get_dsArrays()
         for name in dataDict.keys():
             wave = dataDict[name][0]
             flux = dataDict[name][1]
             sigma = dataDict[name][2]
             flag = dataDict[name][3]
-            FigAx = self.pht_plotter(wave, flux, sigma, flag, FigAx, linewidth,
-                                     phtColor, phtSize, name)
+            pht_ebDict = {
+                "linestyle": "none",
+                "ms": phtMS,
+                "mew": phtLW,
+                "elinewidth": phtLW,
+                "color": phtColor,
+                "fmt": "o",
+                "capsize": 0,
+                "zorder": zorder,
+                "label": name,
+                }
+            FigAx = self.pht_plotter(wave, flux, sigma, flag, FigAx, pht_ebDict)
         return FigAx
 
-    def spc_plotter(self, wave, flux, sigma, FigAx=None, linewidth=1.,
-                    spcColor='grey', label=None, zorder=4, Quiet=True):
+    def spc_plotter(self, wave, flux, sigma, FigAx=None, ebDict=None, Quiet=True):
         if(len(wave) == 0):
             if Quiet is False:
                 print 'There is no data in the SED!'
@@ -156,19 +143,34 @@ class SedClass(bc.DataSet):
         else:
             fig = FigAx[0]
             ax = FigAx[1]
-        ax.errorbar(wave, flux, yerr=sigma, color=spcColor, linewidth=linewidth,
-                    label=label, zorder=zorder)
+        if ebDict is None:
+            ebDict = {
+                "linestyle": "-",
+                "linewidth": 1.,
+                "color": "grey",
+                "capsize": 0,
+                "zorder": 4.,
+                }
+        ax.errorbar(wave, flux, yerr=sigma, **ebDict)
         ax.set_xscale('log')
         ax.set_yscale('log')
         return (fig, ax)
 
-    def plot_spc(self, FigAx=None, linewidth=1., spcColor='grey', **kwargs):
+    def plot_spc(self, FigAx=None, spcLS="-", spcLW=1., spcColor='grey', zorder=4, **kwargs):
         dataDict = self.get_csArrays()
         for name in dataDict.keys():
             wave = dataDict[name][0]
             flux = dataDict[name][1]
             sigma = dataDict[name][2]
-            FigAx = self.spc_plotter(wave, flux, sigma, FigAx, linewidth, spcColor, name)
+            spc_ebDict = {
+                "linestyle": spcLS,
+                "linewidth": spcLW,
+                "color": spcColor,
+                "capsize": 0,
+                "zorder": zorder,
+                "label": name,
+                }
+            FigAx = self.spc_plotter(wave, flux, sigma, FigAx, spc_ebDict)
         return FigAx
 
     def plot_sed(self, FigAx=None, **kwargs):
@@ -341,7 +343,7 @@ def setSedData(targname, redshift, distance, dataDict, sedPck, silent=True):
             spc : spectroscopic data.
         All the three items are tuple of ("wave", "flux", "sigma"), with "pht"
         having an extra component "band" in the end.
-    silent : bool
+    silent : (optional) bool
         The toggle not to print some information if True.
 
     Returns
@@ -351,6 +353,8 @@ def setSedData(targname, redshift, distance, dataDict, sedPck, silent=True):
     """
     pht = sedPck["pht"]
     spc = sedPck["spc"]
+    #->The upperlimit corresponds to how many sigmas
+    nSigma = dataDict.get("nSigma", 3.)
     #->Settle into the rest frame
     frame = dataDict.get("frame", "rest") #The coordinate frame of the SED; "rest"
                                           #by default.
@@ -371,16 +375,16 @@ def setSedData(targname, redshift, distance, dataDict, sedPck, silent=True):
     bandList_ignore = dataDict.get("bandList_ignore", []) #The list of bands to be
                                                           #ignored from the bands to use.
     pht = sedt.SED_select_band(pht, bandList_use, bandList_ignore, silent)
-    phtwave  = pht[0]
-    phtflux  = pht[1]
-    phtsigma = pht[2]
-    phtband  = pht[3]
-    spcwave  = spc[0]
-    spcflux  = spc[1]
-    spcsigma = spc[2]
+    phtwave  = np.array(pht[0])
+    phtflux  = np.array(pht[1])
+    phtsigma = np.array(pht[2])
+    phtband  = np.array(pht[3])
+    spcwave  = np.array(spc[0])
+    spcflux  = np.array(spc[1])
+    spcsigma = np.array(spc[2])
     if not silent:
         print("[setSedData]: The incorporated bands are: {0}".format(phtband))
-    #->Check data
+    #->Check data. If there are nan, raise error.
     chck_pht = np.sum(np.isnan(phtflux)) + np.sum(np.isnan(phtsigma))
     chck_spc = np.sum(np.isnan(spcflux)) + np.sum(np.isnan(spcsigma))
     if chck_pht:
@@ -390,14 +394,17 @@ def setSedData(targname, redshift, distance, dataDict, sedPck, silent=True):
     #->Put into the sedData
     phtName = dataDict.get("phtName", None)
     if not phtName is None:
-        phtflag = np.ones_like(phtwave)
+        fltr_uplim = phtsigma < 0 #Find the upperlimits.
+        phtsigma[fltr_uplim] = phtflux[fltr_uplim] / nSigma #Restore the uncertainties for the non-detections.
+        phtflag = np.zeros_like(phtwave) #Generate the flag for the upperlimits
+        phtflag[fltr_uplim] = 1 #Find the position of the non-detections and mark them.
         phtDataType = ["name", "wavelength", "flux", "error", "flag"]
         phtData = {phtName: bc.DiscreteSet(phtband, phtwave, phtflux, phtsigma, phtflag, phtDataType)}
     else:
         phtData = {}
     spcName = dataDict.get("spcName", None)
     if not spcName is None:
-        spcflag = np.ones_like(spcwave)
+        spcflag = np.zeros_like(spcwave)
         spcDataType = ["wavelength", "flux", "error", "flag"]
         spcData = {"IRS": bc.ContinueSet(spcwave, spcflux, spcsigma, spcflag, spcDataType)}
     else:
