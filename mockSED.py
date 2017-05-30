@@ -176,9 +176,10 @@ def mocker(sedData, sedModel, sysUnc=None, uncModel=None, silent=True,
     #->Add the upperlimits
     if nonDetect:
         phtflux = np.array(sedData.get_dsList("y"))
-        phtsigma = np.array(sedData.get_dsList("e"))
-        fltr_undct = phtsigma < 0
+        phtflag = np.array(sedData.get_dsList("f"))
+        fltr_undct = phtflag == 1
         mockPht[fltr_undct] = phtflux[fltr_undct]
+        mockPhtSigma[fltr_undct] = -1
     mockSedFlux  = np.concatenate([mockPht, mockSpc])
     mockSedWave  = np.concatenate([mockPhtWave, mockSpcWave])
     mockSedSigma = np.concatenate([mockPhtSigma, mockSpcSigma])
