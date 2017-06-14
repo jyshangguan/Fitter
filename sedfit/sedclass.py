@@ -145,18 +145,17 @@ class SedClass(bc.DataSet):
             ax = FigAx[1]
         if ebDict is None:
             ebDict = {
-                "linestyle": "-",
                 "linewidth": 1.,
                 "color": "grey",
-                "capsize": 0,
                 "zorder": 4.,
                 }
-        ax.errorbar(wave, flux, yerr=sigma, **ebDict)
+        #ax.errorbar(wave, flux, yerr=sigma, **ebDict)
+        ax.step(wave, flux, **ebDict)
         ax.set_xscale('log')
         ax.set_yscale('log')
         return (fig, ax)
 
-    def plot_spc(self, FigAx=None, spcLS="-", spcLW=1., spcColor='grey', zorder=4, **kwargs):
+    def plot_spc(self, FigAx=None, spcLS="-", spcLW=2., spcColor='grey', zorder=4, **kwargs):
         dataDict = self.get_csArrays()
         for name in dataDict.keys():
             wave = dataDict[name][0]
@@ -166,7 +165,6 @@ class SedClass(bc.DataSet):
                 "linestyle": spcLS,
                 "linewidth": spcLW,
                 "color": spcColor,
-                "capsize": 0,
                 "zorder": zorder,
                 "label": name,
                 }
