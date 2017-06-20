@@ -550,7 +550,7 @@ class EmceeModel(object):
             plt.close()
 
     def plot_fit(self, ps=None, filename=None, nSamples=100, truths=None, FigAx=None,
-                 xlim=None, ylim=None, **kwargs):
+                 xlim=None, ylim=None, showLegend=True, **kwargs):
         """
         Plot the best-fit model and the data.
         """
@@ -620,7 +620,8 @@ class EmceeModel(object):
         #ax.yaxis.set_ticks(yTickRange[1:-1])
         ax.xaxis.set_tick_params(which="major", labelsize=18)
         ax.yaxis.set_tick_params(which="major", labelsize=18)
-        ax.legend(loc="upper left", framealpha=0.3, fontsize=15)
+        if showLegend:
+            ax.legend(loc="upper left", framealpha=0.3, fontsize=15)
         if filename is None:
             return (fig, ax)
         else:
