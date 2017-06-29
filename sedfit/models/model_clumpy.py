@@ -3,7 +3,7 @@ import numpy as np
 import cPickle as pickle
 import ndiminterpolation as ndip
 from ..fitter.template import Template
-from ..dir_list import clumpy_path as template_path
+from ..dir_list import template_path
 
 pi = np.pi
 Mpc = 3.08567758e24 #unit: cm
