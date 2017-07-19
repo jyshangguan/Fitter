@@ -37,3 +37,6 @@ mock/*
 
 #Trash
 trash/*
+
+#Irrelevant
+.DS_Store
