@@ -5,7 +5,7 @@ from ..dir_list import template_path
 Mpc = 3.08567758e24 #unit: cm
 pi = np.pi
 
-tb = np.genfromtxt(template_path+"PAH.template.dat")
+tb = np.genfromtxt(template_path+"PAH.template_HLC.dat")
 twave = tb[:, 0]
 tflux_temp = tb[:, 1]
 norm = np.trapz(tflux_temp, twave)
