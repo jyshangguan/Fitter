@@ -79,7 +79,7 @@ def BC03_PosPar(logMs, age, t=bc03):
     age_d = t.get_nearestParameters([age])
     parDict = {
         "logMs": logMs,
-        "age": age
+        "age": age_d
     }
     return parDict
 
