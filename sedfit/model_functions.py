@@ -7,6 +7,8 @@ from models.model_xl import Torus_Emission, Torus_Emission_PosPar
 from models.model_clumpy import CLUMPY_intp
 from models.model_torus_template import Torus_Template
 from models.model_pah import pah
+from models.model_cat3d_G import Cat3d_G, Cat3d_G_PosPar
+from models.model_cat3d_H import Cat3d_H, Cat3d_H_PosPar
 #CLUMPY_intp = None
 
 Linear = ma.Linear
@@ -100,4 +102,18 @@ funcLib = {
         "param_fit": ["logLtorus"],
         "param_add": ["DL", "z", "frame", "ttype", "waveLim"]
     },
+    "Cat3d_G": {
+        "function": Cat3d_G,
+        "x_name": "wave",
+        "param_fit": ["a", "theta", "N0", "i", "logL"],
+        "param_add": ["DL", "z", "frame", "t"],
+        "operation": "plus&multiply"
+    },
+    "Cat3d_H": {
+        "function": Cat3d_H,
+        "x_name": "wave",
+        "param_fit": ["a", "h", "N0", "i", "logL"],
+        "param_add": ["DL", "z", "frame", "t"],
+        "operation": "plus&multiply"
+    }
 }
