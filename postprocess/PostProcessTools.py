@@ -236,7 +236,8 @@ def CorrectParameters(modelDict, discFuncDict, silent=True):
 
 def Flux_Pht_Component(pars, component, sedModel, sedData):
     """
-    Calculate the flux of one specific model component.
+    Calculate the rest-frame flux in the photometric bands of one specific 
+    model component.
 
     Parameters
     ----------
