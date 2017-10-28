@@ -326,9 +326,10 @@ def gsf_fitter(configName, targname=None, redshift=None, distance=None, sedFile=
         ax = plt.gca()
         em.plot_fit(truths=parTruth, FigAx=(fig, ax), xlim=xlim, ylim=ylim,
                     nSamples=100, burnin=burnIn, fraction=fraction)
-        ax.text(0.05, 0.8, targname, transform=ax.transAxes, fontsize=24,
-                verticalalignment='bottom', horizontalalignment='left',
+        ax.text(0.05, 0.95, targname, transform=ax.transAxes, fontsize=24,
+                verticalalignment='top', horizontalalignment='left',
                 bbox=dict(facecolor='white', alpha=0.5, edgecolor="none"))
+        ax.legend(loc="lower right", framealpha=0.3, fontsize=15, numpoints=1)
     plt.savefig("{0}_result.png".format(targname), bbox_inches="tight")
     plt.close()
     #->Plot the posterior probability distribution

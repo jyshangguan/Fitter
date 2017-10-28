@@ -164,8 +164,8 @@ if sedData.check_csData():
         hd = handles[loop]
         if lb == "Hot_Dust":
             lb = "BB"
-        if lb == "CLUMPY":
-            lb = "CLU"
+        #if lb == "CLUMPY":
+        #    lb = "CLU"
         if lb == phtName:
             hd = hd[0]
         if lb != spcName:
@@ -225,9 +225,13 @@ else:
     ylim = [ymin, ymax]
     em.plot_fit(truths=parTruth, FigAx=(fig, ax), xlim=xlim, ylim=ylim, nSamples=100,
                 burnin=burnIn, fraction=fraction, ps=ps)
-    plotName = r"PG {0}${1}${2}".format(targname[2:6], targname[6], targname[7:])
-    ax.text(0.58, 0.88, "{0}".format(plotName),
-            verticalalignment='bottom', horizontalalignment='left',
+    xticks = [1., 2., 4., 8., 16.]
+    ax.set_xticks(xticks)
+    ax.set_xticklabels(xticks)
+    #plotName = r"PG {0}${1}${2}".format(targname[2:6], targname[6], targname[7:])
+    plotName = targname
+    ax.text(0.05, 0.95, "{0}".format(plotName),
+            verticalalignment='top', horizontalalignment='left',
             transform=ax.transAxes, fontsize=24,
             bbox=dict(facecolor='white', alpha=0.5, edgecolor="none"))
     #-->Set the legend
@@ -241,14 +245,14 @@ else:
         hd = handles[loop]
         if lb == "Hot_Dust":
             lb = "BB"
-        if lb == "CLUMPY":
-            lb = "CLU"
+        #if lb == "CLUMPY":
+        #    lb = "CLU"
         if lb == phtName:
             hd = hd[0]
         labelUse.append(lb)
         handleUse.append(hd)
-    plt.legend(handleUse, labelUse, loc="lower left", fontsize=18, numpoints=1,
-               handletextpad=0.3, handlelength=(4./3.))
+    plt.legend(handleUse, labelUse, loc="upper left", fontsize=18, numpoints=1,
+               handletextpad=0.3, handlelength=(4./3.), bbox_to_anchor=(0.02,0.90))
 plt.savefig("{0}_result.pdf".format(targname), bbox_inches="tight")
 plt.close()
 print("Best fit plot finished!")
