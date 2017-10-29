@@ -228,6 +228,8 @@ else:
     xticks = [1., 2., 4., 8., 16.]
     ax.set_xticks(xticks)
     ax.set_xticklabels(xticks)
+    ax.set_xlabel(r"Rest Wavelength ($\mu$m)", fontsize=24)
+    ax.set_ylabel(r"$f_\nu \mathrm{(mJy)}$", fontsize=24)
     #plotName = r"PG {0}${1}${2}".format(targname[2:6], targname[6], targname[7:])
     plotName = targname
     ax.text(0.05, 0.95, "{0}".format(plotName),
