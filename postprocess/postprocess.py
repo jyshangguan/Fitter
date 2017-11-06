@@ -223,19 +223,22 @@ else:
     ymax = np.max(sedflux) * 2.0
     xlim = [xmin, xmax]
     ylim = [ymin, ymax]
+    cList = ["green", "red", "blue"]
     em.plot_fit(truths=parTruth, FigAx=(fig, ax), xlim=xlim, ylim=ylim, nSamples=100,
-                burnin=burnIn, fraction=fraction, ps=ps)
-    xticks = [1., 2., 4., 8., 16.]
-    ax.set_xticks(xticks)
-    ax.set_xticklabels(xticks)
+                burnin=burnIn, fraction=fraction, cList=cList, ps=ps)
+    #xticks = [1., 2., 4., 8., 16.]
+    #ax.set_xticks(xticks)
+    #ax.set_xticklabels(xticks)
     ax.set_xlabel(r"Rest Wavelength ($\mu$m)", fontsize=24)
     ax.set_ylabel(r"$f_\nu \mathrm{(mJy)}$", fontsize=24)
     #plotName = r"PG {0}${1}${2}".format(targname[2:6], targname[6], targname[7:])
-    plotName = targname
+    plotName = r"SDSS {0}${1}${2}".format(targname[4:9], targname[9], targname[10:])
     ax.text(0.05, 0.95, "{0}".format(plotName),
             verticalalignment='top', horizontalalignment='left',
             transform=ax.transAxes, fontsize=24,
             bbox=dict(facecolor='white', alpha=0.5, edgecolor="none"))
+    ax.tick_params(axis="both", which="major", length=8, labelsize=18)
+    ax.tick_params(axis="both", which="minor", length=5)
     #-->Set the legend
     phtName = dataDict["phtName"]
     spcName = dataDict["spcName"]
@@ -245,16 +248,19 @@ else:
     for loop in range(len(labels)):
         lb = labels[loop]
         hd = handles[loop]
-        if lb == "Hot_Dust":
-            lb = "BB"
+        if lb == "Cat3d_H":
+            lb = "CAT3D"
+        #if lb == "Hot_Dust":
+        #    lb = "BB"
         #if lb == "CLUMPY":
         #    lb = "CLU"
         if lb == phtName:
             hd = hd[0]
         labelUse.append(lb)
         handleUse.append(hd)
-    plt.legend(handleUse, labelUse, loc="upper left", fontsize=18, numpoints=1,
-               handletextpad=0.3, handlelength=(4./3.), bbox_to_anchor=(0.02,0.90))
+    plt.legend(handleUse, labelUse, loc="upper left", fontsize=16, numpoints=1,
+               handletextpad=0.3, handlelength=(4./3.), bbox_to_anchor=(0.02,0.90),
+               framealpha=0.5)
 plt.savefig("{0}_result.pdf".format(targname), bbox_inches="tight")
 plt.close()
 print("Best fit plot finished!")

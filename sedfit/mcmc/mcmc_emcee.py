@@ -550,7 +550,8 @@ class EmceeModel(object):
             plt.close()
 
     def plot_fit(self, ps=None, filename=None, nSamples=100, truths=None, FigAx=None,
-                 xlim=None, ylim=None, showLegend=True, **kwargs):
+                 xlim=None, ylim=None, showLegend=True, cList=None, cLineKwargs={},
+                 tLineKwargs={}, **kwargs):
         """
         Plot the best-fit model and the data.
         """
@@ -559,20 +560,23 @@ class EmceeModel(object):
         #-->Plot the SED data
         fig, ax = sedData.plot_sed(FigAx=FigAx)
         #-->Plot the models
-        cList = ["g", "r", "m", "b", "y", "c"]
+        if cList is None:
+            cList = ["g", "r", "m", "b", "y", "c"]
         ncolor = len(cList)
         #->Plot the sampled model variability
         if ps is None:
             ps = self.posterior_sample(**kwargs)
-        cKwargs = {
-            "linestyle":":",
-            "alpha": 0.1
-            }
-        tKwargs = {
-            "linestyle": ":",
-            "color": "brown",
-            "alpha": 0.1
-            }
+        cKwargs = { #The line properties of the model components.
+            "linestyle": cLineKwargs.get("ls_uc", ":"),
+            "alpha": cLineKwargs.get("alpha_uc", 0.1),
+            "linewidth": cLineKwargs.get("ls_uc", 1.0),
+        }
+        tKwargs = { #The line properties of the model total.
+            "linestyle": tLineKwargs.get("ls_uc", ":"),
+            "alpha": tLineKwargs.get("alpha_uc", 0.1),
+            "linewidth": tLineKwargs.get("ls_uc", 1.0),
+            "color": tLineKwargs.get("color", "brown"),
+        }
         for pars in ps[np.random.randint(len(ps), size=nSamples)]:
             sedModel.updateParList(pars)
             sedModel.plot(FigAx=(fig, ax), colorList=cList, DisplayPars=False,
@@ -584,11 +588,16 @@ class EmceeModel(object):
         sedModel.updateParList(pcnt)
         ycnt = sedModel.combineResult() #The best-fit model
         yPhtC = np.array( sedData.model_pht(waveModel, ycnt) ) #The best-fit band average flux density
-        cKwargs = {"linestyle":"--"}
-        tKwargs = {
-            "linestyle": "--",
-            "color": "brown",
-            "linewidth": 3.0
+        cKwargs = { #The line properties of the model components.
+            "linestyle": cLineKwargs.get("ls_bf", "--"),
+            "alpha": cLineKwargs.get("alpha_bf", 1.0),
+            "linewidth": cLineKwargs.get("ls_bf", 1.0),
+            }
+        tKwargs = { #The line properties of the model total.
+            "linestyle": tLineKwargs.get("ls_bf", "--"),
+            "alpha": tLineKwargs.get("alpha_bf", 1.0),
+            "linewidth": tLineKwargs.get("ls_bf", 3.0),
+            "color": tLineKwargs.get("color", "brown"),
             }
         sedModel.plot(FigAx=(fig, ax), colorList=cList, DisplayPars=False,
                       cKwargs=cKwargs, tKwargs=tKwargs)
