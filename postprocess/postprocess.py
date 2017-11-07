@@ -217,8 +217,8 @@ if sedData.check_csData():
 else:
     fig = plt.figure(figsize=(7, 7))
     ax = plt.gca()
-    xmin = np.min(sedwave) * 0.9
-    xmax = np.max(sedwave) * 1.1
+    xmin = 0.8 #np.min(sedwave) * 0.9
+    xmax = 500 #np.max(sedwave) * 1.1
     ymin = np.min(sedflux) * 0.5
     ymax = np.max(sedflux) * 2.0
     xlim = [xmin, xmax]
