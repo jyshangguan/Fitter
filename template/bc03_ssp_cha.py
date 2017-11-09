@@ -8,6 +8,7 @@ from sgPhot import extractSED
 ls_mic = 2.99792458e14 #micron/s
 ls_aa  = 2.99792458e18 #aa/s
 Mpc    = 3.08567758e24 #cm
+pc10   = 3.08567758e19 #cm
 Lsun   = 3.828e33 #erg/s
 mJy    = 1e26 # From erg/s/cm^2/Hz to mJy
 
@@ -29,8 +30,8 @@ for loop in range(nAge):
     age  = ageList[loop]
     (wave, flux) = sedList[loop]
     fltr = (wave > waveLim[0]) & (wave < waveLim[1])
-    wave = wave[fltr]
-    flux = flux[fltr] * mJy
+    wave = wave[fltr] * 1e-4 # Convert to micron
+    flux = flux[fltr] * (4.0 * np.pi * pc10**2.) # Convert to erg/s/Hz
     tck = splrep(wave, flux)
     tckList.append(tck)
     XList.append([age])
@@ -65,8 +66,8 @@ for loop in range(len(cl)):
     pars = [ageList[loop]]
     wave, flux = sedList[loop]
     fltr = (wave > waveLim[0]) & (wave < waveLim[1])
-    wave = wave[fltr]
-    flux = flux[fltr] * mJy
+    wave = wave[fltr] * 1e-4
+    flux = flux[fltr] * (4.0 * np.pi * pc10**2.)
     f = t(wave, pars)
     plt.plot(wave, f, color=cl[loop], linestyle="--")
     plt.plot(wave, flux, color=cl[loop], linestyle=":")

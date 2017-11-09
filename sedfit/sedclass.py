@@ -404,7 +404,7 @@ def setSedData(targname, redshift, distance, dataDict, sedPck, silent=True):
     if not spcName is None:
         spcflag = np.zeros_like(spcwave)
         spcDataType = ["wavelength", "flux", "error", "flag"]
-        spcData = {"IRS": bc.ContinueSet(spcwave, spcflux, spcsigma, spcflag, spcDataType)}
+        spcData = {spcName: bc.ContinueSet(spcwave, spcflux, spcsigma, spcflag, spcDataType)}
     else:
         spcData = {}
     sedData = SedClass(targname, redshift, distance, phtDict=phtData, spcDict=spcData)
