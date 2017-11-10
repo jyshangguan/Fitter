@@ -17,7 +17,8 @@ logMs = 0.0
 ageList = np.logspace(np.log10(0.05), 1.0, 100)
 waveLim = [5e2, 1e7]
 #ageList = np.array([0.5, 1.0, 3.0, 5.0, 9.0])
-model_name="bc03_ssp_z_0.02_chab.model"
+#model_name = "bc03_ssp_z_0.02_chab.model"
+model_name = "bc03_exp_1.0_z_0.02_chab.model"
 nAge = len(ageList)
 sedList = []
 for age in ageList:
@@ -44,7 +45,8 @@ parFormat = ["age"]
 readMe = '''
 The stellar emission templates are generated with EzGal.
 The units of the wavelength and flux are angstrom and mJy.
-'''
+This template uses {0} SFH.
+'''.format(model_name)
 templateDict = {
     "tckList": tckList,
     "kdTree": kdt,
@@ -56,7 +58,7 @@ templateDict = {
 t = Template(tckList=tckList, kdTree=kdt, parList=XList, modelInfo=modelInfo,
              parFormat=parFormat, readMe=readMe)
 t = Template(**templateDict)
-fp = open("bc03_ssp_cha_kdt.tmplt", "w")
+fp = open("bc03_sps_cha_kdt.tmplt", "w")
 pickle.dump(templateDict, fp)
 fp.close()
 

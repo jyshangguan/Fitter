@@ -8,12 +8,12 @@ Mpc = 3.08567758e24 #unit: cm
 mJy = 1e26 #unit: erg/s/cm^2/Hz
 pi  = np.pi
 
-fp = open(template_path+"bc03_ssp_cha_kdt.tmplt")
+fp = open(template_path+"bc03_sps_cha_kdt.tmplt")
 tp_bc03 = pickle.load(fp)
 fp.close()
 bc03 = Template(**tp_bc03)
 waveLim = [1e-2, 1e3]
-def BC03_ref(logMs, age, DL, wave, z, frame="rest", t=bc03, waveLim=waveLim):
+def BC03_ref(logMs, logAge, DL, wave, z, frame="rest", t=bc03, waveLim=waveLim):
     """
     This function call the interpolated BC03 template to generate the stellar
     emission SED with the given parameters.
@@ -22,8 +22,8 @@ def BC03_ref(logMs, age, DL, wave, z, frame="rest", t=bc03, waveLim=waveLim):
     ----------
     logMs : float
         The log10 of stellar mass with the unit solar mass.
-    age : float
-        The age of the stellar population with the unit Gyr.
+    logAge : float
+        The log10 of the age of the stellar population with the unit Gyr.
     DL : float
         The luminosity distance with the unit Mpc.
     wave : float array
@@ -50,6 +50,7 @@ def BC03_ref(logMs, age, DL, wave, z, frame="rest", t=bc03, waveLim=waveLim):
     fltr = (wave > waveLim[0]) & (wave < waveLim[1])
     if np.sum(fltr) == 0:
         return np.zeros_like(wave)
+    age = 10**logAge
     flux[fltr] = t(wave[fltr], [age])
     if frame == "rest":
         idx = 2.0
@@ -60,7 +61,7 @@ def BC03_ref(logMs, age, DL, wave, z, frame="rest", t=bc03, waveLim=waveLim):
     fnu = (1.0 + z)**idx * flux * 10**logMs / (4 * pi * (DL * Mpc)**2) * mJy
     return fnu
 
-def BC03_ref_PosPar(logMs, age, t=bc03):
+def BC03_ref_PosPar(logMs, logAge, t=bc03):
     """
     Find the position of the parameters on the discrete grid.
 
@@ -76,6 +77,7 @@ def BC03_ref_PosPar(logMs, age, t=bc03):
     parDict : dict
         The dict of the parameters.
     """
+    age = 10**logAge
     age_d = t.get_nearestParameters([age])
     parDict = {
         "logMs": logMs,

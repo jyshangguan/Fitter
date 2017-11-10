@@ -45,7 +45,7 @@ funcLib = {
     "BC03_ref":{
         "function": BC03_ref,
         "x_name": "wave",
-        "param_fit": ["logMs", "age"],
+        "param_fit": ["logMs", "logAge"],
         "param_add": ["DL", "z", "frame", "t"],
     },
     "CLUMPY_intp": {

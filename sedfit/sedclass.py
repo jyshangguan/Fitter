@@ -361,7 +361,7 @@ def setSedData(targname, redshift, distance, dataDict, sedPck, silent=True):
         spc = sedt.SED_to_restframe(spc, redshift)
         if not silent:
             print("[setSedData]: The input SED is in the observed frame!")
-    elif frame == "frame":
+    elif frame == "rest":
         if not silent:
             print("[setSedData]: The input SED is in the rest frame!")
     else:
