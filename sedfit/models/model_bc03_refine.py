@@ -13,7 +13,7 @@ tp_bc03 = pickle.load(fp)
 fp.close()
 bc03 = Template(**tp_bc03)
 waveLim = [1e-2, 1e3]
-def BC03_ref(logMs, logAge, DL, wave, z, frame="rest", t=bc03, waveLim=waveLim):
+def BC03_ref(logMs, logAge, sfh, DL, wave, z, frame="rest", t=bc03, waveLim=waveLim):
     """
     This function call the interpolated BC03 template to generate the stellar
     emission SED with the given parameters.
@@ -24,6 +24,8 @@ def BC03_ref(logMs, logAge, DL, wave, z, frame="rest", t=bc03, waveLim=waveLim):
         The log10 of stellar mass with the unit solar mass.
     logAge : float
         The log10 of the age of the stellar population with the unit Gyr.
+    sfh : int
+        The code for the SFH.
     DL : float
         The luminosity distance with the unit Mpc.
     wave : float array
@@ -51,7 +53,7 @@ def BC03_ref(logMs, logAge, DL, wave, z, frame="rest", t=bc03, waveLim=waveLim):
     if np.sum(fltr) == 0:
         return np.zeros_like(wave)
     age = 10**logAge
-    flux[fltr] = t(wave[fltr], [age])
+    flux[fltr] = t(wave[fltr], [age, sfh])
     if frame == "rest":
         idx = 2.0
     elif frame == "obs":
@@ -61,7 +63,7 @@ def BC03_ref(logMs, logAge, DL, wave, z, frame="rest", t=bc03, waveLim=waveLim):
     fnu = (1.0 + z)**idx * flux * 10**logMs / (4 * pi * (DL * Mpc)**2) * mJy
     return fnu
 
-def BC03_ref_PosPar(logMs, logAge, t=bc03):
+def BC03_ref_PosPar(logMs, logAge, sfh, t=bc03):
     """
     Find the position of the parameters on the discrete grid.
 
@@ -71,6 +73,8 @@ def BC03_ref_PosPar(logMs, logAge, t=bc03):
         The log of the stellar mass, unit: Msun.
     age : float
         The age of the stellar population, unit: Gyr.
+    sfh : int
+        The code for the SFH.
 
     Returns
     -------
@@ -78,7 +82,7 @@ def BC03_ref_PosPar(logMs, logAge, t=bc03):
         The dict of the parameters.
     """
     age = 10**logAge
-    age_d = t.get_nearestParameters([age])
+    age_d = t.get_nearestParameters([age, sfh])
     parDict = {
         "logMs": logMs,
         "age": age_d
