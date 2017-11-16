@@ -217,8 +217,8 @@ if sedData.check_csData():
 else:
     fig = plt.figure(figsize=(7, 7))
     ax = plt.gca()
-    xmin = 0.7 #np.min(sedwave) * 0.9
-    xmax = 600 #np.max(sedwave) * 1.1
+    xmin = np.min(sedwave) * 0.9 #0.7 #
+    xmax = np.max(sedwave) * 1.1 #600 #
     ymin = np.min(sedflux) * 0.5
     ymax = np.max(sedflux) * 2.0
     xlim = [xmin, xmax]
@@ -231,6 +231,7 @@ else:
     #ax.set_xticklabels(xticks)
     ax.set_xlabel(r"Rest Wavelength ($\mu$m)", fontsize=24)
     ax.set_ylabel(r"$f_\nu \mathrm{(mJy)}$", fontsize=24)
+    #plotName = r"{0}".format(targname)
     #plotName = r"PG {0}${1}${2}".format(targname[2:6], targname[6], targname[7:])
     plotName = r"SDSS {0}${1}${2}".format(targname[4:9], targname[9], targname[10:])
     ax.text(0.05, 0.95, "{0}".format(plotName),
