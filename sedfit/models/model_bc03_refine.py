@@ -25,7 +25,16 @@ def BC03_ref(logMs, logAge, sfh, DL, wave, z, frame="rest", t=bc03, waveLim=wave
     logAge : float
         The log10 of the age of the stellar population with the unit Gyr.
     sfh : int
-        The code for the SFH.
+        The code for the SFH, it ranges from 0-5 currently for the following
+        SFHs:
+          0 - bc03_ssp_z_0.02_chab.model,
+          1 - bc03_burst_0.1_z_0.02_chab.model,
+          2 - bc03_exp_0.1_z_0.02_chab.model,
+          3 - bc03_exp_1.0_z_0.02_chab.model,
+          4 - bc03_const_1.0_tV_0.2_z_0.02_chab.model,
+          5 - bc03_const_1.0_tV_5.0_z_0.02_chab.model.
+        It is not suggested to let this parameter free, since the relation between
+        the adjascent models are not continuous.
     DL : float
         The luminosity distance with the unit Mpc.
     wave : float array
