@@ -201,7 +201,7 @@ if sedData.check_csData():
     plt.tight_layout(pad=1.8)
     #->Setup the shared axis label.
     ax.set_xlabel(r"Rest Wavelength ($\mu$m)", fontsize=24)
-    ax.set_ylabel(r"$f_\nu \mathrm{(mJy)}$", fontsize=24)
+    ax.set_ylabel(r"$f_\nu \, \mathrm{(mJy)}$", fontsize=24)
     ax.xaxis.set_label_coords(0.5, -0.05)
     ax.yaxis.set_label_coords(-0.06, 0.5)
     ax.spines['top'].set_visible(False)
@@ -215,7 +215,7 @@ if sedData.check_csData():
                    labelbottom='off', # labels along the bottom edge are off)
                    labelleft="off")
 else:
-    fig = plt.figure(figsize=(7, 7))
+    fig = plt.figure(figsize=(10, 5))
     ax = plt.gca()
     xmin = np.min(sedwave) * 0.9 #0.7 #
     xmax = np.max(sedwave) * 1.1 #600 #
@@ -223,14 +223,32 @@ else:
     ymax = np.max(sedflux) * 2.0
     xlim = [xmin, xmax]
     ylim = [ymin, ymax]
-    cList = ["green", "red", "blue"]
+    cList = ["green", "orange", "blue"]
+    cKwargs = { #The line properties of the model components.
+        "ls_uc": "--",
+        "alpha_uc": 0.1,
+        "lw_uc": 0.5,
+        "ls_bf": "--",
+        "alpha_bf": 1.0,
+        "lw_bf": 1.0,
+    }
+    tKwargs = { #The line properties of the model total.
+        "ls_uc": "-",
+        "alpha_uc": 0.1,
+        "lw_uc": 0.5,
+        "ls_bf": "-",
+        "alpha_bf": 1.0,
+        "lw_bf": 3.0,
+        "color": "red",
+    }
     em.plot_fit(truths=parTruth, FigAx=(fig, ax), xlim=xlim, ylim=ylim, nSamples=100,
-                burnin=burnIn, fraction=fraction, cList=cList, ps=ps)
+                burnin=burnIn, fraction=fraction, cList=cList, cLineKwargs=cKwargs,
+                tLineKwargs=tKwargs, ps=ps)
     #xticks = [1., 2., 4., 8., 16.]
     #ax.set_xticks(xticks)
     #ax.set_xticklabels(xticks)
     ax.set_xlabel(r"Rest Wavelength ($\mu$m)", fontsize=24)
-    ax.set_ylabel(r"$f_\nu \mathrm{(mJy)}$", fontsize=24)
+    ax.set_ylabel(r"$f_\nu \, \mathrm{(mJy)}$", fontsize=24)
     #plotName = r"{0}".format(targname)
     #plotName = r"PG {0}${1}${2}".format(targname[2:6], targname[6], targname[7:])
     plotName = r"SDSS {0}${1}${2}".format(targname[4:9], targname[9], targname[10:])
@@ -261,7 +279,7 @@ else:
         handleUse.append(hd)
     plt.legend(handleUse, labelUse, loc="upper left", fontsize=16, numpoints=1,
                handletextpad=0.3, handlelength=(4./3.), bbox_to_anchor=(0.02,0.90),
-               framealpha=0.5)
+               framealpha=0.9, edgecolor="white")
 plt.savefig("{0}_result.pdf".format(targname), bbox_inches="tight")
 plt.close()
 print("Best fit plot finished!")

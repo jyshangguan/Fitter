@@ -561,21 +561,21 @@ class EmceeModel(object):
         fig, ax = sedData.plot_sed(FigAx=FigAx)
         #-->Plot the models
         if cList is None:
-            cList = ["g", "r", "m", "b", "y", "c"]
+            cList = ["green", "magenta", "orange", "blue", "yellow", "cyan"]
         ncolor = len(cList)
         #->Plot the sampled model variability
         if ps is None:
             ps = self.posterior_sample(**kwargs)
         cKwargs = { #The line properties of the model components.
-            "linestyle": cLineKwargs.get("ls_uc", ":"),
+            "linestyle": cLineKwargs.get("ls_uc", "--"),
             "alpha": cLineKwargs.get("alpha_uc", 0.1),
-            "linewidth": cLineKwargs.get("ls_uc", 1.0),
+            "linewidth": cLineKwargs.get("lw_uc", 0.5),
         }
         tKwargs = { #The line properties of the model total.
-            "linestyle": tLineKwargs.get("ls_uc", ":"),
+            "linestyle": tLineKwargs.get("ls_uc", "-"),
             "alpha": tLineKwargs.get("alpha_uc", 0.1),
-            "linewidth": tLineKwargs.get("ls_uc", 1.0),
-            "color": tLineKwargs.get("color", "brown"),
+            "linewidth": tLineKwargs.get("lw_uc", 0.5),
+            "color": tLineKwargs.get("color", "red"),
         }
         for pars in ps[np.random.randint(len(ps), size=nSamples)]:
             sedModel.updateParList(pars)
@@ -591,13 +591,13 @@ class EmceeModel(object):
         cKwargs = { #The line properties of the model components.
             "linestyle": cLineKwargs.get("ls_bf", "--"),
             "alpha": cLineKwargs.get("alpha_bf", 1.0),
-            "linewidth": cLineKwargs.get("ls_bf", 1.0),
+            "linewidth": cLineKwargs.get("lw_bf", 1.0),
             }
         tKwargs = { #The line properties of the model total.
-            "linestyle": tLineKwargs.get("ls_bf", "--"),
+            "linestyle": tLineKwargs.get("ls_bf", "-"),
             "alpha": tLineKwargs.get("alpha_bf", 1.0),
-            "linewidth": tLineKwargs.get("ls_bf", 3.0),
-            "color": tLineKwargs.get("color", "brown"),
+            "linewidth": tLineKwargs.get("lw_bf", 3.0),
+            "color": tLineKwargs.get("color", "red"),
             }
         sedModel.plot(FigAx=(fig, ax), colorList=cList, DisplayPars=False,
                       cKwargs=cKwargs, tKwargs=tKwargs)
