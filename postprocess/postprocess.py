@@ -132,8 +132,9 @@ if sedData.check_csData():
     ymax = np.nanmax(spcflux) * 1.05
     xlim = [xmin, xmax]
     ylim = [ymin, ymax]
+    cList = ["green", "orange", "blue"]
     em.plot_fit(truths=parTruth, FigAx=(fig, ax1), xlim=xlim, ylim=ylim, nSamples=100,
-                burnin=burnIn, fraction=fraction, ps=ps, showLegend=False)
+                burnin=burnIn, fraction=fraction, cList=cList, ps=ps, showLegend=False)
     #-->Set the labels
     xTickLabels = [10., 20.]
     ax1.set_xticks(xTickLabels)
@@ -153,7 +154,12 @@ if sedData.check_csData():
              verticalalignment='bottom', horizontalalignment='left',
              transform=ax1.transAxes, fontsize=24,
              bbox=dict(facecolor='white', alpha=0.5, edgecolor="none"))
+    #ax1.text(0.09, 0.70, "(b)",
+    #         verticalalignment='bottom', horizontalalignment='left',
+    #         transform=ax1.transAxes, fontsize=24,
+    #         bbox=dict(facecolor='white', alpha=0.5, edgecolor="none"))
     #-->Set the legend
+    #"""
     phtName = dataDict["phtName"]
     spcName = dataDict["spcName"]
     handles, labels = ax1.get_legend_handles_labels()
@@ -180,6 +186,7 @@ if sedData.check_csData():
                framealpha=0.9, edgecolor="white", #frameon=False, #
                fontsize=16, labelspacing=0.3, columnspacing=0.5,
                handletextpad=0.3, numpoints=1, handlelength=(4./3.))
+    #"""
     #->Plot the lower panel
     xmin = np.min(sedwave) * 0.9
     xmax = np.max(sedwave) * 1.1
@@ -188,7 +195,7 @@ if sedData.check_csData():
     xlim = [xmin, xmax]
     ylim = [ymin, ymax]
     em.plot_fit(truths=parTruth, FigAx=(fig, ax2), xlim=xlim, ylim=ylim, nSamples=100,
-                burnin=burnIn, fraction=fraction, ps=ps, showLegend=False)
+                burnin=burnIn, fraction=fraction, cList=cList, ps=ps, showLegend=False)
     ax2.set_xlabel("")
     ax2.set_ylabel("")
     ax2.tick_params(axis="both", which="major", length=8, labelsize=18)
@@ -199,6 +206,35 @@ if sedData.check_csData():
     ax2.set_yticklabels(yTicksLabels)
     ax2.yaxis.set_major_formatter(FuncFormatter(mjrFormatter))
     plt.tight_layout(pad=1.8)
+    #-->Set the legend
+    """
+    phtName = dataDict["phtName"]
+    spcName = dataDict["spcName"]
+    handles, labels = ax2.get_legend_handles_labels()
+    handleUse = []
+    labelUse  = []
+    for loop in range(len(labels)):
+        lb = labels[loop]
+        hd = handles[loop]
+        if lb == "Hot_Dust":
+            lb = "BB"
+        #if lb == "CLUMPY":
+        #    lb = "CLU"
+        if lb == phtName:
+            hd = hd[0]
+        if lb != spcName:
+            labelUse.append(lb)
+            handleUse.append(hd)
+        else:
+            label_spc  = lb
+            handle_spc = hd
+    labelUse.append(label_spc)
+    handleUse.append(handle_spc)
+    ax2.legend(handleUse, labelUse, loc="upper left", ncol=2,
+               framealpha=0.9, edgecolor="white", frameon=False, #
+               fontsize=16, labelspacing=0.3, columnspacing=0.5,
+               handletextpad=0.3, numpoints=1, handlelength=(4./3.))
+    #"""
     #->Setup the shared axis label.
     ax.set_xlabel(r"Rest Wavelength ($\mu$m)", fontsize=24)
     ax.set_ylabel(r"$f_\nu \, \mathrm{(mJy)}$", fontsize=24)
