@@ -249,7 +249,6 @@ def gsf_fitter(configName, targname=None, redshift=None, distance=None, sedFile=
     ############################################################################
     #                                   Fit                                    #
     ############################################################################
-    modelUnct = config.modelUnct #Whether to consider the model uncertainty in the fitting
     parTruth  = config.parTruth  #Whether to provide the truth of the model
     unctDict = config.unctDict
     emceeDict = config.emceeDict
@@ -282,7 +281,7 @@ def gsf_fitter(configName, targname=None, redshift=None, distance=None, sedFile=
         "waveModel": waveModel,
         "parAddDict_all": parAddDict_all,
         "parTruth": parTruth,
-        "modelUnct": modelUnct
+        "unctDict": unctDict
     }
     fitrs = {
         "dataPck": dataPck,
