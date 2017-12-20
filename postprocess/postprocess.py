@@ -93,7 +93,7 @@ funcLib    = sedmf.funcLib
 waveModel = modelPck["waveModel"]
 sedModel = bc.Model_Generator(modelDict, funcLib, waveModel, parAddDict_all)
 parTruth = modelPck["parTruth"]   #Whether to provide the truth of the model
-modelUnct = modelPck["modelUnct"] #Whether to consider the model uncertainty in the fitting
+modelUnct = False #modelPck["modelUnct"] #Whether to consider the model uncertainty in the fitting
 parAllList = sedModel.get_parVaryList()
 if modelUnct:
     parAllList.append(-np.inf)
@@ -290,6 +290,10 @@ else:
     plotName = r"SDSS {0}${1}${2}".format(targname[4:9], targname[9], targname[10:])
     ax.text(0.05, 0.95, "{0}".format(plotName),
             verticalalignment='top', horizontalalignment='left',
+            transform=ax.transAxes, fontsize=24,
+            bbox=dict(facecolor='white', alpha=0.5, edgecolor="none"))
+    ax.text(0.95, 0.95, "(d)",
+            verticalalignment='top', horizontalalignment='right',
             transform=ax.transAxes, fontsize=24,
             bbox=dict(facecolor='white', alpha=0.5, edgecolor="none"))
     ax.tick_params(axis="both", which="major", length=8, labelsize=18)
