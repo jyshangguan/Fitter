@@ -1,6 +1,7 @@
 import numpy as np
 from collections import OrderedDict
 from models.model_bc03 import BC03, BC03_PosPar
+from models.model_bc03_refine import BC03_ref, BC03_ref_PosPar
 from models.model_dl07 import DL07, DL07_PosPar
 import models.model_analyticals as ma
 from models.model_xl import Torus_Emission, Torus_Emission_PosPar
@@ -39,6 +40,12 @@ funcLib = {
         "function": BC03,
         "x_name": "wave",
         "param_fit": ["logMs", "age"],
+        "param_add": ["DL", "z", "frame", "t"],
+    },
+    "BC03_ref":{
+        "function": BC03_ref,
+        "x_name": "wave",
+        "param_fit": ["logMs", "logAge", "sfh"],
         "param_add": ["DL", "z", "frame", "t"],
     },
     "CLUMPY_intp": {

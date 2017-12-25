@@ -7,8 +7,9 @@ ls_mic = 2.99792458e14 #unit: micron/s
 Mpc = 3.08567758e24 #unit: cm
 mJy = 1e26 #unit: erg/s/cm^2/Hz
 
-__all__ = ["AddDict", "MatchDict", "parStatistics", "Luminosity_Integrate", "Luminosity_Specific",
-           "L_Total", "randomSampler", "CorrectParameters"]
+__all__ = ["AddDict", "MatchDict", "parStatistics", "Luminosity_Integrate",
+           "Luminosity_Specific", "L_Total", "randomSampler", "CorrectParameters",
+           "Flux_Pht_Component"]
 
 def AddDict(targetDict, quantName, quant, nFillPar=None):
     """
@@ -232,3 +233,64 @@ def CorrectParameters(modelDict, discFuncDict, silent=True):
         return (parList, parNameList)
     else:
         return parList
+
+def Flux_Pht_Component(pars, component, sedModel, sedData):
+    """
+    Calculate the rest-frame flux in the photometric bands of one specific 
+    model component.
+
+    Parameters
+    ----------
+    pars : list
+        The parameter list.
+    component : string
+        The name of the component.
+    sedModel : ModelCombiner object
+        The combined model.
+    sedData : SEDClass object
+        The data set of SED.
+
+    Returns
+    -------
+    fluxModelPht : list
+        The list of photometric flux calculated from the model.
+
+    Notes
+    -----
+    None.
+    """
+    sedModel.updateParList(pars)
+    result_cmp = sedModel.componentResult()
+    waveModel = sedModel.get_xList()
+    fluxModel = result_cmp[component]
+    fluxModelPht = sedData.model_pht(waveModel, fluxModel)
+    return fluxModelPht
+
+if __name__ == "__main__":
+    import cPickle as pickle
+    from sedfit import sedclass as sedsc
+    from sedfit.fitter import basicclass as bc
+    from sedfit import model_functions as sedmf
+
+    fitrsPath = "./"
+    f = open(fitrsPath+"SDSSJ0041-0952.fitrs", "r")
+    fitrs = pickle.load(f)
+    f.close()
+
+    dataPck = fitrs["dataPck"]
+    targname = dataPck["targname"]
+    redshift = dataPck["redshift"]
+    distance = dataPck["distance"]
+    dataDict = dataPck["dataDict"]
+    sedPck   = dataPck["sedPck"]
+    sedData = sedsc.setSedData(targname, redshift, distance, dataDict, sedPck, True)
+
+    #->Setup the model
+    modelPck = fitrs["modelPck"]
+    funcLib = sedmf.funcLib
+    modelDict = modelPck["modelDict"]
+    waveModel = modelPck["waveModel"]
+    parAddDict_all = modelPck["parAddDict_all"]
+    sedModel = bc.Model_Generator(modelDict, funcLib, waveModel, parAddDict_all)
+    pars = sedModel.get_parList()
+    print Flux_Pht_Component(pars, "BC03", sedModel, sedData)

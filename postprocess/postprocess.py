@@ -93,7 +93,7 @@ funcLib    = sedmf.funcLib
 waveModel = modelPck["waveModel"]
 sedModel = bc.Model_Generator(modelDict, funcLib, waveModel, parAddDict_all)
 parTruth = modelPck["parTruth"]   #Whether to provide the truth of the model
-modelUnct = modelPck["modelUnct"] #Whether to consider the model uncertainty in the fitting
+modelUnct = False #modelPck["modelUnct"] #Whether to consider the model uncertainty in the fitting
 parAllList = sedModel.get_parVaryList()
 if modelUnct:
     parAllList.append(-np.inf)
@@ -132,8 +132,9 @@ if sedData.check_csData():
     ymax = np.nanmax(spcflux) * 1.05
     xlim = [xmin, xmax]
     ylim = [ymin, ymax]
+    cList = ["green", "orange", "blue"]
     em.plot_fit(truths=parTruth, FigAx=(fig, ax1), xlim=xlim, ylim=ylim, nSamples=100,
-                burnin=burnIn, fraction=fraction, ps=ps, showLegend=False)
+                burnin=burnIn, fraction=fraction, cList=cList, ps=ps, showLegend=False)
     #-->Set the labels
     xTickLabels = [10., 20.]
     ax1.set_xticks(xTickLabels)
@@ -153,7 +154,12 @@ if sedData.check_csData():
              verticalalignment='bottom', horizontalalignment='left',
              transform=ax1.transAxes, fontsize=24,
              bbox=dict(facecolor='white', alpha=0.5, edgecolor="none"))
+    #ax1.text(0.09, 0.70, "(b)",
+    #         verticalalignment='bottom', horizontalalignment='left',
+    #         transform=ax1.transAxes, fontsize=24,
+    #         bbox=dict(facecolor='white', alpha=0.5, edgecolor="none"))
     #-->Set the legend
+    #"""
     phtName = dataDict["phtName"]
     spcName = dataDict["spcName"]
     handles, labels = ax1.get_legend_handles_labels()
@@ -164,8 +170,8 @@ if sedData.check_csData():
         hd = handles[loop]
         if lb == "Hot_Dust":
             lb = "BB"
-        if lb == "CLUMPY":
-            lb = "CLU"
+        #if lb == "CLUMPY":
+        #    lb = "CLU"
         if lb == phtName:
             hd = hd[0]
         if lb != spcName:
@@ -180,6 +186,7 @@ if sedData.check_csData():
                framealpha=0.9, edgecolor="white", #frameon=False, #
                fontsize=16, labelspacing=0.3, columnspacing=0.5,
                handletextpad=0.3, numpoints=1, handlelength=(4./3.))
+    #"""
     #->Plot the lower panel
     xmin = np.min(sedwave) * 0.9
     xmax = np.max(sedwave) * 1.1
@@ -188,7 +195,7 @@ if sedData.check_csData():
     xlim = [xmin, xmax]
     ylim = [ymin, ymax]
     em.plot_fit(truths=parTruth, FigAx=(fig, ax2), xlim=xlim, ylim=ylim, nSamples=100,
-                burnin=burnIn, fraction=fraction, ps=ps, showLegend=False)
+                burnin=burnIn, fraction=fraction, cList=cList, ps=ps, showLegend=False)
     ax2.set_xlabel("")
     ax2.set_ylabel("")
     ax2.tick_params(axis="both", which="major", length=8, labelsize=18)
@@ -199,9 +206,38 @@ if sedData.check_csData():
     ax2.set_yticklabels(yTicksLabels)
     ax2.yaxis.set_major_formatter(FuncFormatter(mjrFormatter))
     plt.tight_layout(pad=1.8)
+    #-->Set the legend
+    """
+    phtName = dataDict["phtName"]
+    spcName = dataDict["spcName"]
+    handles, labels = ax2.get_legend_handles_labels()
+    handleUse = []
+    labelUse  = []
+    for loop in range(len(labels)):
+        lb = labels[loop]
+        hd = handles[loop]
+        if lb == "Hot_Dust":
+            lb = "BB"
+        #if lb == "CLUMPY":
+        #    lb = "CLU"
+        if lb == phtName:
+            hd = hd[0]
+        if lb != spcName:
+            labelUse.append(lb)
+            handleUse.append(hd)
+        else:
+            label_spc  = lb
+            handle_spc = hd
+    labelUse.append(label_spc)
+    handleUse.append(handle_spc)
+    ax2.legend(handleUse, labelUse, loc="upper left", ncol=2,
+               framealpha=0.9, edgecolor="white", frameon=False, #
+               fontsize=16, labelspacing=0.3, columnspacing=0.5,
+               handletextpad=0.3, numpoints=1, handlelength=(4./3.))
+    #"""
     #->Setup the shared axis label.
     ax.set_xlabel(r"Rest Wavelength ($\mu$m)", fontsize=24)
-    ax.set_ylabel(r"$f_\nu \mathrm{(mJy)}$", fontsize=24)
+    ax.set_ylabel(r"$f_\nu \, \mathrm{(mJy)}$", fontsize=24)
     ax.xaxis.set_label_coords(0.5, -0.05)
     ax.yaxis.set_label_coords(-0.06, 0.5)
     ax.spines['top'].set_visible(False)
@@ -215,21 +251,53 @@ if sedData.check_csData():
                    labelbottom='off', # labels along the bottom edge are off)
                    labelleft="off")
 else:
-    fig = plt.figure(figsize=(7, 7))
+    fig = plt.figure(figsize=(10, 5))
     ax = plt.gca()
-    xmin = np.min(sedwave) * 0.9
-    xmax = np.max(sedwave) * 1.1
+    xmin = np.min(sedwave) * 0.9 #0.7 #
+    xmax = np.max(sedwave) * 1.1 #600 #
     ymin = np.min(sedflux) * 0.5
     ymax = np.max(sedflux) * 2.0
     xlim = [xmin, xmax]
     ylim = [ymin, ymax]
+    cList = ["green", "orange", "blue"]
+    cKwargs = { #The line properties of the model components.
+        "ls_uc": "--",
+        "alpha_uc": 0.1,
+        "lw_uc": 0.5,
+        "ls_bf": "--",
+        "alpha_bf": 1.0,
+        "lw_bf": 1.0,
+    }
+    tKwargs = { #The line properties of the model total.
+        "ls_uc": "-",
+        "alpha_uc": 0.1,
+        "lw_uc": 0.5,
+        "ls_bf": "-",
+        "alpha_bf": 1.0,
+        "lw_bf": 3.0,
+        "color": "red",
+    }
     em.plot_fit(truths=parTruth, FigAx=(fig, ax), xlim=xlim, ylim=ylim, nSamples=100,
-                burnin=burnIn, fraction=fraction, ps=ps)
-    plotName = r"PG {0}${1}${2}".format(targname[2:6], targname[6], targname[7:])
-    ax.text(0.58, 0.88, "{0}".format(plotName),
-            verticalalignment='bottom', horizontalalignment='left',
+                burnin=burnIn, fraction=fraction, cList=cList, cLineKwargs=cKwargs,
+                tLineKwargs=tKwargs, ps=ps)
+    #xticks = [1., 2., 4., 8., 16.]
+    #ax.set_xticks(xticks)
+    #ax.set_xticklabels(xticks)
+    ax.set_xlabel(r"Rest Wavelength ($\mu$m)", fontsize=24)
+    ax.set_ylabel(r"$f_\nu \, \mathrm{(mJy)}$", fontsize=24)
+    #plotName = r"{0}".format(targname)
+    #plotName = r"PG {0}${1}${2}".format(targname[2:6], targname[6], targname[7:])
+    plotName = r"SDSS {0}${1}${2}".format(targname[4:9], targname[9], targname[10:])
+    ax.text(0.05, 0.95, "{0}".format(plotName),
+            verticalalignment='top', horizontalalignment='left',
             transform=ax.transAxes, fontsize=24,
             bbox=dict(facecolor='white', alpha=0.5, edgecolor="none"))
+    ax.text(0.95, 0.95, "(d)",
+            verticalalignment='top', horizontalalignment='right',
+            transform=ax.transAxes, fontsize=24,
+            bbox=dict(facecolor='white', alpha=0.5, edgecolor="none"))
+    ax.tick_params(axis="both", which="major", length=8, labelsize=18)
+    ax.tick_params(axis="both", which="minor", length=5)
     #-->Set the legend
     phtName = dataDict["phtName"]
     spcName = dataDict["spcName"]
@@ -239,16 +307,19 @@ else:
     for loop in range(len(labels)):
         lb = labels[loop]
         hd = handles[loop]
-        if lb == "Hot_Dust":
-            lb = "BB"
-        if lb == "CLUMPY":
-            lb = "CLU"
+        if lb == "Cat3d_H":
+            lb = "CAT3D"
+        #if lb == "Hot_Dust":
+        #    lb = "BB"
+        #if lb == "CLUMPY":
+        #    lb = "CLU"
         if lb == phtName:
             hd = hd[0]
         labelUse.append(lb)
         handleUse.append(hd)
-    plt.legend(handleUse, labelUse, loc="lower left", fontsize=18, numpoints=1,
-               handletextpad=0.3, handlelength=(4./3.))
+    plt.legend(handleUse, labelUse, loc="upper left", fontsize=16, numpoints=1,
+               handletextpad=0.3, handlelength=(4./3.), bbox_to_anchor=(0.02,0.90),
+               framealpha=0.9, edgecolor="white")
 plt.savefig("{0}_result.pdf".format(targname), bbox_inches="tight")
 plt.close()
 print("Best fit plot finished!")

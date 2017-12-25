@@ -386,7 +386,7 @@ def Load_SED(sedfile):
     wave  = sedtb["wavelength"].data
     flux  = sedtb["flux"].data
     sigma = sedtb["sigma"].data
-    band  = sedtb["band"].data
+    band  = sedtb["band"].data.astype("str")
     fltr_spc = band == "0"
     fltr_pht = np.logical_not(fltr_spc)
     phtwave  = wave[fltr_pht]
@@ -462,7 +462,7 @@ def SED_select_band(sed, bandList_use=[], bandList_ignore=[], silent=True):
             sigma.append(sed[2][idx])
             band.append(sed[3][idx])
     if len(band) == 0:
-        raise RuntimeError("There is no band in use!")
+        print("Warning: There is no band in use!")
     sed_select = (wave, flux, sigma, band)
     return sed_select
 #Func_end

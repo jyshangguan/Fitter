@@ -647,7 +647,7 @@ class ModelCombiner(object):
         yTotal = self.combineResult(x=x)
         yCmpnt = self.componentResult(x=x) #The best-fit components
         if colorList is None:
-            colorList = ["r", "g", "b", "m", "y", "c"]
+            colorList = ["orange", "green", "blue", "magenta", "yellow", "cyan"]
         nColor = len(colorList)
         counter = 0
         for modelName in modelList:
