@@ -2,7 +2,7 @@
 
 ## Requirements
 
-[Anachonda](https://www.continuum.io/) is suggested to use. Current version of Fitter is only tested on python 2.7 verion.
+[Anaconda](https://www.continuum.io/) is suggested to use. Current version of Fitter is only tested on python 2.7 verion.
 
 The code requires the following python packages:
 * [emcee](http://dan.iel.fm/emcee/current/): pip install emcee
@@ -23,3 +23,9 @@ The code requires the following python packages:
   * The line `LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/Softwares/lib` should also be added into `~/.bashrc`.
 
 ## Installation
+
+git clone https://github.com/jyshangguan/Fitter.git
+
+## How to use it?
+
+I will try to write down the manual soon!  Please contact me if you are interested in the code :)
