@@ -287,15 +287,18 @@ else:
     ax.set_ylabel(r"$f_\nu \, \mathrm{(mJy)}$", fontsize=24)
     #plotName = r"{0}".format(targname)
     #plotName = r"PG {0}${1}${2}".format(targname[2:6], targname[6], targname[7:])
-    plotName = r"SDSS {0}${1}${2}".format(targname[4:9], targname[9], targname[10:])
+    #plotName = r"SDSS {0}${1}${2}".format(targname[4:9], targname[9], targname[10:])
+    plotName = r"$\mathrm{{{0}}}$".format(targname)
     ax.text(0.05, 0.95, "{0}".format(plotName),
             verticalalignment='top', horizontalalignment='left',
             transform=ax.transAxes, fontsize=24,
             bbox=dict(facecolor='white', alpha=0.5, edgecolor="none"))
+    """
     ax.text(0.95, 0.95, "(d)",
             verticalalignment='top', horizontalalignment='right',
             transform=ax.transAxes, fontsize=24,
             bbox=dict(facecolor='white', alpha=0.5, edgecolor="none"))
+    """
     ax.tick_params(axis="both", which="major", length=8, labelsize=18)
     ax.tick_params(axis="both", which="minor", length=5)
     #-->Set the legend

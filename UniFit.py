@@ -84,7 +84,7 @@ else: #If the target list is provided, fit the targets one by one.
         commandArgs = [configName, targname, "{0}".format(redshift)]
         if "DL" in targTable.colnames:
             distance = targTable["DL"][loop]
-            commandArgs.append(distance)
+            commandArgs.append("{0}".format(distance))
         else:
             distance = None
         sedFile = sedPath + sedList[loop]
