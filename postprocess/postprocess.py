@@ -132,7 +132,7 @@ if sedData.check_csData():
     ymax = np.nanmax(spcflux) * 1.05
     xlim = [xmin, xmax]
     ylim = [ymin, ymax]
-    cList = ["green", "orange", "blue"]
+    cList = ["green", "orange", "blue", "yellow"]
     em.plot_fit(truths=parTruth, FigAx=(fig, ax1), xlim=xlim, ylim=ylim, nSamples=100,
                 burnin=burnIn, fraction=fraction, cList=cList, ps=ps, showLegend=False)
     #-->Set the labels
@@ -159,7 +159,7 @@ if sedData.check_csData():
     #         transform=ax1.transAxes, fontsize=24,
     #         bbox=dict(facecolor='white', alpha=0.5, edgecolor="none"))
     #-->Set the legend
-    #"""
+    """
     phtName = dataDict["phtName"]
     spcName = dataDict["spcName"]
     handles, labels = ax1.get_legend_handles_labels()
@@ -207,7 +207,7 @@ if sedData.check_csData():
     ax2.yaxis.set_major_formatter(FuncFormatter(mjrFormatter))
     plt.tight_layout(pad=1.8)
     #-->Set the legend
-    """
+    #"""
     phtName = dataDict["phtName"]
     spcName = dataDict["spcName"]
     handles, labels = ax2.get_legend_handles_labels()
