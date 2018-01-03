@@ -500,7 +500,7 @@ class EmceeModel(object):
         sedModel.updateParList(pcnt)
         ycnt = sedModel.combineResult()
         fig, ax = sedData.plot_sed(FigAx=FigAx)
-        cList = ["g", "r", "m", "b", "y", "c"]
+        cList = ["green", "magenta", "orange", "blue", "yellow", "cyan"]
         ncolor = len(cList)
         #->Plot the best-fit model
         sedModel.updateParList(pcnt)
