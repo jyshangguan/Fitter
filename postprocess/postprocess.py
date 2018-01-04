@@ -251,6 +251,7 @@ if sedData.check_csData():
                    labelbottom='off', # labels along the bottom edge are off)
                    labelleft="off")
 else:
+    #fig = plt.figure(figsize=(7, 7))
     fig = plt.figure(figsize=(10, 5))
     ax = plt.gca()
     xmin = np.min(sedwave) * 0.9 #0.7 #
@@ -283,11 +284,13 @@ else:
     #xticks = [1., 2., 4., 8., 16.]
     #ax.set_xticks(xticks)
     #ax.set_xticklabels(xticks)
+    #ax.set_ylim([0.3, 20])
     ax.set_xlabel(r"Rest Wavelength ($\mu$m)", fontsize=24)
     ax.set_ylabel(r"$f_\nu \, \mathrm{(mJy)}$", fontsize=24)
     #plotName = r"{0}".format(targname)
     #plotName = r"PG {0}${1}${2}".format(targname[2:6], targname[6], targname[7:])
     #plotName = r"SDSS {0}${1}${2}".format(targname[4:9], targname[9], targname[10:])
+    #plotName = r"{0}${1}${2}".format(targname[0:5], targname[5], targname[6:])
     plotName = r"$\mathrm{{{0}}}$".format(targname)
     ax.text(0.05, 0.95, "{0}".format(plotName),
             verticalalignment='top', horizontalalignment='left',
