@@ -387,15 +387,16 @@ def Load_SED(sedfile):
     flux  = sedtb["flux"].data
     sigma = sedtb["sigma"].data
     band  = sedtb["band"].data.astype("str")
-    fltr_spc = band == "0"
-    fltr_pht = np.logical_not(fltr_spc)
+    fltr_spc_use = band == "0"  # Spectral data used
+    fltr_spc_drp = band == "-1" # Spectral data dropped
+    fltr_pht = np.logical_not(fltr_spc_use | fltr_spc_drp)
     phtwave  = wave[fltr_pht]
     phtflux  = flux[fltr_pht]
     phtsigma = sigma[fltr_pht]
     phtband  = band[fltr_pht]
-    spcwave  = wave[fltr_spc]
-    spcflux  = flux[fltr_spc]
-    spcsigma = sigma[fltr_spc]
+    spcwave  = wave[fltr_spc_use]
+    spcflux  = flux[fltr_spc_use]
+    spcsigma = sigma[fltr_spc_use]
 
     sedwave  = np.concatenate([phtwave, spcwave])
     sedflux  = np.concatenate([phtflux, spcflux])

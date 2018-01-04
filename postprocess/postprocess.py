@@ -132,7 +132,7 @@ if sedData.check_csData():
     ymax = np.nanmax(spcflux) * 1.05
     xlim = [xmin, xmax]
     ylim = [ymin, ymax]
-    cList = ["green", "orange", "blue"]
+    cList = ["green", "orange", "blue", "yellow"]
     em.plot_fit(truths=parTruth, FigAx=(fig, ax1), xlim=xlim, ylim=ylim, nSamples=100,
                 burnin=burnIn, fraction=fraction, cList=cList, ps=ps, showLegend=False)
     #-->Set the labels
@@ -159,7 +159,7 @@ if sedData.check_csData():
     #         transform=ax1.transAxes, fontsize=24,
     #         bbox=dict(facecolor='white', alpha=0.5, edgecolor="none"))
     #-->Set the legend
-    #"""
+    """
     phtName = dataDict["phtName"]
     spcName = dataDict["spcName"]
     handles, labels = ax1.get_legend_handles_labels()
@@ -207,7 +207,7 @@ if sedData.check_csData():
     ax2.yaxis.set_major_formatter(FuncFormatter(mjrFormatter))
     plt.tight_layout(pad=1.8)
     #-->Set the legend
-    """
+    #"""
     phtName = dataDict["phtName"]
     spcName = dataDict["spcName"]
     handles, labels = ax2.get_legend_handles_labels()
@@ -251,6 +251,7 @@ if sedData.check_csData():
                    labelbottom='off', # labels along the bottom edge are off)
                    labelleft="off")
 else:
+    #fig = plt.figure(figsize=(7, 7))
     fig = plt.figure(figsize=(10, 5))
     ax = plt.gca()
     xmin = np.min(sedwave) * 0.9 #0.7 #
@@ -283,19 +284,24 @@ else:
     #xticks = [1., 2., 4., 8., 16.]
     #ax.set_xticks(xticks)
     #ax.set_xticklabels(xticks)
+    #ax.set_ylim([0.3, 20])
     ax.set_xlabel(r"Rest Wavelength ($\mu$m)", fontsize=24)
     ax.set_ylabel(r"$f_\nu \, \mathrm{(mJy)}$", fontsize=24)
     #plotName = r"{0}".format(targname)
     #plotName = r"PG {0}${1}${2}".format(targname[2:6], targname[6], targname[7:])
-    plotName = r"SDSS {0}${1}${2}".format(targname[4:9], targname[9], targname[10:])
+    #plotName = r"SDSS {0}${1}${2}".format(targname[4:9], targname[9], targname[10:])
+    #plotName = r"{0}${1}${2}".format(targname[0:5], targname[5], targname[6:])
+    plotName = r"$\mathrm{{{0}}}$".format(targname)
     ax.text(0.05, 0.95, "{0}".format(plotName),
             verticalalignment='top', horizontalalignment='left',
             transform=ax.transAxes, fontsize=24,
             bbox=dict(facecolor='white', alpha=0.5, edgecolor="none"))
+    """
     ax.text(0.95, 0.95, "(d)",
             verticalalignment='top', horizontalalignment='right',
             transform=ax.transAxes, fontsize=24,
             bbox=dict(facecolor='white', alpha=0.5, edgecolor="none"))
+    """
     ax.tick_params(axis="both", which="major", length=8, labelsize=18)
     ax.tick_params(axis="both", which="minor", length=5)
     #-->Set the legend

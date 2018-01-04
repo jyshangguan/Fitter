@@ -9,7 +9,7 @@ The code requires the following python packages:
 * [acor](https://github.com/dfm/acor): pip install acor
 * [corner](http://corner.readthedocs.io/en/latest/#): pip install corner
 * [George](http://dan.iel.fm/george/current/): conda install -c conda-forge george
-* [mpi4py](http://pythonhosted.org/mpi4py/): pip install mpi4py or conda install -c anaconda mpi4py
+* [mpi4py](http://pythonhosted.org/mpi4py/): conda install mpi4py (Better to use MPICH2 for MPI)
 
 * Additional things
   * In order to install tmux under the user home directory, use the following code:
