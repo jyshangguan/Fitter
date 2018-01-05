@@ -1,5 +1,6 @@
 import numpy as np
 from collections import OrderedDict
+"""
 from models.model_bc03 import BC03, BC03_PosPar
 from models.model_bc03_refine import BC03_ref, BC03_ref_PosPar
 from models.model_dl07 import DL07, DL07_PosPar
@@ -19,22 +20,14 @@ Power_Law = ma.Power_Law
 Synchrotron = ma.Synchrotron
 Line_Gaussian_L = ma.Line_Gaussian_L
 
-"""
-ls_mic = 2.99792458e14 #unit: micron/s
-m_H = 1.6726219e-24 #unit: gram
-Msun = 1.9891e33 #unit: gram
-Mpc = 3.08567758e24 #unit: cm
-mJy = 1e26 #unit: erg/s/cm^2/Hz
-"""
-
-
 #Dict of the supporting functions
 funcLib = {
     "Linear":{
         "function": Linear,
         "x_name": "x",
         "param_fit": ["a", "b"],
-        "param_add": []
+        "param_add": [],
+        "operation": ["+","*"]
     },
     "BC03":{
         "function": BC03,
@@ -95,7 +88,8 @@ funcLib = {
         "function": Line_Gaussian_L,
         "x_name": "wavelength",
         "param_fit": ["logLum", "lambda0", "FWHM"],
-        "param_add": ["DL"]
+        "param_add": ["DL"],
+        "operation": ["+", "*"]
     },
     "pah": {
         "function": pah,
@@ -114,13 +108,50 @@ funcLib = {
         "x_name": "wave",
         "param_fit": ["a", "theta", "N0", "i", "logL"],
         "param_add": ["DL", "z", "frame", "t"],
-        "operation": "plus&multiply"
+        "operation": ["+"]
     },
     "Cat3d_H": {
         "function": Cat3d_H,
         "x_name": "wave",
         "param_fit": ["a", "h", "N0", "i", "logL"],
         "param_add": ["DL", "z", "frame", "t"],
-        "operation": "plus&multiply"
+        "operation": ["+"]
     }
+}
+"""
+
+#-> For the test
+def Linear(a, b, x):
+    return a * np.atleast_1d(x) + b
+
+def Square(a, b, c, x):
+    x = np.atleast_1d(x)
+    return a * (x - b)**2. + c
+
+def Gaussian(a, b, c, x):
+    x = np.atleast_1d(x)
+    return a * np.exp(-0.5 * ((x - b) / c)**2.)
+
+funcLib = {
+    "Linear":{
+        "function": Linear,
+        "x_name": "x",
+        "param_fit": ["a", "b"],
+        "param_add": [],
+        "operation": ["+"]
+    },
+    "Square":{
+        "function": Square,
+        "x_name": "x",
+        "param_fit": ["a", "b", "c"],
+        "param_add": [],
+        #"operation": ["+"]
+    },
+    "Gaussian":{
+        "function": Gaussian,
+        "x_name": "x",
+        "param_fit": ["a", "b", "c"],
+        "param_add": [],
+        "operation": ["+", "*"]
+    },
 }

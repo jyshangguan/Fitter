@@ -435,11 +435,35 @@ class DataSet(object):
 
 #The basic class of model
 class ModelFunction(object):
-    def __init__(self, function, xName, parFitDict={}, parAddDict={}):
+    def __init__(self, function, xName, parFitDict={}, parAddDict={}, multiList=None):
+        """
+        The functions of each model component.  The model is multiplicative if
+        multiList is used.
+
+        Parameters
+        ----------
+        function : string
+            The variable name of the function.
+        xName : string
+            The name of the active variable.
+        parFitDict : dict
+            The name of the fitting variables.
+        parAddDict : dict
+            The name of the additional variables for this model.
+        multiList (optional): list
+            If provided, the model is multiplicative. The model will be
+            multiplied to the models in the list.  Otherwise, the model will be
+            added with other models that are not multiplicative.
+
+        Notes
+        ----
+        Revised by SGJY at Jan. 5, 2018 in KIAA-PKU.
+        """
         self.__function = function
         self.xName = xName
         self.parFitDict = parFitDict
         self.parAddDict = parAddDict
+        self.multiList  = multiList
 
     def __call__(self, x):
         kwargs = {}
@@ -451,6 +475,15 @@ class ModelFunction(object):
             kwargs[parName] = self.parAddDict[parName]
         exec "y = sedmf.{0}(**kwargs)".format(self.__function)
         return y
+
+    def if_Add(self):
+        """
+        Check whether the function is to add or multiply.
+        """
+        if self.multiList is None:
+            return True
+        else:
+            return False
 
     def __getstate__(self):
         return self.__dict__
@@ -494,6 +527,16 @@ class ModelCombiner(object):
         self.__modelDict = modelDict
         self._modelList = modelDict.keys()
         self.__x = xList
+        self._multiDict = {} # The dict of models to multiply to other models
+        self._addList = [] # The list of models to add together
+        for modelName in self._modelList:
+            mf = modelDict[modelName]
+            if mf.if_Add():
+                self._addList.append(modelName)
+            else:
+                self._multiDict[modelName] = mf.multiList
+        print "Add: {0}".format(self._addList)
+        print "Multiply: {0}".format(self._multiDict)
 
     def get_xList(self):
         return self.__x
@@ -508,7 +551,7 @@ class ModelCombiner(object):
         if x is None:
             x = self.__x
         result = np.zeros_like(x)
-        for modelName in self.__modelDict.keys():
+        for modelName in self._modelList:
             mf = self.__modelDict[modelName]
             result += mf(x)
         return result
@@ -697,6 +740,7 @@ def Model_Generator(input_model_dict, func_lib, x_list, par_add_dict_all={}, **k
         funcName = input_model_dict[modelName]["function"]
         funcInfo = func_lib[funcName]
         xName = funcInfo["x_name"]
+        #-> Build up the parameter dictionaries
         parFitList = funcInfo["param_fit"]
         parAddList = funcInfo["param_add"]
         parFitDict = OrderedDict()
@@ -709,7 +753,14 @@ def Model_Generator(input_model_dict, func_lib, x_list, par_add_dict_all={}, **k
                 pass
             else:
                 parAddDict[parName] = par_add_iterm
+        #-> Check the consistency if the component is multiply
+        multiList = input_model_dict[modelName].get("multiply", None)
+        if not multiList is None:
+            #--> The "*" should be included in the operation list.
+            print "{0} is multiplied to {1}!".format(modelName, multiList)
+            assert "*" in funcInfo["operation"]
         #modelDict[modelName] = ModelFunction(funcInfo["function"], xName, parFitDict, parAddDict)
-        modelDict[modelName] = ModelFunction(funcName, xName, parFitDict, parAddDict)
+        modelDict[modelName] = ModelFunction(funcName, xName, parFitDict,
+                                             parAddDict, multiList)
     sed_model = ModelCombiner(modelDict, x_list, **kwargs)
     return sed_model
