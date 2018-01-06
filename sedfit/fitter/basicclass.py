@@ -435,30 +435,30 @@ class DataSet(object):
 
 #The basic class of model
 class ModelFunction(object):
+    """
+    The functions of each model component.  The model is multiplicative if
+    multiList is used.
+
+    Parameters
+    ----------
+    function : string
+        The variable name of the function.
+    xName : string
+        The name of the active variable.
+    parFitDict : dict
+        The name of the fitting variables.
+    parAddDict : dict
+        The name of the additional variables for this model.
+    multiList (optional): list
+        If provided, the model is multiplicative. The model will be
+        multiplied to the models in the list.  Otherwise, the model will be
+        added with other models that are not multiplicative.
+
+    Notes
+    ----
+    Revised by SGJY at Jan. 5, 2018 in KIAA-PKU.
+    """
     def __init__(self, function, xName, parFitDict={}, parAddDict={}, multiList=None):
-        """
-        The functions of each model component.  The model is multiplicative if
-        multiList is used.
-
-        Parameters
-        ----------
-        function : string
-            The variable name of the function.
-        xName : string
-            The name of the active variable.
-        parFitDict : dict
-            The name of the fitting variables.
-        parAddDict : dict
-            The name of the additional variables for this model.
-        multiList (optional): list
-            If provided, the model is multiplicative. The model will be
-            multiplied to the models in the list.  Otherwise, the model will be
-            added with other models that are not multiplicative.
-
-        Notes
-        ----
-        Revised by SGJY at Jan. 5, 2018 in KIAA-PKU.
-        """
         self.__function = function
         self.xName = xName
         self.parFitDict = parFitDict
@@ -491,85 +491,209 @@ class ModelFunction(object):
     def __setstate__(self, dict):
         self.__dict__ = dict
 
-"""
-class ModelFunction(object):
-    def __init__(self, function, xName, parFitDict={}, parAddDict={}):
-        self.__function = function
-        self.__funcName = function.func_code.co_name
-        self.xName = xName
-        #Check whether the parameters match the function.
-        funcParList = function.func_code.co_varnames
-        ##Get a list of all the parameters.
-        parList = parFitDict.keys() + parAddDict.keys()
-        ##Check whether there is unexpected parameters.
-        for loop in range( len(parList) ):
-            parName = parList[loop]
-            if not parName in funcParList:
-                raise TypeError("{0}() got an unexpected keyword argument '{1}'.".format(self.__funcName, parName))
-        ##Set the parameters after the checks.
-        self.parFitDict = parFitDict
-        self.parAddDict = parAddDict
-
-    def result(self, x):
-        kwargs = {}
-        #Add in the parameters for fit
-        kwargs[self.xName] = x
-        for parName in self.parFitDict.keys():
-            kwargs[parName] = self.parFitDict[parName]["value"]
-        for parName in self.parAddDict.keys():
-            kwargs[parName] = self.parAddDict[parName]
-        y = self.__function(**kwargs)
-        return y
-"""
-
 class ModelCombiner(object):
-    def __init__(self, modelDict, xList):
+    """
+    The object to combine all the model components.
+
+    Parameters
+    ----------
+    modelDict : dict (better to be ordered dict)
+        The dict containing all the model functions.
+    xList : array like
+        The array of the default active variable.
+    QuietMode : bool
+        Use verbose mode if False.
+
+    Notes
+    -----
+    None.
+    """
+    def __init__(self, modelDict, xList, QuietMode=True):
         self.__modelDict = modelDict
         self._modelList = modelDict.keys()
         self.__x = xList
-        self._multiDict = {} # The dict of models to multiply to other models
+        self._mltList = [] # The list of models to multiply to other models
         self._addList = [] # The list of models to add together
         for modelName in self._modelList:
             mf = modelDict[modelName]
             if mf.if_Add():
                 self._addList.append(modelName)
             else:
-                self._multiDict[modelName] = mf.multiList
-        print "Add: {0}".format(self._addList)
-        print "Multiply: {0}".format(self._multiDict)
+                self._mltList.append(modelName)
+        if not QuietMode:
+            print "Add: {0}".format(self._addList)
+            print "Multiply: {0}".format(self._mltList)
 
     def get_xList(self):
+        """
+        Get the array of the default active variable.
+
+        Parameters
+        ----------
+        None.
+
+        Returns
+        -------
+        The array of the default active variable.
+        """
         return self.__x
 
     def set_xList(self, xList):
+        """
+        Reset the default active variable array.
+
+        Parameters
+        ----------
+        xList : array like
+            The new array of the active variable.
+
+        Returns
+        -------
+        None.
+        """
         self.__x = xList
 
     def combineResult(self, x=None):
         """
         Return the model result combining all the components.
+
+        Parameters
+        ----------
+        x (optional) : array like
+            The active variable of the models.
+
+        Returns
+        -------
+        result : array like
+            The result of the models all combined.
+
+        Notes
+        -----
+        None.
         """
         if x is None:
             x = self.__x
-        result = np.zeros_like(x)
-        for modelName in self._modelList:
+        #-> Calculate the add model components
+        addCmpDict = {}
+        for modelName in self._addList:
             mf = self.__modelDict[modelName]
-            result += mf(x)
+            addCmpDict[modelName] = mf(x)
+        #-> Manipulate the model components
+        for modelName in self._mltList:
+            mf = self.__modelDict[modelName]
+            my = mf(x) # multiplied y component
+            #--> Multiply the current component to the target models
+            for tmn in mf.multiList:
+                addCmpDict[tmn] *= my
+        #-> Add up all the add models
+        result = np.zeros_like(x)
+        for modelName in self._addList:
+            result += addCmpDict[modelName]
         return result
 
     def componentResult(self, x=None):
         """
-        Return the model results of all the components separately.
+        Return the results of all the add components multiplied by the
+        multiplicative models correspondingly.
+
+        Parameters
+        ----------
+        x (optional) : array like
+            The active variable of the models.
+
+        Returns
+        -------
+        result : ordered dict
+            The result of the model components.
+
+        Notes
+        -----
+        None.
         """
-        result = OrderedDict()
         if x is None:
             x = self.__x
-        for modelName in self.__modelDict.keys():
+        #-> Calculate the add model components
+        result = OrderedDict()
+        for modelName in self._addList:
             mf = self.__modelDict[modelName]
             result[modelName] = mf(x)
+        #-> Manipulate the model components
+        for modelName in self._mltList:
+            mf = self.__modelDict[modelName]
+            my = mf(x) # multiplied y component
+            #--> Multiply the current component to the target models
+            for tmn in mf.multiList:
+                result[tmn] *= my
+        return result
+
+    def componentAddResult(self, x=None):
+        """
+        Return the original results of add models without multiplied other models.
+
+        Parameters
+        ----------
+        x (optional) : array like
+            The active variable of the models.
+
+        Returns
+        -------
+        result : ordered dict
+            The result of the model components.
+
+        Notes
+        -----
+        None.
+        """
+        if x is None:
+            x = self.__x
+        result = OrderedDict()
+        for modelName in self._addList:
+            result[modelName] = self.__modelDict[modelName](x)
+        return result
+
+    def componentMltResult(self, x=None):
+        """
+        Return the original results of multiplicative models.
+
+
+        Parameters
+        ----------
+        x (optional) : array like
+            The active variable of the models.
+
+        Returns
+        -------
+        result : ordered dict
+            The result of the model components.
+
+        Notes
+        -----
+        None.
+        """
+        if x is None:
+            x = self.__x
+        result = OrderedDict()
+        for modelName in self._mltList:
+            result[modelName] = self.__modelDict[modelName](x)
         return result
 
     def get_modelDict(self):
+        """
+        Get the dict of all the models.
+        """
         return self.__modelDict
+
+    def get_modelAddList(self):
+        """
+        Get the name list of the add models.
+        """
+        return self._addList
+
+    def get_modelMltList(self):
+        """
+        Get the name list of the multiply models.
+        """
+        return self._mltList
 
     def get_modelParDict(self):
         modelParDict = OrderedDict()
@@ -683,7 +807,7 @@ class ModelCombiner(object):
         else:
             fig, ax = FigAx
         modelDict = self.__modelDict
-        modelList = modelDict.keys()
+        modelList = self.get_modelAddList() #modelDict.keys()
         TextIterm = lambda text, v1, v2: text.format(v1, v2)
         textList = []
         #yTotal = np.zeros_like(x)
@@ -733,6 +857,60 @@ class ModelCombiner(object):
 def Model_Generator(input_model_dict, func_lib, x_list, par_add_dict_all={}, **kwargs):
     """
     Generate the ModelCombiner object from the input model dict.
+
+    Parameters
+    ----------
+    input_model_dict : dict (better to be ordered dict)
+        The dict of input model informations.
+        An example of the format of the dict elements:
+            "Slope": {                    # The name of the model is arbitrary.
+                "function": "Linear"      # Necessary to be exactly the same as
+                                          # the name of the variable.
+                "a": {                    # The name of the first parameter.
+                    "value": 3.,          # The value of the parameter.
+                    "range": [-10., 10.], # The prior range of the parameter.
+                    "type": "c",          # The type (continuous/discrete) of
+                                          # the parameter. Currently, it does
+                                          # not matter...
+                    "vary": True,         # The toggle whether the parameter is
+                                          # fixed (if False).
+                    "latex": "$a$",       # The format for plotting.
+                }
+                "b": {...}                # The same format as "a".
+            }
+    func_lib : dict
+        The dict of the information of the functions.
+        An example of the format of the dict elements:
+            "Linear":{                   # The function name should be exactly
+                                         # the same as the name of the function
+                                         # variable it refers to.
+                "function": Linear,      # The function variable, not necessary.
+                "x_name": "x",           # The active variable of the function.
+                "param_fit": ["a", "b"], # The name of the parameters that are
+                                         # involved in fitting.
+                "param_add": [],         # The name of the additional parameters
+                                         # necessary for the function.
+                "operation": ["+"]       # The operation expected for this
+                                         # function, for consistency check.
+                                         # "+": to add with other "+" components.
+                                         # "*": to multiply to other "+"
+                                         # components. One model can be both "+"
+                                         # and "*".
+    x_list : array like
+        The default active variable for the model.
+    par_add_dict_all : dict
+        The additional parameters for all the models in input_model_dict.
+    **kwargs : dict
+        Additional keywords for the ModelCombiner.
+
+    Returns
+    -------
+    sed_model : ModelCombiner object
+        The combined SED model.
+
+    Notes
+    -----
+    None.
     """
     modelDict = OrderedDict()
     modelNameList = input_model_dict.keys()
@@ -757,8 +935,13 @@ def Model_Generator(input_model_dict, func_lib, x_list, par_add_dict_all={}, **k
         multiList = input_model_dict[modelName].get("multiply", None)
         if not multiList is None:
             #--> The "*" should be included in the operation list.
-            print "{0} is multiplied to {1}!".format(modelName, multiList)
             assert "*" in funcInfo["operation"]
+            print "{0} is multiplied to {1}!".format(modelName, multiList)
+            #--> Check further the target models are not multiplicative.
+            for tmn in multiList:
+                f_mlt = input_model_dict[tmn].get("multiply", None)
+                if not f_mlt is None:
+                    raise ValueError("The multiList includes a multiplicative model ({0})!".format(tmn))
         #modelDict[modelName] = ModelFunction(funcInfo["function"], xName, parFitDict, parAddDict)
         modelDict[modelName] = ModelFunction(funcName, xName, parFitDict,
                                              parAddDict, multiList)
