@@ -1,6 +1,5 @@
 import numpy as np
 from collections import OrderedDict
-"""
 from models.model_bc03 import BC03, BC03_PosPar
 from models.model_bc03_refine import BC03_ref, BC03_ref_PosPar
 from models.model_dl07 import DL07, DL07_PosPar
@@ -118,41 +117,3 @@ funcLib = {
         "operation": ["+"]
     }
 }
-"""
-
-#-> For the test
-def Linear(a, b, x):
-    return a * np.atleast_1d(x) + b
-
-def Square(a, b, c, x):
-    x = np.atleast_1d(x)
-    return a * (x - b)**2. + c
-
-def Gaussian(a, b, c, x):
-    x = np.atleast_1d(x)
-    return a * np.exp(-0.5 * ((x - b) / c)**2.)
-
-funcLib = {
-    "Linear":{
-        "function": Linear,
-        "x_name": "x",
-        "param_fit": ["a", "b"],
-        "param_add": [],
-        "operation": ["+"]
-    },
-    "Square":{
-        "function": Square,
-        "x_name": "x",
-        "param_fit": ["a", "b", "c"],
-        "param_add": [],
-        #"operation": ["+"]
-    },
-    "Gaussian":{
-        "function": Gaussian,
-        "x_name": "x",
-        "param_fit": ["a", "b", "c"],
-        "param_add": [],
-        "operation": ["+", "*"]
-    },
-}
-#"""
