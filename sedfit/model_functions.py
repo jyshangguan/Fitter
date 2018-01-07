@@ -10,6 +10,7 @@ from models.model_torus_template import Torus_Template
 from models.model_pah import pah
 from models.model_cat3d_G import Cat3d_G, Cat3d_G_PosPar
 from models.model_cat3d_H import Cat3d_H, Cat3d_H_PosPar
+from models.model_extinction import Calzetti00
 #CLUMPY_intp = None
 
 Linear = ma.Linear
@@ -115,5 +116,12 @@ funcLib = {
         "param_fit": ["a", "h", "N0", "i", "logL"],
         "param_add": ["DL", "z", "frame", "t"],
         "operation": ["+"]
+    },
+    "Calzetti00": {
+        "function": Calzetti00,
+        "x_name": "wave",
+        "param_fit": ["Av", "Rv"],
+        "param_add": ["waveLim", "QuietMode"],
+        "operation": ["*"]
     }
 }
