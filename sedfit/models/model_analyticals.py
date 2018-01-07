@@ -1,6 +1,9 @@
 import numpy as np
 import Radiation_Model_Toolkit as rmt
 
+__all__ = ["BlackBody", "Modified_BlackBody", "Power_Law", "Synchrotron",
+           "Linear", "Line_Gaussian_L", "Poly3"]
+
 ls_mic = 2.99792458e14 #unit: micron/s
 Mpc = 3.08567758e24 #unit: cm
 mJy = 1e-26 #1 mJy in erg/s/cm^2/Hz
@@ -174,14 +177,39 @@ def Line_Gaussian_L(wavelength, logLum, lambda0, FWHM, DL):
     fnu  = rmt.Line_Profile_Gaussian(nu, flux, nu0, FWHM, norm="integrate")
     return fnu
 
+from numpy.polynomial.polynomial import polyval
+def Poly3(x, logc0, c1, c2, c3):
+    """
+    This is a 3rd order polynomial function.  It calls polyval from numpy.
+
+    Parameters
+    ----------
+    x : array like
+        The input active variable.
+    logc0 : float
+        The log10 of c0 the coefficient of the 0th order.
+    c1 -- c3 : floats
+        The coefficiants for 1th to 3rd order.
+
+    Returns
+    -------
+    y : array like
+        The function result.
+    """
+    x = np.atleast_1d(x)
+    c0 = 10**logc0
+    y = polyval(x, [c0, c1, c2, c3])
+    return y
+
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
 
-    wave = 10**np.linspace(0, 6, 1000)
-    flux = Synchrotron(0.8, 5, wave, lognuc=13, lognum=14)
+    wave = np.linspace(-5, 5, 20)
+    flux = Poly3(wave, 5, -8., 2, 1)
+    #flux = Synchrotron(0.8, 5, wave, lognuc=13, lognum=14)
     plt.plot(wave, flux)
-    plt.axvline(x=ls_mic/1e13, color="r", linestyle=":")
-    plt.axvline(x=ls_mic/1e14, color="r", linestyle=":")
-    plt.xscale('log')
+    #plt.axvline(x=ls_mic/1e13, color="r", linestyle=":")
+    #plt.axvline(x=ls_mic/1e14, color="r", linestyle=":")
+    #plt.xscale('log')
     plt.yscale('log')
     plt.show()

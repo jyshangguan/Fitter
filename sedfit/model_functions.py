@@ -19,6 +19,7 @@ Modified_BlackBody = ma.Modified_BlackBody
 Power_Law = ma.Power_Law
 Synchrotron = ma.Synchrotron
 Line_Gaussian_L = ma.Line_Gaussian_L
+Poly3 = ma.Poly3
 
 #Dict of the supporting functions
 funcLib = {
@@ -123,5 +124,12 @@ funcLib = {
         "param_fit": ["Av", "Rv"],
         "param_add": ["waveLim", "QuietMode"],
         "operation": ["*"]
+    },
+    "Poly3": {
+        "function": Poly3,
+        "x_name": "x",
+        "param_fit": ["logc0", "c1", "c2", "c3"],
+        "param_add": [],
+        "operation": ["+"]
     }
 }
