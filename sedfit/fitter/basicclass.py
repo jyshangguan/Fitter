@@ -884,7 +884,6 @@ def Model_Generator(input_model_dict, func_lib, x_list, par_add_dict_all={}, **k
             "Linear":{                   # The function name should be exactly
                                          # the same as the name of the function
                                          # variable it refers to.
-                "function": Linear,      # The function variable, not necessary.
                 "x_name": "x",           # The active variable of the function.
                 "param_fit": ["a", "b"], # The name of the parameters that are
                                          # involved in fitting.
@@ -936,13 +935,12 @@ def Model_Generator(input_model_dict, func_lib, x_list, par_add_dict_all={}, **k
         if not multiList is None:
             #--> The "*" should be included in the operation list.
             assert "*" in funcInfo["operation"]
-            print "{0} is multiplied to {1}!".format(modelName, multiList)
+            print "[Model_Generator]: {0} is multiplied to {1}!".format(modelName, multiList)
             #--> Check further the target models are not multiplicative.
             for tmn in multiList:
                 f_mlt = input_model_dict[tmn].get("multiply", None)
                 if not f_mlt is None:
                     raise ValueError("The multiList includes a multiplicative model ({0})!".format(tmn))
-        #modelDict[modelName] = ModelFunction(funcInfo["function"], xName, parFitDict, parAddDict)
         modelDict[modelName] = ModelFunction(funcName, xName, parFitDict,
                                              parAddDict, multiList)
     sed_model = ModelCombiner(modelDict, x_list, **kwargs)
