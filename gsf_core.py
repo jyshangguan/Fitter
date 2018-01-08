@@ -322,7 +322,7 @@ def gsf_fitter(configName, targname=None, redshift=None, distance=None, sedFile=
                       verticalalignment='bottom', horizontalalignment='left',
                       bbox=dict(facecolor='white', alpha=0.5, edgecolor="none"))
     else:
-        fig = plt.figure(figsize=(7, 7))
+        fig = plt.figure(figsize=(10, 5))
         ax = plt.gca()
         em.plot_fit(truths=parTruth, FigAx=(fig, ax), xlim=xlim, ylim=ylim,
                     nSamples=100, burnin=burnIn, fraction=fraction)
