@@ -308,7 +308,8 @@ def gsf_fitter(configName, targname=None, redshift=None, distance=None, sedFile=
     ymin = np.min(sedflux) * 0.5
     ymax = np.max(sedflux) * 2.0
     ylim = [ymin, ymax]
-    if sedData.check_csData():
+    flag_two_panel = sedData.check_csData() & sedData.check_dsData()
+    if flag_two_panel:
         fig, axarr = plt.subplots(2, 1)
         fig.set_size_inches(10, 10)
         em.plot_fit_spec(truths=parTruth, FigAx=(fig, axarr[0]), nSamples=100,

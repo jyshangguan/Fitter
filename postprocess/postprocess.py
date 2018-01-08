@@ -30,7 +30,7 @@ def ticksFinder(ymin, ymax,
     """
     Find the proper ticklabel from ymin to ymax in logscale.
     """
-    yTicksLabels = yTicksTry[(yTicksTry>ymin) & (yTicksTry<ymax)]
+    yTicksLabels = yTicksTry[(yTicksTry>=ymin) & (yTicksTry<=ymax)]
     if len(yTicksLabels) > 1:
         midTick = (np.log10(ymax)+np.log10(ymin))/2.0
         fltr_label = np.argmin(np.abs(np.log10(yTicksLabels) - midTick))
@@ -120,7 +120,8 @@ sedwave = sedData.get_List("x")
 sedflux = sedData.get_List("y")
 spcwave = sedData.get_csList("x")
 spcflux = sedData.get_csList("y")
-if sedData.check_csData():
+flag_two_panel = sedData.check_csData() & sedData.check_dsData()
+if flag_two_panel:
     fig = plt.figure(figsize=(8, 8))
     ax = fig.add_subplot(111)    # The big subplot
     ax1 = fig.add_subplot(211)
@@ -132,7 +133,7 @@ if sedData.check_csData():
     ymax = np.nanmax(spcflux) * 1.05
     xlim = [xmin, xmax]
     ylim = [ymin, ymax]
-    cList = ["green", "orange", "blue", "yellow"]
+    cList = ["green", "orange", "blue", "yellow", "purple"]
     em.plot_fit(truths=parTruth, FigAx=(fig, ax1), xlim=xlim, ylim=ylim, nSamples=100,
                 burnin=burnIn, fraction=fraction, cList=cList, ps=ps, showLegend=False)
     #-->Set the labels
@@ -260,7 +261,7 @@ else:
     ymax = np.max(sedflux) * 2.0
     xlim = [xmin, xmax]
     ylim = [ymin, ymax]
-    cList = ["green", "orange", "blue"]
+    cList = ["orange", "green", "blue", "yellow", "purple"]
     cKwargs = { #The line properties of the model components.
         "ls_uc": "--",
         "alpha_uc": 0.1,
