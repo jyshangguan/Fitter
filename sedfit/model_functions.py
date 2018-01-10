@@ -111,7 +111,7 @@ funcLib = {
     },
     "Poly3": {
         "x_name": "x",
-        "param_fit": ["logc0", "c1", "c2", "c3"],
+        "param_fit": ["c0", "c1", "c2", "c3"],
         "param_add": [],
         "operation": ["+"]
     }

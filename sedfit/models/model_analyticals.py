@@ -178,18 +178,17 @@ def Line_Gaussian_L(wavelength, logLum, lambda0, FWHM, DL):
     return fnu
 
 from numpy.polynomial.polynomial import polyval
-def Poly3(x, logc0, c1, c2, c3):
+def Poly3(x, c0, c1, c2, c3):
     """
-    This is a 3rd order polynomial function.  It calls polyval from numpy.
+    This is a log 3rd order polynomial function.  It calls polyval from numpy.
+        y = 10^(c0 + c1 * x + c2 * x^2 + c3 * x^3)
 
     Parameters
     ----------
     x : array like
         The input active variable.
-    logc0 : float
-        The log10 of c0 the coefficient of the 0th order.
-    c1 -- c3 : floats
-        The coefficiants for 1th to 3rd order.
+    c0 -- c3 : floats
+        The coefficiants for 0th to 3rd order.
 
     Returns
     -------
@@ -197,8 +196,7 @@ def Poly3(x, logc0, c1, c2, c3):
         The function result.
     """
     x = np.atleast_1d(x)
-    c0 = 10**logc0
-    y = polyval(x, [c0, c1, c2, c3])
+    y = 10**polyval(x, [c0, c1, c2, c3])
     return y
 
 if __name__ == "__main__":
