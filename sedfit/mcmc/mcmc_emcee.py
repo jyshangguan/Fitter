@@ -225,18 +225,22 @@ class EmceeModel(object):
             raise ValueError("The sampler '{0}' is unrecognised!".format(sampler))
         return p0
 
-    def p_logl_max(self):
+    def p_logl_max(self, chain=None, lnlike=None, QuietMode=True):
         """
         Find the position in the sampled parameter space that the likelihood is
         the highest.
         """
         sampler = self.__sampler
-        if sampler == "EnsembleSampler":
-            chain  = self.sampler.chain
-            lnlike = self.sampler.lnprobability
+        if (not chain is None) and (not lnlike is None):
+            if not QuietMode:
+                print("The chain and lnlike are provided!")
         else:
-            chain  = self.sampler.chain[0, ...]
-            lnlike = self.sampler.lnlikelihood[0, ...]
+            if sampler == "EnsembleSampler":
+                chain  = self.sampler.chain
+                lnlike = self.sampler.lnprobability
+            else:
+                chain  = self.sampler.chain[0, ...]
+                lnlike = self.sampler.lnlikelihood[0, ...]
         idx = lnlike.ravel().argmax()
         p   = chain.reshape(-1, self.__dim)[idx]
         return p
