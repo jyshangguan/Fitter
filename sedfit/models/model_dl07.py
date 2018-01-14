@@ -68,7 +68,7 @@ def DL07(logumin, logumax, qpah, loggamma, logMd, DL, z, wave, frame="rest", t=t
     qpah_min = t.get_nearestParameters(pmin)[2]
     qpah_pl = t.get_nearestParameters(ppl)[2]
     if qpah_min != qpah_pl:
-        raise RuntimeError("The DL07 model is inconsistent!")
+        raise RuntimeError("The DL07 model is inconsistent (delta_qpah={0})!".format(qpah_min-qpah_pl))
     mdmh = mdust2mh[qpahList.index(qpah_min)]
     jnu = (1 - gamma) * jnu_min + gamma * jnu_pl
     if frame == "rest":
