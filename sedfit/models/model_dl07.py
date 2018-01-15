@@ -58,17 +58,16 @@ def DL07(logumin, logumax, qpah, loggamma, logMd, DL, z, wave, frame="rest", t=t
     umin = 10**logumin
     umax = 10**logumax
     gamma = 10**loggamma
-    pmin = [umin, umin, qpah]
-    ppl  = [umin, umax, qpah]
+    pmin = t.get_nearestParameters([umin, umin, qpah])
+    qpah_min = pmin[2]
+    ppl = [umin, umax, qpah_min] # In order to avoid inconsistency, the qpah of
+                                 # the pl component is matched to that of the
+                                 # min component.
     fltr = (wave > waveLim[0]) & (wave < waveLim[1])
     if np.sum(fltr) == 0:
         return np.zeros_like(wave)
     jnu_min = t(wave[fltr], pmin)
     jnu_pl  = t(wave[fltr], ppl)
-    qpah_min = t.get_nearestParameters(pmin)[2]
-    qpah_pl = t.get_nearestParameters(ppl)[2]
-    if qpah_min != qpah_pl:
-        raise RuntimeError("The DL07 model is inconsistent (delta_qpah={0})!".format(qpah_min-qpah_pl))
     mdmh = mdust2mh[qpahList.index(qpah_min)]
     jnu = (1 - gamma) * jnu_min + gamma * jnu_pl
     if frame == "rest":
