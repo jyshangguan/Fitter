@@ -7,6 +7,7 @@
 *.fitrs
 *.*sed
 *.csv
+*.log
 results/*
 chains*/*
 template/grain_models/*
