@@ -62,7 +62,10 @@ distance = dataPck["distance"]
 dataDict = dataPck["dataDict"]
 sedPck = dataPck["sedPck"]
 sedData = sedsc.setSedData(targname, redshift, distance, dataDict, sedPck, silent=True)
-
+print("The target info:")
+print("Name: {0}".format(targname))
+print("Redshift: {0}".format(redshift))
+print("Distance: {0}".format(distance))
 
 ################################################################################
 #                                   Model                                      #
@@ -150,7 +153,8 @@ if flag_two_panel:
     ax1.set_ylabel("")
     ax1.tick_params(axis="both", which="major", length=8, labelsize=18)
     ax1.tick_params(axis="both", which="minor", length=5)
-    plotName = r"PG {0}${1}${2}".format(targname[2:6], targname[6], targname[7:])
+    plotName = r"{0}".format(targname)
+    #plotName = r"PG {0}${1}${2}".format(targname[2:6], targname[6], targname[7:])
     ax1.text(0.05, 0.8, "{0}".format(plotName),
              verticalalignment='bottom', horizontalalignment='left',
              transform=ax1.transAxes, fontsize=24,
