@@ -5,11 +5,12 @@ from models.model_bc03_refine import BC03_ref, BC03_ref_PosPar
 from models.model_dl07 import DL07, DL07_PosPar
 import models.model_analyticals as ma
 from models.model_xl import Torus_Emission, Torus_Emission_PosPar
-from models.model_clumpy import CLUMPY_intp
+#from models.model_clumpy import CLUMPY_intp
 from models.model_torus_template import Torus_Template
 from models.model_pah import pah
 from models.model_cat3d_G import Cat3d_G, Cat3d_G_PosPar
 from models.model_cat3d_H import Cat3d_H, Cat3d_H_PosPar
+from models.model_cat3d_H_wind import Cat3d_H_wind, Cat3d_H_wind_PosPar
 from models.model_extinction import Calzetti00
 #CLUMPY_intp = None
 
@@ -100,6 +101,12 @@ funcLib = {
     "Cat3d_H": {
         "x_name": "wave",
         "param_fit": ["a", "h", "N0", "i", "logL"],
+        "param_add": ["DL", "z", "frame", "t"],
+        "operation": ["+"]
+    },
+    "Cat3d_H_wind": {
+        "x_name": "wave",
+        "param_fit": ["a", "h", "N0", "i", 'fwd', 'aw', 'thetaw', 'thetasig', "logL"],
         "param_add": ["DL", "z", "frame", "t"],
         "operation": ["+"]
     },
