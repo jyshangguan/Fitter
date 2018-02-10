@@ -32,7 +32,6 @@ if import_all:
     for mds in import_dict.keys():
         funcList = import_dict[mds]
         exec "from models.{0} import {1}".format(mds, ",".join(funcList))
-        print("{0} is imported!".format(mds))
 else:
     #-> Go through the functions in the modelDict
     for fnm in modelDict.keys():
@@ -42,7 +41,6 @@ else:
             funcList = import_dict[mds]
             if funcName in funcList:
                 exec "from models.{0} import {1}".format(mds, ",".join(funcList))
-                print("{0} is imported!".format(mds))
 
 #Dict of the supporting functions
 funcLib = {
