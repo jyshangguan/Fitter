@@ -6,17 +6,16 @@ matplotlib_version = eval(matplotlib.__version__.split(".")[0])
 if matplotlib_version > 1:
     plt.style.use("classic")
 plt.rc('font',family='Times New Roman')
+import os
 import sys
 import types
 import numpy as np
 import importlib
 from time import time
 import cPickle as pickle
+from sedfit.dir_list import root_path
 import sedfit.SED_Toolkit as sedt
-from sedfit.fitter import basicclass as bc
 from sedfit.mcmc import mcmc_emcee as mcmc
-from sedfit import sedclass as sedsc
-from sedfit import model_functions as sedmf
 
 __all__ = ["configImporter", "fitter", "gsf_fitter"]
 
@@ -212,13 +211,19 @@ def gsf_fitter(configName, targname=None, redshift=None, distance=None, sedFile=
     except:
         silent = False
 
+    #-> Dump the modelDict for model_functions.py to choose the modules to import
+    modelDict = config.modelDict
+    fp = open("{0}temp_model.dict".format(root_path), "w")
+    pickle.dump(modelDict, fp)
+    fp.close()
+
     #->Setup the data Data
     dataDict = config.dataDict
     sedPck = sedt.Load_SED(sedFile)
+    from sedfit import sedclass as sedsc
     sedData = sedsc.setSedData(targname, redshift, distance, dataDict, sedPck, silent)
 
     #->Setup the model
-    modelDict = config.modelDict
     print("The model info:")
     parCounter = 0
     for modelName in modelDict.keys():
@@ -235,6 +240,8 @@ def gsf_fitter(configName, targname=None, redshift=None, distance=None, sedFile=
                 pass
     print("Varying parameter number: {0}".format(parCounter))
     print("#--------------------------------#")
+    #--> Import the model functions
+    from sedfit import model_functions as sedmf
     funcLib   = sedmf.funcLib
     waveModel = config.waveModel
     try:
@@ -244,6 +251,7 @@ def gsf_fitter(configName, targname=None, redshift=None, distance=None, sedFile=
     parAddDict_all["DL"]    = sedData.dl
     parAddDict_all["z"]     = redshift
     parAddDict_all["frame"] = "rest"
+    from sedfit.fitter import basicclass as bc
     sedModel  = bc.Model_Generator(modelDict, funcLib, waveModel, parAddDict_all)
 
     ############################################################################
@@ -257,6 +265,8 @@ def gsf_fitter(configName, targname=None, redshift=None, distance=None, sedFile=
     ############################################################################
     #                              Post process                                #
     ############################################################################
+    #-> Remove the temp files
+    os.remove("{0}temp_model.dict".format(root_path))
     try:
         ppDict = config.ppDict
     except:

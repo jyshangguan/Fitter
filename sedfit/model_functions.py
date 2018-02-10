@@ -1,26 +1,48 @@
 import numpy as np
 from collections import OrderedDict
-from models.model_bc03 import BC03, BC03_PosPar
-from models.model_bc03_refine import BC03_ref, BC03_ref_PosPar
-from models.model_dl07 import DL07, DL07_PosPar
-import models.model_analyticals as ma
-from models.model_xl import Torus_Emission, Torus_Emission_PosPar
-#from models.model_clumpy import CLUMPY_intp
-from models.model_torus_template import Torus_Template
-from models.model_pah import pah
-from models.model_cat3d_G import Cat3d_G, Cat3d_G_PosPar
-from models.model_cat3d_H import Cat3d_H, Cat3d_H_PosPar
-from models.model_cat3d_H_wind import Cat3d_H_wind, Cat3d_H_wind_PosPar
-from models.model_extinction import Calzetti00
-#CLUMPY_intp = None
-
-Linear = ma.Linear
-BlackBody = ma.BlackBody
-Modified_BlackBody = ma.Modified_BlackBody
-Power_Law = ma.Power_Law
-Synchrotron = ma.Synchrotron
-Line_Gaussian_L = ma.Line_Gaussian_L
-Poly3 = ma.Poly3
+import cPickle as pickle
+from dir_list import root_path
+#-> Load the modelDict to select the modules to import
+try:
+    fp = open("{0}temp_model.dict".format(root_path), "r")
+    modelDict = pickle.load(fp)
+    fp.close()
+    import_all = 0
+except:
+    print("Cannot find the temp_model.dict in {0}!".format(root_path))
+    import_all = 1
+#-> Load the modules
+import_dict = {
+    "model_bc03": ["BC03", "BC03_PosPar"],
+    "model_bc03_refine": ["BC03_ref", "BC03_ref_PosPar"],
+    "model_dl07": ["DL07", "DL07_PosPar"],
+    "model_analyticals": ["Linear", "BlackBody", "Modified_BlackBody",
+                          "Power_Law", "Synchrotron", "Line_Gaussian_L",
+                          "Poly3"],
+    "model_xl": ["Torus_Emission", "Torus_Emission_PosPar"],
+    "model_torus_template": ["Torus_Template"],
+    "model_pah": ["pah"],
+    "model_cat3d_G": ["Cat3d_G", "Cat3d_G_PosPar"],
+    "model_cat3d_H": ["Cat3d_H", "Cat3d_H_PosPar"],
+    "model_cat3d_H_wind": ["Cat3d_H_wind", "Cat3d_H_wind_PosPar"],
+    "model_extinction": ["Calzetti00"],
+    "model_mir_extinction": ["Smith07"],
+}
+if import_all:
+    for mds in import_dict.keys():
+        funcList = import_dict[mds]
+        exec "from models.{0} import {1}".format(mds, ",".join(funcList))
+        print("{0} is imported!".format(mds))
+else:
+    #-> Go through the functions in the modelDict
+    for fnm in modelDict.keys():
+        funcName = modelDict[fnm]["function"]
+        #--> Go through the import_dict and find the modules in use
+        for mds in import_dict.keys():
+            funcList = import_dict[mds]
+            if funcName in funcList:
+                exec "from models.{0} import {1}".format(mds, ",".join(funcList))
+                print("{0} is imported!".format(mds))
 
 #Dict of the supporting functions
 funcLib = {
@@ -116,6 +138,12 @@ funcLib = {
         "param_add": ["waveLim", "QuietMode"],
         "operation": ["*"]
     },
+    "Smith07": {
+        "x_name": "wave",
+        "param_fit": ["logtau"],
+        "param_add": [],
+        "operation": ["*"]
+    },
     "Poly3": {
         "x_name": "x",
         "param_fit": ["c0", "c1", "c2", "c3"],
@@ -123,3 +151,28 @@ funcLib = {
         "operation": ["+"]
     }
 }
+
+"""
+from models.model_bc03 import BC03, BC03_PosPar
+from models.model_bc03_refine import BC03_ref, BC03_ref_PosPar
+from models.model_dl07 import DL07, DL07_PosPar
+import models.model_analyticals as ma
+from models.model_xl import Torus_Emission, Torus_Emission_PosPar
+#from models.model_clumpy import CLUMPY_intp
+from models.model_torus_template import Torus_Template
+from models.model_pah import pah
+from models.model_cat3d_G import Cat3d_G, Cat3d_G_PosPar
+from models.model_cat3d_H import Cat3d_H, Cat3d_H_PosPar
+from models.model_cat3d_H_wind import Cat3d_H_wind, Cat3d_H_wind_PosPar
+from models.model_extinction import Calzetti00
+from models.model_mir_extinction import Smith07
+#CLUMPY_intp = None
+
+Linear = ma.Linear
+BlackBody = ma.BlackBody
+Modified_BlackBody = ma.Modified_BlackBody
+Power_Law = ma.Power_Law
+Synchrotron = ma.Synchrotron
+Line_Gaussian_L = ma.Line_Gaussian_L
+Poly3 = ma.Poly3
+"""
