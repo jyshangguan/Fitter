@@ -61,6 +61,11 @@ class SedClass(bc.DataSet):
         bc.DataSet.__init__(self, phtDict, spcDict)
         self.targetName = targetName
         self.redshift = redshift
+        spc_wave = np.array(self.get_csList("x"))
+        spc_flux = np.array(self.get_csList("y"))
+        spc_unct = np.array(self.get_csList("e"))
+        self.spc_WaveLength = np.max(spc_wave) - np.min(spc_wave)
+        self.spc_FluxMedian = np.sqrt(np.sum((spc_flux / spc_unct)**2) / np.sum(spc_unct**-2))
         self.__bandDict = {}
         if Dist is None:
             if redshift > 1e-2:
