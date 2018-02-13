@@ -149,28 +149,3 @@ funcLib = {
         "operation": ["+"]
     }
 }
-
-"""
-from models.model_bc03 import BC03, BC03_PosPar
-from models.model_bc03_refine import BC03_ref, BC03_ref_PosPar
-from models.model_dl07 import DL07, DL07_PosPar
-import models.model_analyticals as ma
-from models.model_xl import Torus_Emission, Torus_Emission_PosPar
-#from models.model_clumpy import CLUMPY_intp
-from models.model_torus_template import Torus_Template
-from models.model_pah import pah
-from models.model_cat3d_G import Cat3d_G, Cat3d_G_PosPar
-from models.model_cat3d_H import Cat3d_H, Cat3d_H_PosPar
-from models.model_cat3d_H_wind import Cat3d_H_wind, Cat3d_H_wind_PosPar
-from models.model_extinction import Calzetti00
-from models.model_mir_extinction import Smith07
-#CLUMPY_intp = None
-
-Linear = ma.Linear
-BlackBody = ma.BlackBody
-Modified_BlackBody = ma.Modified_BlackBody
-Power_Law = ma.Power_Law
-Synchrotron = ma.Synchrotron
-Line_Gaussian_L = ma.Line_Gaussian_L
-Poly3 = ma.Poly3
-"""
