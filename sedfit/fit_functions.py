@@ -295,10 +295,8 @@ def logLFunc_gp(params, data, model):
     #lnlikelihood for spectral data using Gaussian process regression
     if len(ySpcModel):
         a, tau = np.exp(params[nParVary:]) #The covariance for spectral residual
-        wave_length = data.spc_WaveLength
-        flux_median = data.spc_FluxMedian
-        a   = a * flux_median   #Make "a" a relative value
-        tau = tau * wave_length #Make "tau" a relative value
+        a   = a * data.spc_FluxMedian   #Make "a" a relative value
+        tau = tau * data.spc_WaveLength #Make "tau" a relative value
         gp = george.GP(a * kernels.Matern32Kernel(tau))
         sSpc = np.sqrt(eSpc**2 + (ySpcModel * f)**2)
         gp.compute(xSpc, sSpc)
