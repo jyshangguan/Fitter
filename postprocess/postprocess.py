@@ -153,7 +153,11 @@ if flag_two_panel:
     ax1.set_ylabel("")
     ax1.tick_params(axis="both", which="major", length=8, labelsize=18)
     ax1.tick_params(axis="both", which="minor", length=5)
-    plotName = r"{0}".format(targname)
+    nameSeg  = targname.split("-")
+    if len(nameSeg) > 1:
+        plotName = "$-$".join(nameSeg)
+    else:
+        plotName = targname
     #plotName = r"PG {0}${1}${2}".format(targname[2:6], targname[6], targname[7:])
     ax1.text(0.05, 0.8, "{0}".format(plotName),
              verticalalignment='bottom', horizontalalignment='left',
@@ -296,7 +300,11 @@ else:
     #plotName = r"PG {0}${1}${2}".format(targname[2:6], targname[6], targname[7:])
     #plotName = r"SDSS {0}${1}${2}".format(targname[4:9], targname[9], targname[10:])
     #plotName = r"{0}${1}${2}".format(targname[0:5], targname[5], targname[6:])
-    plotName = r"$\mathrm{{{0}}}$".format(targname)
+    nameSeg  = targname.split("-")
+    if len(nameSeg > 1):
+        plotName = "$-$".join(nameSeg)
+    else:
+        plotName = targname
     ax.text(0.05, 0.95, "{0}".format(plotName),
             verticalalignment='top', horizontalalignment='left',
             transform=ax.transAxes, fontsize=24,
