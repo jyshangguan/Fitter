@@ -6,7 +6,6 @@ matplotlib_version = eval(matplotlib.__version__.split(".")[0])
 if matplotlib_version > 1:
     plt.style.use("classic")
 plt.rc('font',family='Times New Roman')
-import os
 import sys
 import types
 import numpy as np
@@ -265,8 +264,6 @@ def gsf_fitter(configName, targname=None, redshift=None, distance=None, sedFile=
     ############################################################################
     #                              Post process                                #
     ############################################################################
-    #-> Remove the temp files
-    os.remove("{0}temp_model.dict".format(root_path))
     try:
         ppDict = config.ppDict
     except:

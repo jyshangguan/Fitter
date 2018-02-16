@@ -1,16 +1,22 @@
+import os
 import numpy as np
 from collections import OrderedDict
 import cPickle as pickle
 from dir_list import root_path
 #-> Load the modelDict to select the modules to import
-try:
-    fp = open("{0}temp_model.dict".format(root_path), "r")
+modelDictPath = "{0}temp_model.dict".format(root_path)
+if os.path.isfile(modelDictPath):
+    fp = open(modelDictPath, "r")
     modelDict = pickle.load(fp)
     fp.close()
+    #--> Remove the temp files
+    os.remove(modelDictPath)
+    #--> No need to import all the modules
     import_all = 0
-except:
-    print("Cannot find the temp_model.dict in {0}!".format(root_path))
+else:
+    #--> Need to import all the modules
     import_all = 1
+    print("Cannot find the temp_model.dict in {0}!".format(root_path))
 #-> Load the modules
 import_dict = {
     "model_bc03": ["BC03", "BC03_PosPar"],
