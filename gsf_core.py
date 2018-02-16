@@ -6,6 +6,7 @@ matplotlib_version = eval(matplotlib.__version__.split(".")[0])
 if matplotlib_version > 1:
     plt.style.use("classic")
 plt.rc('font',family='Times New Roman')
+import os
 import sys
 import types
 import numpy as np
@@ -223,6 +224,7 @@ def gsf_fitter(configName, targname=None, redshift=None, distance=None, sedFile=
     sedData = sedsc.setSedData(targname, redshift, distance, dataDict, sedPck, silent)
 
     #->Setup the model
+    print("#--------------------------------#")
     print("The model info:")
     parCounter = 0
     for modelName in modelDict.keys():
@@ -264,6 +266,7 @@ def gsf_fitter(configName, targname=None, redshift=None, distance=None, sedFile=
     ############################################################################
     #                              Post process                                #
     ############################################################################
+    print("#--------------------------------#")
     try:
         ppDict = config.ppDict
     except:
@@ -275,6 +278,12 @@ def gsf_fitter(configName, targname=None, redshift=None, distance=None, sedFile=
     nuisance = ppDict.get("nuisance", True)
     fraction = ppDict.get("fraction", 0)
     burnIn   = ppDict.get("burn-in", 50)
+    savePath = ppDict.get("savepath", "results/")
+
+    #-> Check the save path. Create the directory if it does not exists.
+    if not os.path.isdir(savePath):
+        os.makedirs(savePath)
+    print("Save all the results to: {0}".format(savePath))
 
     dataPck = {
         "targname": targname,
@@ -298,14 +307,14 @@ def gsf_fitter(configName, targname=None, redshift=None, distance=None, sedFile=
         "chain": em.sampler.chain,
         "lnprobability": em.sampler.lnprobability
     }
-    fp = open("{0}.fitrs".format(targname), "w")
+    fp = open("{0}{1}.fitrs".format(savePath, targname), "w")
     pickle.dump(fitrs, fp)
     fp.close()
     #->Save the best-fit parameters
-    em.Save_BestFit("{0}_bestfit.txt".format(targname), low=psLow, center=psCenter, high=psHigh,
-                    burnin=burnIn, fraction=fraction)
+    em.Save_BestFit("{0}{1}_bestfit.txt".format(savePath, targname), low=psLow,
+                    center=psCenter, high=psHigh, burnin=burnIn, fraction=fraction)
     #->Plot the chain of the final run
-    em.plot_chain(filename="{0}_chain.png".format(targname), truths=parTruth)
+    em.plot_chain(filename="{0}{1}_chain.png".format(savePath, targname), truths=parTruth)
     #->Plot the SED fitting result figure
     sedwave = sedData.get_List("x")
     sedflux = sedData.get_List("y")
@@ -337,11 +346,11 @@ def gsf_fitter(configName, targname=None, redshift=None, distance=None, sedFile=
                 verticalalignment='top', horizontalalignment='left',
                 bbox=dict(facecolor='white', alpha=0.5, edgecolor="none"))
         ax.legend(loc="lower right", framealpha=0.3, fontsize=15, numpoints=1)
-    plt.savefig("{0}_result.png".format(targname), bbox_inches="tight")
+    plt.savefig("{0}{1}_result.png".format(savePath, targname), bbox_inches="tight")
     plt.close()
     #->Plot the posterior probability distribution
-    em.plot_corner(filename="{0}_triangle.png".format(targname), burnin=burnIn,
-                   nuisance=nuisance, truths=parTruth, fraction=fraction,
-                   quantiles=[psLow/100., psCenter/100., psHigh/100.], show_titles=True,
-                   title_kwargs={"fontsize": 20})
+    em.plot_corner(filename="{0}{1}_triangle.png".format(savePath, targname),
+                   burnin=burnIn, nuisance=nuisance, truths=parTruth,
+                   fraction=fraction, quantiles=[psLow/100., psCenter/100., psHigh/100.],
+                   show_titles=True, title_kwargs={"fontsize": 20})
     print("Post-processed!")
