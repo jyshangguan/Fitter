@@ -485,6 +485,12 @@ class ModelFunction(object):
         else:
             return False
 
+    def get_function_name(self):
+        """
+        Get the function name.
+        """
+        return self.__function
+
     def __getstate__(self):
         return self.__dict__
 
@@ -502,7 +508,7 @@ class ModelCombiner(object):
     xList : array like
         The array of the default active variable.
     QuietMode : bool
-        Use verbose mode if False.
+        Use verbose mode if True.
 
     Notes
     -----
@@ -854,7 +860,8 @@ class ModelCombiner(object):
         self.__dict__ = dict
 
 #The function generate the ModelCombiner from input model dict
-def Model_Generator(input_model_dict, func_lib, x_list, par_add_dict_all={}, **kwargs):
+def Model_Generator(input_model_dict, func_lib, x_list, par_add_dict_all={},
+                    QuietMode=False, **kwargs):
     """
     Generate the ModelCombiner object from the input model dict.
 
@@ -935,7 +942,8 @@ def Model_Generator(input_model_dict, func_lib, x_list, par_add_dict_all={}, **k
         if not multiList is None:
             #--> The "*" should be included in the operation list.
             assert "*" in funcInfo["operation"]
-            print "[Model_Generator]: {0} is multiplied to {1}!".format(modelName, multiList)
+            if not QuietMode:
+                print "[Model_Generator]: {0} is multiplied to {1}!".format(modelName, multiList)
             #--> Check further the target models are not multiplicative.
             for tmn in multiList:
                 f_mlt = input_model_dict[tmn].get("multiply", None)
