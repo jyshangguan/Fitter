@@ -3,6 +3,8 @@ import numpy as np
 from collections import OrderedDict
 import cPickle as pickle
 from dir_list import root_path
+__all__ = ["funcLib", "discreteFuncList"]
+
 #-> Load the modelDict to select the modules to import
 modelDictPath = "{0}temp_model.dict".format(root_path)
 if os.path.isfile(modelDictPath):
@@ -45,8 +47,10 @@ else:
             funcList = import_dict[mds]
             if funcName in funcList:
                 exec "from models.{0} import {1}".format(mds, ",".join(funcList))
-
-#Dict of the supporting functions
+#-> Discrete functions
+discreteFuncList = ["BC03", "BC03_ref", "Torus_Emission", "DL07", "Cat3d_G",
+                    "Cat3d_H", "Cat3d_H_wind"]
+#-> Dict of the supporting functions
 funcLib = {
     "Linear":{
         "x_name": "x",

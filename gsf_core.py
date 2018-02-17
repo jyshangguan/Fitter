@@ -270,7 +270,7 @@ def gsf_fitter(configName, targname=None, redshift=None, distance=None, sedFile=
     print("#--------------------------------#")
     #-> Remove the temp files
     os.remove(modelDictPath)
-    
+
     #-> Load the post process information
     try:
         ppDict = config.ppDict

@@ -2,14 +2,18 @@
 #
 import os
 import numpy as np
+import cPickle as pickle
+from sedfit.dir_list import root_path
 from scipy.interpolate import interp1d
+
 ls_mic = 2.99792458e14 #unit: micron/s
 Mpc = 3.08567758e24 #unit: cm
 mJy = 1e26 #unit: erg/s/cm^2/Hz
 
 __all__ = ["AddDict", "MatchDict", "parStatistics", "Luminosity_Integrate",
            "Luminosity_Specific", "L_Total", "randomSampler", "CorrectParameters",
-           "Flux_Pht_Component"]
+           "Flux_Pht_Component", "dumpModelDict", "cleanTempFile", "dataLoader",
+           "modelLoader"]
 
 def AddDict(targetDict, quantName, quant, nFillPar=None):
     """
@@ -179,7 +183,7 @@ def randomSampler(parRange, parType="D"):
         raise ValueError("The parameter type '{0}' is not recognised!".format(parType))
     return p
 
-def CorrectParameters(modelDict, discFuncDict, silent=True):
+def CorrectParameters(modelDict, discFuncDict=None, silent=True):
     """
     Correct the parameters if there are some discrete parameters interpolated
     with nearest neighbor method.
@@ -205,18 +209,19 @@ def CorrectParameters(modelDict, discFuncDict, silent=True):
     -----
     None.
     """
+    from sedfit import model_functions as sedmf
     parList = []
     parNameList = []
     for model in modelDict.keys():
         fitDict = modelDict[model]
         pnList  = fitDict.keys()
-        if model in discFuncDict.keys():
+        if model in sedmf.discreteFuncList:
             if not silent:
                 print("{0} is discrete".format(model))
             inDict  = {}
             for pn in pnList:
                 inDict[pn] = fitDict[pn]["value"]
-            Func_PosPar = discFuncDict[model]
+            exec "Func_PosPar = sedmf.{0}_PosPar".format(model) #discFuncDict[model]
             outDict = Func_PosPar(**inDict)
             for pn in pnList:
                 if fitDict[pn]["vary"]:
@@ -236,7 +241,7 @@ def CorrectParameters(modelDict, discFuncDict, silent=True):
 
 def Flux_Pht_Component(pars, component, sedModel, sedData):
     """
-    Calculate the rest-frame flux in the photometric bands of one specific 
+    Calculate the rest-frame flux in the photometric bands of one specific
     model component.
 
     Parameters
@@ -265,6 +270,79 @@ def Flux_Pht_Component(pars, component, sedModel, sedData):
     fluxModel = result_cmp[component]
     fluxModelPht = sedData.model_pht(waveModel, fluxModel)
     return fluxModelPht
+
+def dumpModelDict(fitrs):
+    """
+    Dump the model dict.
+
+    Parameters
+    ----------
+    fitrs : DictType
+        The dict of the fitting results.
+
+    Returns
+    -------
+    None.
+
+    Notes
+    -----
+    None.
+    """
+    modelPck = fitrs["modelPck"]
+    modelDict = modelPck["modelDict"]
+    fp = open("{0}temp_model.dict".format(root_path), "w")
+    pickle.dump(modelDict, fp)
+    fp.close()
+
+def cleanTempFile():
+    """
+    Clean the tempt file.
+    """
+    os.remove("{0}temp_model.dict".format(root_path))
+
+def modelLoader(fitrs):
+    """
+    Load the model object.  Import the module within the function.
+
+    Parameters
+    ----------
+    fitrs : DictType
+        The dict of the fitting results.
+
+    Returns
+    -------
+    sedModel: ModelCombiner
+        The model combiner object.
+
+    Notes
+    -----
+    None.
+    """
+    from sedfit import model_functions as sedmf
+    from sedfit.fitter import basicclass as bc
+    modelPck = fitrs["modelPck"]
+    funcLib = sedmf.funcLib
+    modelDict = modelPck["modelDict"]
+    waveModel = modelPck["waveModel"]
+    parAddDict_all = modelPck["parAddDict_all"]
+    DL = parAddDict_all["DL"]
+    sedModel = bc.Model_Generator(modelDict, funcLib, waveModel, parAddDict_all)
+    return sedModel
+
+def dataLoader(fitrs):
+    """
+    Load the data objects.  Import the module within the function.
+    """
+    from sedfit import sedclass as sedsc
+    #-> Setup the data
+    dataPck = fitrs["dataPck"]
+    targname = dataPck["targname"]
+    redshift = dataPck["redshift"]
+    distance = dataPck["distance"]
+    dataDict = dataPck["dataDict"]
+    sedPck   = dataPck["sedPck"]
+    sedData = sedsc.setSedData(targname, redshift, distance, dataDict, sedPck, True)
+    return sedData
 
 if __name__ == "__main__":
     import cPickle as pickle
