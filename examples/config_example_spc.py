@@ -1,5 +1,15 @@
-#This config file is for the radio loud sources.
-#
+################################################################################
+## This is config is an example of full SED fitting.
+## The data used is IRSA13120-5453 a luminous infrared galaxy.
+## The adopted models are:
+##   BC03         -- Stellar emisison
+##   Smith07      -- MIR extinction (two components applied to the latter two)
+##   Cat3d_H_wind -- Dust torus extinction
+##   DL07         -- Cold dust emission
+##
+## The example is created by SGJY at Feb-17-2018 in KIAA-PKU.
+################################################################################
+
 import numpy as np
 from collections import OrderedDict
 
