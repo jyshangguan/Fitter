@@ -9,8 +9,6 @@ if os.path.isfile(modelDictPath):
     fp = open(modelDictPath, "r")
     modelDict = pickle.load(fp)
     fp.close()
-    #--> Remove the temp files
-    os.remove(modelDictPath)
     #--> No need to import all the modules
     import_all = 0
 else:

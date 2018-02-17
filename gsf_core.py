@@ -213,7 +213,8 @@ def gsf_fitter(configName, targname=None, redshift=None, distance=None, sedFile=
 
     #-> Dump the modelDict for model_functions.py to choose the modules to import
     modelDict = config.modelDict
-    fp = open("{0}temp_model.dict".format(root_path), "w")
+    modelDictPath = "{0}temp_model.dict".format(root_path)
+    fp = open(modelDictPath, "w")
     pickle.dump(modelDict, fp)
     fp.close()
 
@@ -267,6 +268,10 @@ def gsf_fitter(configName, targname=None, redshift=None, distance=None, sedFile=
     #                              Post process                                #
     ############################################################################
     print("#--------------------------------#")
+    #-> Remove the temp files
+    os.remove(modelDictPath)
+    
+    #-> Load the post process information
     try:
         ppDict = config.ppDict
     except:
