@@ -13,10 +13,8 @@ import types
 import numpy as np
 import cPickle as pickle
 import sedfit.SED_Toolkit as sedt
-from sedfit.fitter import basicclass as bc
 from sedfit.mcmc import mcmc_emcee as mcmc
-from sedfit import sedclass as sedsc
-from sedfit import model_functions as sedmf
+from PostProcessTools import *
 from matplotlib.ticker import FuncFormatter, FormatStrFormatter
 
 def mjrFormatter(x, pos):
@@ -45,6 +43,8 @@ fitrsFile = sys.argv[1]
 fp = open(fitrsFile, "r")
 fitrs = pickle.load(fp)
 fp.close()
+#--> Dump the model dict
+dumpModelDict(fitrs)
 
 #The code starts#
 #################
@@ -52,59 +52,28 @@ print("#################################")
 print("# Galaxy SED Fitter postprocess #")
 print("#################################")
 
-################################################################################
-#                                    Data                                      #
-################################################################################
+silent = True
 dataPck = fitrs["dataPck"]
 targname = dataPck["targname"]
 redshift = dataPck["redshift"]
 distance = dataPck["distance"]
 dataDict = dataPck["dataDict"]
-sedPck = dataPck["sedPck"]
-sedData = sedsc.setSedData(targname, redshift, distance, dataDict, sedPck, silent=True)
+modelPck = fitrs["modelPck"]
 print("The target info:")
 print("Name: {0}".format(targname))
 print("Redshift: {0}".format(redshift))
 print("Distance: {0}".format(distance))
 
-################################################################################
-#                                   Model                                      #
-################################################################################
-modelPck = fitrs["modelPck"]
-modelDict = modelPck["modelDict"]
-print("The model info:")
-parCounter = 0
-for modelName in modelDict.keys():
-    print("[{0}]".format(modelName))
-    model = modelDict[modelName]
-    for parName in model.keys():
-        param = model[parName]
-        if not isinstance(param, types.DictType):
-            continue
-        elif param["vary"]:
-            print("-- {0}, {1}".format(parName, param["type"]))
-            parCounter += 1
-        else:
-            pass
-print("Varying parameter number: {0}".format(parCounter))
-print("#--------------------------------#")
+#-> Load the data
+sedData = dataLoader(fitrs, silent)
 
-#Build up the model#
-#------------------#
-parAddDict_all = modelPck["parAddDict_all"]
-funcLib    = sedmf.funcLib
-waveModel = modelPck["waveModel"]
-sedModel = bc.Model_Generator(modelDict, funcLib, waveModel, parAddDict_all)
+#-> Load the model
+sedModel = modelLoader(fitrs, silent)
+cleanTempFile()
 parTruth = modelPck["parTruth"]   #Whether to provide the truth of the model
 modelUnct = False #modelPck["modelUnct"] #Whether to consider the model uncertainty in the fitting
-parAllList = sedModel.get_parVaryList()
-if modelUnct:
-    parAllList.append(-np.inf)
-    parAllList.append(-np.inf)
-    parAllList.append(-5)
 
-#Build the emcee object#
-#----------------------#
+#-> Build the emcee object
 em = mcmc.EmceeModel(sedData, sedModel, modelUnct)
 
 #posterior process settings#
