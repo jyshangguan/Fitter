@@ -238,7 +238,7 @@ else:
     ymax = np.max(sedflux) * 2.0
     xlim = [xmin, xmax]
     ylim = [ymin, ymax]
-    cList = ["orange", "green", "blue", "yellow", "purple"]
+    cList = ["green", "orange", "blue", "yellow", "purple"]
     cKwargs = { #The line properties of the model components.
         "ls_uc": "--",
         "alpha_uc": 0.1,
@@ -270,7 +270,7 @@ else:
     #plotName = r"SDSS {0}${1}${2}".format(targname[4:9], targname[9], targname[10:])
     #plotName = r"{0}${1}${2}".format(targname[0:5], targname[5], targname[6:])
     nameSeg  = targname.split("-")
-    if len(nameSeg > 1):
+    if (len(nameSeg) > 1):
         plotName = "$-$".join(nameSeg)
     else:
         plotName = targname
