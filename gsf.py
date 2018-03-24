@@ -14,6 +14,8 @@ parser.add_option("-w", "--warning", dest="warning",
 parser.add_option("-o", "--overwrite", dest="overwrite",
                   action="store_true", default=False,
                   help="Overwrite the object information with the command-line inputs.")
+parser.add_option("-r", "--refit", dest="refit", action="store_true", default=False,
+                  help="Refit the SED though there is a result found.")
 (options, args) = parser.parse_args()
 if len(args) == 0:
     raise AssertionError("The config file is not specified!")
@@ -24,6 +26,10 @@ if options.warning:
     pass
 else:
     warnings.simplefilter("ignore")
+if options.refit:
+    refit = True
+else:
+    refit = False
 
 #The starter of this module#
 #--------------------------#
@@ -38,7 +44,7 @@ len_args = len(args)
 if not options.overwrite:
     if len_args > 1:
         print("**Warning[UniFit]: there are more arguments may not be used...")
-    gsf_fitter(configName)
+    gsf_fitter(configName, refit=refit)
 else:
     if len_args < 4:
         raise AssertionError("The object information is lacking!")
@@ -54,4 +60,4 @@ else:
         sedFile  = args[4]
     else:
         print("**Warning[UniFit]: there are more arguments may not be used...")
-    gsf_fitter(configName, targname, redshift, distance, sedFile)
+    gsf_fitter(configName, targname, redshift, distance, sedFile, refit=refit)

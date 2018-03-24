@@ -60,6 +60,8 @@ if targetList is None:
         commandDict["options"].append("-o")
     if options.warning:
         commandDict["options"].append("-w")
+    if options.refit: # Force to refit the objects
+        commandDict["options"].append("-r")
     commandLine = makeCommand(commandDict)
     os.system(commandLine)
 else: #If the target list is provided, fit the targets one by one.
@@ -89,12 +91,10 @@ else: #If the target list is provided, fit the targets one by one.
             distance = None
         sedFile = sedPath + sedList[loop]
         commandArgs.append(sedFile)
-        if not options.refit: #Omit the target if there is a fitting result.
-            fileList = os.listdir(".")
-            if "{0}.fitrs".format(targname) in fileList:
-                print("\n***{0} has been fitted!\n".format(targname))
-                continue
+        #-> Add options
         commandDict["options"] = ["-o"] #We need to overwrite the target info.
+        if options.refit: # Force to refit the objects
+            commandDict["options"].append("-r")
         if options.warning:
             commandDict["options"].append("-w")
         commandDict["args"] = commandArgs

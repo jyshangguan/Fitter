@@ -152,8 +152,8 @@ def fitter(sedData, sedModel, unctDict, parTruth, emceeDict, mpi_pool=None):
             p0 = em.p_ball(pcen, ratio=ballR)
     return em
 
-
-def gsf_fitter(configName, targname=None, redshift=None, distance=None, sedFile=None, mpi_pool=None):
+def gsf_fitter(configName, targname=None, redshift=None, distance=None,
+               sedFile=None, mpi_pool=None, refit=False):
     """
     The wrapper of fitter() function. If the targname, redshift and sedFile are
     provided as arguments, they will be used overriding the values in the config
@@ -205,12 +205,24 @@ def gsf_fitter(configName, targname=None, redshift=None, distance=None, sedFile=
     print("SED file:    {0}".format(sedFile))
     print("Config file: {0}".format(configName))
     print("#--------------------------------#")
-
+    #-> Verbose or not
     try:
         silent = config.silent
     except:
         silent = False
-
+    #-> Check whether there is already fitting results
+    try:
+        ppDict = config.ppDict
+    except:
+        print("[gsf] Warning: cannot find ppDict in the configure file!")
+        ppDict = {}
+    savePath = ppDict.get("savepath", "results/")
+    if os.path.isfile("{0}{1}.fitrs".format(savePath, targname)):
+        if refit:
+            print("The object {0} is overwrited!".format(targname))
+        else:
+            print("The object {0} is skipped!".format(targname))
+            return 1
     #-> Dump the modelDict for model_functions.py to choose the modules to import
     modelDict = config.modelDict
     modelDictPath = "{0}temp_model.dict".format(root_path)
@@ -272,24 +284,18 @@ def gsf_fitter(configName, targname=None, redshift=None, distance=None, sedFile=
     os.remove(modelDictPath)
 
     #-> Load the post process information
-    try:
-        ppDict = config.ppDict
-    except:
-        print("[gsf] Warning: cannot find ppDict in the configure file!")
-        ppDict = {}
     psLow    = ppDict.get("low", 16)
     psCenter = ppDict.get("center", 50)
     psHigh   = ppDict.get("high", 84)
     nuisance = ppDict.get("nuisance", True)
     fraction = ppDict.get("fraction", 0)
     burnIn   = ppDict.get("burn-in", 50)
-    savePath = ppDict.get("savepath", "results/")
 
-    #-> Check the save path. Create the directory if it does not exists.
+    #-> Dump the fitting results
+    #--> Check the save path. Create the directory if it does not exists.
     if not os.path.isdir(savePath):
         os.makedirs(savePath)
     print("Save all the results to: {0}".format(savePath))
-
     dataPck = {
         "targname": targname,
         "redshift": redshift,
@@ -359,3 +365,4 @@ def gsf_fitter(configName, targname=None, redshift=None, distance=None, sedFile=
                    fraction=fraction, quantiles=[psLow/100., psCenter/100., psHigh/100.],
                    show_titles=True, title_kwargs={"fontsize": 20})
     print("Post-processed!")
+    return 0
