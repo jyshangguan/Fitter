@@ -29,6 +29,7 @@ temp/
 notes/
 *.swp
 run_*.sh
+postprocess_*.py
 
 #SED data
 data/*

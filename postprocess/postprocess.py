@@ -3,11 +3,24 @@
 from __future__ import print_function
 import matplotlib
 matplotlib.use("Agg")
+from matplotlib import rcParams
+rcParams['font.family'] = 'sans-serif'
+rcParams['font.sans-serif'] = ['Arial']
+rcParams['mathtext.fontset'] = "custom"
+rcParams["mathtext.rm"] = "Arial"
+rcParams["mathtext.it"] = "Arial:italic"
+rcParams["mathtext.default"] = "it"
+rcParams["xtick.direction"] = "in"
+rcParams["ytick.direction"] = "in"
+from matplotlib.font_manager import FontProperties
+font = FontProperties()
+boldfont = font.copy()
+boldfont.set_weight('bold')
 import matplotlib.pyplot as plt
-matplotlib_version = eval(matplotlib.__version__.split(".")[0])
-if matplotlib_version > 1:
-    plt.style.use("classic")
-plt.rc('font',family='Times New Roman')
+#matplotlib_version = eval(matplotlib.__version__.split(".")[0])
+#if matplotlib_version > 1:
+#    plt.style.use("classic")
+#plt.rc('font',family='Times New Roman')
 import sys
 import types
 import numpy as np
@@ -269,22 +282,22 @@ else:
     #plotName = r"PG {0}${1}${2}".format(targname[2:6], targname[6], targname[7:])
     #plotName = r"SDSS {0}${1}${2}".format(targname[4:9], targname[9], targname[10:])
     #plotName = r"{0}${1}${2}".format(targname[0:5], targname[5], targname[6:])
-    nameSeg  = targname.split("-")
+    plotName = targname
+    nameSeg  = plotName.split("-")
     if (len(nameSeg) > 1):
         plotName = "$-$".join(nameSeg)
-    else:
-        plotName = targname
+    plotName = "SDSS {0}".format(plotName[4:])
     ax.text(0.05, 0.95, "{0}".format(plotName),
             verticalalignment='top', horizontalalignment='left',
             transform=ax.transAxes, fontsize=24,
             bbox=dict(facecolor='white', alpha=0.5, edgecolor="none"))
-    """
-    ax.text(0.95, 0.95, "(d)",
+    #"""
+    ax.text(0.95, 0.95, "d",
             verticalalignment='top', horizontalalignment='right',
-            transform=ax.transAxes, fontsize=24,
+            transform=ax.transAxes, fontsize=24, fontproperties=boldfont,
             bbox=dict(facecolor='white', alpha=0.5, edgecolor="none"))
-    """
-    ax.tick_params(axis="both", which="major", length=8, labelsize=18)
+    #"""
+    ax.tick_params(axis="both", which="major", length=8, labelsize=18, direction="in")
     ax.tick_params(axis="both", which="minor", length=5)
     #-->Set the legend
     phtName = dataDict["phtName"]
@@ -307,7 +320,7 @@ else:
         handleUse.append(hd)
     plt.legend(handleUse, labelUse, loc="upper left", fontsize=16, numpoints=1,
                handletextpad=0.3, handlelength=(4./3.), bbox_to_anchor=(0.02,0.90),
-               framealpha=0.9, edgecolor="white")
+               framealpha=0., edgecolor="white")
 plt.savefig("{0}_result.pdf".format(targname), bbox_inches="tight")
 plt.close()
 print("Best fit plot finished!")

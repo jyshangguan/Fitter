@@ -264,6 +264,35 @@ def Flux_Pht_Component(pars, component, sedModel, sedData):
     fluxModelPht = sedData.model_pht(waveModel, fluxModel)
     return fluxModelPht
 
+def Flux_Pht_Total(pars, sedModel, sedData):
+    """
+    Calculate the rest-frame flux in the photometric bands of
+    the total model.
+
+    Parameters
+    ----------
+    pars : list
+        The parameter list.
+    sedModel : ModelCombiner object
+        The combined model.
+    sedData : SEDClass object
+        The data set of SED.
+
+    Returns
+    -------
+    fluxModelPht : list
+        The list of photometric flux calculated from the model.
+
+    Notes
+    -----
+    None.
+    """
+    sedModel.updateParList(pars)
+    waveModel = sedModel.get_xList()
+    fluxModel = sedModel.combineResult()
+    fluxModelPht = sedData.model_pht(waveModel, fluxModel)
+    return fluxModelPht
+
 def dumpModelDict(fitrs):
     """
     Dump the model dict.
