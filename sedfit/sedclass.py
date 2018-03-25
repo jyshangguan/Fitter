@@ -8,7 +8,24 @@ from . import bandfunc as bf
 from .dir_list import filter_path
 from scipy.interpolate import splrep, splev
 from collections import OrderedDict
-import sedfit.SED_Toolkit as sedt
+import SED_Toolkit as sedt
+#import sedfit.SED_Toolkit as sedt
+__all__ = ["SedClass", "setSedData"]
+
+ls_mic = 2.99792458e14 #micron/s
+xlabelDict = {
+    "cm": r'$\lambda \, \mathrm{(cm)}$',
+    "mm": r'$\lambda \, \mathrm{(mm)}$',
+    "micron": r'$\lambda \, \mathrm{(\mu m)}$',
+    "angstrom": r'$\lambda \, \mathrm{(\AA)}$',
+    "Hz": r'$\nu \, \mathrm{(Hz)}$',
+    "MHz": r'$\nu \, \mathrm{(MHz)}$',
+    "GHz": r'$\nu \, \mathrm{(GHz)}$',
+}
+ylabelDict = {
+    "fnu": r'$f_\nu \, \mathrm{(mJy)}$',
+    "nufnu": r'$\nu f_\nu \, \mathrm{(erg\,s^{-1}\,cm^{-2})}$',
+}
 
 class SedClass(bc.DataSet):
     """
@@ -31,7 +48,8 @@ class SedClass(bc.DataSet):
         The spectral data packed in a dict. The items should be the
         ContinueSet().
     """
-    def __init__(self, targetName, redshift, Dist=None, H0=67.8, Om0=0.308, phtDict={}, spcDict={}):
+    def __init__(self, targetName, redshift, Dist=None, H0=67.8, Om0=0.308,
+                 phtDict={}, spcDict={}):
         """
         Parameters
         ----------
@@ -79,7 +97,8 @@ class SedClass(bc.DataSet):
         else:
             self.dl = Dist
 
-    def pht_plotter(self, wave, flux, sigma, flag, FigAx=None, ebDict=None, Quiet=True):
+    def pht_plotter(self, wave, flux, sigma, flag, FigAx=None, ebDict=None,
+                    Quiet=True, xUnits="micron", yUnits="fnu"):
         wave = np.array(wave)
         flux = np.array(flux)
         sigma = np.array(sigma)
@@ -108,16 +127,24 @@ class SedClass(bc.DataSet):
                 "capsize": 0,
                 "zorder": 4,
                 }
+        if yUnits == "fnu": # Default settings, units: mJy
+            pass
+        elif yUnits == "nufnu": # Convert from mJy to erg s^-1 cm^-2
+            y_conv = ls_mic / sedt.WaveToMicron(wave, xUnits) * 1.e-26
+            flux   *= y_conv
+            sigma  *= y_conv
+        else:
+            raise ValueError("The yUnits ({0}) is not recognised!".format(yUnits))
         ax.errorbar(wave, flux, yerr=sigma, uplims=flag, **ebDict)
-        str_xlabel = r'$\lambda \, \mathrm{(\mu m)}$'
-        ax.set_xlabel(str_xlabel, fontsize=18)
-        ax.set_ylabel(r'$f_\nu \, \mathrm{(mJy)}$', fontsize=18)
+        ax.set_xlabel(xlabelDict[xUnits], fontsize=18)
+        ax.set_ylabel(ylabelDict[yUnits], fontsize=18)
         ax.set_xscale('log')
         ax.set_yscale('log')
         ax.tick_params(labelsize=16)
         return (fig, ax)
 
-    def plot_pht(self, FigAx=None, phtLW=1.5, phtColor='k', phtMS=6, zorder=4, **kwargs):
+    def plot_pht(self, FigAx=None, phtLW=1.5, phtColor='k', phtMS=6, zorder=4,
+                 **kwargs):
         dataDict = self.get_dsArrays()
         for name in dataDict.keys():
             wave = dataDict[name][0]
@@ -135,10 +162,15 @@ class SedClass(bc.DataSet):
                 "zorder": zorder,
                 "label": name,
                 }
-            FigAx = self.pht_plotter(wave, flux, sigma, flag, FigAx, pht_ebDict)
+            FigAx = self.pht_plotter(wave, flux, sigma, flag, FigAx, pht_ebDict,
+                                     **kwargs)
         return FigAx
 
-    def spc_plotter(self, wave, flux, sigma, FigAx=None, ebDict=None, Quiet=True):
+    def spc_plotter(self, wave, flux, sigma, FigAx=None, ebDict=None, Quiet=True,
+                    xUnits="micron", yUnits="fnu"):
+        wave = np.array(wave)
+        flux = np.array(flux)
+        sigma = np.array(sigma)
         if(len(wave) == 0):
             if Quiet is False:
                 print 'There is no data in the SED!'
@@ -155,13 +187,27 @@ class SedClass(bc.DataSet):
                 "color": "grey",
                 "zorder": 4.,
                 }
-        #ax.errorbar(wave, flux, yerr=sigma, **ebDict)
+        if yUnits == "fnu": # Default settings, units: mJy
+            pass
+        elif yUnits == "nufnu": # Convert from mJy to erg s^-1 cm^-2
+            y_conv = ls_mic / sedt.WaveToMicron(wave, xUnits) * 1.e-26
+            flux  *= y_conv
+            sigma *= y_conv
+        else:
+            raise ValueError("The yUnits ({0}) is not recognised!".format(yUnits))
         ax.step(wave, flux, **ebDict)
+        fel = flux - sigma
+        feu = flux + sigma
+        ebDict["label"] = None
+        ax.fill_between(wave, y1=fel, y2=feu, step="pre", alpha=0.4, **ebDict)
+        ax.set_xlabel(xlabelDict[xUnits], fontsize=18)
+        ax.set_ylabel(ylabelDict[yUnits], fontsize=18)
         ax.set_xscale('log')
         ax.set_yscale('log')
         return (fig, ax)
 
-    def plot_spc(self, FigAx=None, spcLS="-", spcLW=2., spcColor='grey', zorder=4, **kwargs):
+    def plot_spc(self, FigAx=None, spcLS="-", spcLW=2., spcColor='grey',
+                 zorder=4, **kwargs):
         dataDict = self.get_csArrays()
         for name in dataDict.keys():
             wave = dataDict[name][0]
@@ -174,7 +220,8 @@ class SedClass(bc.DataSet):
                 "zorder": zorder,
                 "label": name,
                 }
-            FigAx = self.spc_plotter(wave, flux, sigma, FigAx, spc_ebDict)
+            FigAx = self.spc_plotter(wave, flux, sigma, FigAx, spc_ebDict,
+                                     **kwargs)
         return FigAx
 
     def plot_sed(self, FigAx=None, **kwargs):

@@ -4,19 +4,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 from collections import OrderedDict
 from fitter import basicclass as bc
+from SED_Toolkit import WaveFromMicron, WaveToMicron
 __all__ = ["SedModel"]
 
-xToHzDict = {# Convert the x-axis to Hz
-    "cm": 2.99792458e10, # lightspeed with cm/s
-    "mm": 2.99792458e11, # lightspeed with mm/s
-    "micron": 2.99792458e14, # lightspeed with micron/s
-    "angstrom": 2.99792458e18, # lightspeed with AA/s
-    "Hz": 1.,
-    "MHz": 1.e6,
-    "GHz": 1.e9,
-}
-waveUnits = ["cm", "mm", "micron", "angstrom"]
-freqUnits = ["Hz", "MHz", "GHz"]
+ls_mic = 2.99792458e14 # micron/s
+
 
 class SedModel(bc.ModelCombiner):
     def __init__(self, input_model_dict, func_lib, x_list, par_add_dict_all={},
@@ -112,14 +104,15 @@ class SedModel(bc.ModelCombiner):
                                                     parAddDict, multiList)
         bc.ModelCombiner.__init__(self, modelDict, x_list, **kwargs)
 
-    def plot(self, x=None, colorList=None, FigAx=None, DisplayPars=False,
+    def plot(self, wave=None, colorList=None, FigAx=None, DisplayPars=False,
              tKwargs=None, cKwargs={}, useLabel=True, xUnits="micron", yUnits="fnu"):
         """
-        Plot the SED model.
+        Plot the SED model.  The working wavelength units is micron and the
+        model output units is assumed mJy.
 
         Parameters
         ----------
-        x (optional): array_like
+        wave (optional): array_like
             The array of the wavelength, default units: micron.
         colorList (optional): list
             The list of the colors for each model components.
@@ -134,7 +127,9 @@ class SedModel(bc.ModelCombiner):
         useLabel (optional): bool
             If True, add the label of the model into the legend. Defualt: True.
         xUnits (optional): string
-            The units of the x-axis, default: micron.
+            The units of the x-axis, default: micron.  Currently supported units
+            are:
+                "cm", "mm", "micron", "angstrom", "Hz", "MHz", "GHz"
         yUnits (optional): string
             The form of the y-axis, default: fnu.
                 fnu -- mJy
@@ -149,8 +144,10 @@ class SedModel(bc.ModelCombiner):
         -----
         May further adopt more units.
         """
-        if x is None:
-            x = self.get_xList()
+        if wave is None:
+            wave = self.get_xList()
+        else:
+            wave = WaveToMicron(wave, xUnits) # Convert the units to micron
         if FigAx is None:
             fig = plt.figure()
             ax = plt.gca()
@@ -161,20 +158,22 @@ class SedModel(bc.ModelCombiner):
         modelList = self.get_modelAddList() #modelDict.keys()
         TextIterm = lambda text, v1, v2: text.format(v1, v2)
         textList = []
-        yTotal = self.combineResult(x=x)
-        yCmpnt = self.componentResult(x=x) #The best-fit components
-        if yUnits == "fnu": # Default settings
+        yTotal = self.combineResult(x=wave)
+        yCmpnt = self.componentResult(x=wave) #The best-fit components
+        if yUnits == "fnu": # Default settings, units: mJy
             pass
         elif yUnits == "nufnu": # Convert from mJy to erg s^-1 cm^-2
-            if xUnits in waveUnits:
-                y_conv = xToHzDict[xUnits] / x * 1.e-26
-            elif xUnits in freqUnits:
-                y_conv = xToHzDict[xUnits] * x * 1.e-26
-            yTotal = yTotal * y_conv
-            yCmpnt[modelName] = yCmpnt[modelName] * y_conv
+            y_conv = ls_mic / wave * 1.e-26
+            yTotal *= y_conv
+            for modelName in modelList:
+                yCmpnt[modelName] *= y_conv
+        else:
+            raise ValueError("The yUnits ({0}) is not recognised!".format(yUnits))
         if colorList is None:
             colorList = ["orange", "green", "blue", "magenta", "yellow", "cyan"]
         nColor = len(colorList)
+        x = WaveFromMicron(wave, xUnits) # Switch the wavelength units back to
+                                         #what assigned
         counter = 0
         for modelName in modelList:
             textList.append( "<{0}>\n".format(modelName) )

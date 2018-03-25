@@ -11,7 +11,11 @@ import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 from astropy.table import Table
 from scipy.interpolate import interp1d
+__all__ = ["Plot_SED", "SpectraRebin", "SEDResample", "Filter_Pass",
+           "Herschel_Bands", "Load_SED", "SED_select_band", "SED_to_restframe",
+           "SED_to_obsframe", "WaveToMicron", "WaveFromMicron"]
 
+ls_mic = 2.99792458e14 # micron/s
 #Func_bgn:
 #-------------------------------------#
 #   Created by SGJY, Dec. 13, 2015    #
@@ -545,6 +549,92 @@ def SED_to_obsframe(sed, redshift):
     sed_obs= tuple(sed_obs)
     return sed_obs
 #Func_end
+
+
+#Func_bgn:
+#-------------------------------------#
+#   Created by SGJY, Mar. 25, 2018    #
+#-------------------------------------#
+def WaveToMicron(wave, units):
+    """
+    Convert the wavelength units to micron.
+
+    Parameters
+    ----------
+    wave : float array
+        The array of wavelength with units consistent with the 2nd parameter.
+    units : string
+        The units of the input wavelength.  Currently supported units are:
+            "cm", "mm", "micron", "angstrom", "Hz", "MHz", "GHz"
+
+    Returns
+    -------
+    wave : float array
+        The array of wavelength with units micron.
+    """
+    wave = np.atleast_1d(wave)
+    waveUnits = ["cm", "mm", "micron", "angstrom"]
+    freqUnits = ["Hz", "MHz", "GHz"]
+    if units in waveUnits:
+        pass
+    elif units in freqUnits:
+        wave = 1. / wave
+    else:
+        raise ValueError("The units ({0}) is not recognised!".format(units))
+    coeffDict = {# The coefficient to convert the units to micron
+        "cm": 1.e4,
+        "mm": 1.e3,
+        "micron": 1.,
+        "angstrom": 1e-4,
+        "Hz": 2.99792458e14,
+        "MHz": 2.99792458e8,
+        "GHz": 2.99792458e5,
+    }
+    wave = coeffDict[units] * wave
+    return wave
+
+
+def WaveFromMicron(wave, units):
+    """
+    Convert the wavelength units from micron to what asigned.
+
+    Parameters
+    ----------
+    wave : float array
+        The array of wavelength, units: micron.
+    units : string
+        The units of the output wavelength.  Currently supported units are:
+            "cm", "mm", "micron", "angstrom", "Hz", "MHz", "GHz"
+
+    Returns
+    -------
+    wave : float array
+        The array of wavelength with units consistent with the 2nd parameter.
+    """
+    wave = np.atleast_1d(wave)
+    waveUnits = ["cm", "mm", "micron", "angstrom"]
+    freqUnits = ["Hz", "MHz", "GHz"]
+    if units in waveUnits:
+        pass
+    elif units in freqUnits:
+        wave = 1. / wave
+    else:
+        raise ValueError("The units ({0}) is not recognised!".format(units))
+    coeffDict = {# The coefficient to convert the units from micron to what asigned
+        "cm": 1.e-4,
+        "mm": 1.e-3,
+        "micron": 1.,
+        "angstrom": 1e4,
+        "Hz": 2.99792458e14,
+        "MHz": 2.99792458e8,
+        "GHz": 2.99792458e5,
+    }
+    wave = coeffDict[units] * wave
+    return wave
+#Func_end
+
+
+
 
 if __name__ == "__main__":
     wave = np.arange(8, dtype="float")

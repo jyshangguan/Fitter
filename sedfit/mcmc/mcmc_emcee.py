@@ -6,9 +6,10 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 from scipy.stats import truncnorm
 from time import time
-
+from ..SED_Toolkit import WaveFromMicron, WaveToMicron
 from .. import fit_functions as sedff
 #from .. import fit_functions_erf as sedff
+ls_mic = 2.99792458e14 # micron/s
 
 #The log_likelihood function
 lnlike = sedff.logLFunc
@@ -492,77 +493,16 @@ class EmceeModel(object):
             plt.savefig(filename)
             plt.close()
 
-    def plot_fit_spec(self, ps=None, filename=None, nSamples=100, truths=None, FigAx=None, **kwargs):
-        """
-        Plot the best-fit model and the data.
-        """
-        sedData   = self.__data
-        sedModel  = self.__model
-        pcnt = self.p_median(ps, **kwargs)
-        waveModel = sedModel.get_xList()
-        #-->Plot the SED data
-        sedModel.updateParList(pcnt)
-        ycnt = sedModel.combineResult()
-        fig, ax = sedData.plot_sed(FigAx=FigAx)
-        cList = ["green", "magenta", "orange", "blue", "yellow", "cyan"]
-        ncolor = len(cList)
-        #->Plot the best-fit model
-        sedModel.updateParList(pcnt)
-        ycnt = sedModel.combineResult() #The best-fit model
-        cKwargs = {"linestyle":"--"}
-        tKwargs = {
-            "linestyle": "--",
-            "color": "brown",
-            "linewidth": 1.5
-            }
-        sedModel.plot(FigAx=(fig, ax), colorList=cList, DisplayPars=False,
-                      cKwargs=cKwargs, tKwargs=tKwargs)
-        #->Plot the variability
-        if ps is None:
-            ps = self.posterior_sample(**kwargs)
-        cKwargs = {
-            "linestyle":":",
-            "alpha": 0.1
-            }
-        tKwargs = {
-            "linestyle": ":",
-            "color": "brown",
-            "alpha": 0.1
-            }
-        for pars in ps[np.random.randint(len(ps), size=nSamples)]:
-            sedModel.updateParList(pars)
-            sedModel.plot(FigAx=(fig, ax), colorList=cList, DisplayPars=False,
-                          cKwargs=cKwargs, tKwargs=tKwargs, useLabel=False)
-        #->Plot the truth model if provided
-        if not truths is None:
-            sedModel.updateParList(truths)
-            sedModel.plot(FigAx=(fig, ax), colorList=cList, DisplayPars=False)
-        xData = sedData.get_csList("x")
-        yData = sedData.get_csList("y")
-        xmin = min(xData)*0.8
-        xmax = max(xData)*1.2
-        ymin = min(yData)*0.5
-        ymax = max(yData)*2.0
-        ax.set_xlim([xmin, xmax])
-        ax.set_ylim([ymin, ymax])
-        ax.xaxis.set_tick_params(which="major", labelsize=18)
-        ax.yaxis.set_tick_params(which="major", labelsize=18)
-        if filename is None:
-            return (fig, ax)
-        else:
-            plt.savefig(filename, bbox_inches="tight")
-            plt.close()
-
     def plot_fit(self, ps=None, filename=None, nSamples=100, truths=None, FigAx=None,
                  xlim=None, ylim=None, showLegend=True, cList=None, cLineKwargs={},
-                 tLineKwargs={}, **kwargs):
+                 tLineKwargs={}, xUnits="micron", yUnits="fnu", **kwargs):
         """
         Plot the best-fit model and the data.
         """
         sedData   = self.__data
         sedModel  = self.__model
         #-->Plot the SED data
-        fig, ax = sedData.plot_sed(FigAx=FigAx)
+        fig, ax = sedData.plot_sed(FigAx=FigAx, xUnits=xUnits, yUnits=yUnits)
         #-->Plot the models
         if cList is None:
             cList = ["green", "magenta", "orange", "blue", "yellow", "cyan"]
@@ -584,7 +524,8 @@ class EmceeModel(object):
         for pars in ps[np.random.randint(len(ps), size=nSamples)]:
             sedModel.updateParList(pars)
             sedModel.plot(FigAx=(fig, ax), colorList=cList, DisplayPars=False,
-                          cKwargs=cKwargs, tKwargs=tKwargs, useLabel=False)
+                          cKwargs=cKwargs, tKwargs=tKwargs, useLabel=False,
+                          xUnits=xUnits, yUnits=yUnits)
         #->Plot the best-fit model
         #Plot the data and model photometric points on the top of lines.
         pcnt = self.p_median(ps, **kwargs)
@@ -604,37 +545,32 @@ class EmceeModel(object):
             "color": tLineKwargs.get("color", "red"),
             }
         sedModel.plot(FigAx=(fig, ax), colorList=cList, DisplayPars=False,
-                      cKwargs=cKwargs, tKwargs=tKwargs)
-        ax.plot(sedData.get_dsList("x"), yPhtC, marker="s", color="k", mfc="none",
+                      cKwargs=cKwargs, tKwargs=tKwargs,
+                      xUnits=xUnits, yUnits=yUnits)
+        xPhtC = WaveFromMicron(sedData.get_dsList("x"), xUnits)
+        y_conv = ls_mic / WaveToMicron(xPhtC, xUnits) * 1.e-26
+        if yUnits == "fnu":
+            yPhtC = y_conv * yPhtC # Convert to erg/s/cm^2
+        ax.plot(xPhtC, yPhtC, marker="s", color="k", mfc="none",
                 mec="k", mew=1.5, alpha=0.8, linestyle="none", label="Model")
         #->Plot the truth model if provided
         if not truths is None:
             sedModel.updateParList(truths)
-            sedModel.plot(FigAx=(fig, ax), colorList=cList, DisplayPars=False)
+            sedModel.plot(FigAx=(fig, ax), colorList=cList, DisplayPars=False,
+                          xUnits=xUnits, yUnits=yUnits)
         #->Setup the figure
-        ax.set_xlabel(r"$\mathrm{Wavelength} \, \mathrm{(\mu m)}$", fontsize=24)
-        ax.set_ylabel(r"$f_\nu \, (\mathrm{mJy})$", fontsize=24)
-        if xlim is None:
-            xmin = min(waveModel)
-            xmax = max(waveModel)
-            xlim = [xmin, xmax]
-        ax.set_xlim(xlim)
-        if ylim is None:
-            yData = sedData.get_List("y")
-            ymin = 10**(np.floor(np.log10(min(yData))) - 2)
-            ymax = 10**np.ceil(np.log10( max([max(yData), max(ycnt)]) ))
-            ylim = [ymin, ymax]
+        if not xlim is None:
+            ax.set_xlim(xlim)
         else:
-            ymin, ymax = ylim
-        ax.set_ylim(ylim)
-        #->Set the yaxis tick range
-        yTickRange = ax.yaxis.get_majorticklocs()
-        yTickRange = yTickRange[(yTickRange >= ymin) & (yTickRange <= ymax)]
-        #ax.yaxis.set_ticks(yTickRange[1:-1])
-        ax.xaxis.set_tick_params(which="major", labelsize=18)
-        ax.yaxis.set_tick_params(which="major", labelsize=18)
-        if showLegend:
-            ax.legend(loc="upper left", framealpha=0.3, fontsize=15)
+            xmin = np.min(xPhtC) / 5.
+            xmax = np.max(xPhtC) * 5.
+            ax.set_xlim([xmin, xmax])
+        if not ylim is None:
+            ax.set_ylim(ylim)
+        else:
+            ymin = np.min(yPhtC) / 5.
+            ymax = np.max(yPhtC) * 5.
+            ax.set_ylim([ymin, ymax])
         if filename is None:
             return (fig, ax)
         else:
