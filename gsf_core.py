@@ -265,8 +265,10 @@ def gsf_fitter(configName, targname=None, redshift=None, distance=None,
     parAddDict_all["DL"]    = sedData.dl
     parAddDict_all["z"]     = redshift
     parAddDict_all["frame"] = "rest"
-    from sedfit.fitter import basicclass as bc
-    sedModel  = bc.Model_Generator(modelDict, funcLib, waveModel, parAddDict_all)
+    #from sedfit.fitter import basicclass as bc
+    #sedModel  = bc.Model_Generator(modelDict, funcLib, waveModel, parAddDict_all)
+    from sedfit.sedmodel import SedModel
+    sedModel = SedModel(modelDict, funcLib, waveModel, parAddDict_all)
 
     ############################################################################
     #                                   Fit                                    #

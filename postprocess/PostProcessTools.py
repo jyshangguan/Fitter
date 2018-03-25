@@ -343,15 +343,14 @@ def modelLoader(fitrs, QuietMode=True):
     None.
     """
     from sedfit import model_functions as sedmf
-    from sedfit.fitter import basicclass as bc
+    from sedfit.sedmodel import SedModel
     modelPck = fitrs["modelPck"]
     funcLib = sedmf.funcLib
     modelDict = modelPck["modelDict"]
     waveModel = modelPck["waveModel"]
     parAddDict_all = modelPck["parAddDict_all"]
     DL = parAddDict_all["DL"]
-    sedModel = bc.Model_Generator(modelDict, funcLib, waveModel, parAddDict_all,
-                                  QuietMode)
+    sedModel = SedModel(modelDict, funcLib, waveModel, parAddDict_all)
     return sedModel
 
 def dataLoader(fitrs, QuietMode=True):
