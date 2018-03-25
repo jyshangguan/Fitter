@@ -550,7 +550,11 @@ class EmceeModel(object):
         xPhtC = WaveFromMicron(sedData.get_dsList("x"), xUnits)
         y_conv = ls_mic / WaveToMicron(xPhtC, xUnits) * 1.e-26
         if yUnits == "fnu":
+            pass
+        elif yUnits == "nufnu":
             yPhtC = y_conv * yPhtC # Convert to erg/s/cm^2
+        else:
+            raise ValueError("The yUnits ({0}) is not recognised!".format(yUnits))
         ax.plot(xPhtC, yPhtC, marker="s", color="k", mfc="none",
                 mec="k", mew=1.5, alpha=0.8, linestyle="none", label="Model")
         #->Plot the truth model if provided
