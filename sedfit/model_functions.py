@@ -28,6 +28,7 @@ import_dict = {
     "model_xl": ["Torus_Emission", "Torus_Emission_PosPar"],
     "model_torus_template": ["Torus_Template"],
     "model_pah": ["pah"],
+    "model_clumpy": ["CLUMPY_intp"],
     "model_cat3d_G": ["Cat3d_G", "Cat3d_G_PosPar"],
     "model_cat3d_H": ["Cat3d_H", "Cat3d_H_PosPar"],
     "model_cat3d_H_wind": ["Cat3d_H_wind", "Cat3d_H_wind_PosPar"],

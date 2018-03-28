@@ -343,6 +343,7 @@ def modelLoader(fitrs, QuietMode=True):
     None.
     """
     from sedfit import model_functions as sedmf
+    reload(sedmf)
     from sedfit.sedmodel import SedModel
     modelPck = fitrs["modelPck"]
     funcLib = sedmf.funcLib
