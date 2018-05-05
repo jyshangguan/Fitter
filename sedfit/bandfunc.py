@@ -407,6 +407,7 @@ filterDict = {
 }
 monoFilters = ["Herschel_PACS_70", "Herschel_PACS_100", "Herschel_PACS_160",
                "Herschel_SPIRE_250", "Herschel_SPIRE_350", "Herschel_SPIRE_500",
+               "Herschel_SPIRE_250_e", "Herschel_SPIRE_350_e", "Herschel_SPIRE_500_e",
                "Spitzer_IRAC1", "Spitzer_IRAC2", "Spitzer_IRAC3", "Spitzer_IRAC4",
                "Spitzer_MIPS_24", "Spitzer_MIPS_70", "Spitzer_MIPS_160",
                "IRAS_12", "IRAS_25", "IRAS_60", "IRAS_100"]
