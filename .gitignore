@@ -4,10 +4,11 @@
 *.dict
 *.pdf
 *.png
-*.fitrs
 *.*sed
 *.csv
 *.log
+*.fitrs  # Fitting results.
+*.xtr  # Extraction of the fitting results.
 results/*
 chains*/*
 template/grain_models/*
