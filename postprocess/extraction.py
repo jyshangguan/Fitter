@@ -44,7 +44,8 @@ print("#################################")
 readme = """
 The structure of the dict is as follows:
 {
- 'dataPck': {...}  # Information of the target and the data.
+ 'dataPck': {...},  # Information of the target and the data.
+ 'waveModel': [...], # The wavelength of the models.
  'Best-Fit': {
     'Total': [...],  # The best-fit total model.
     'Components': {...}  # The best-fit model of each components.
@@ -91,6 +92,7 @@ em = mcmc.EmceeModel(sedData, sedModel, modelUnct)
 waveModel = modelPck["waveModel"]
 extractDict = {# The dict of extracted data.
     "dataPck": fitrs["dataPck"],
+    "waveModel": waveModel,
     "readme": readme
 }
 #--> Best-fit model
