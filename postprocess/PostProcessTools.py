@@ -13,7 +13,7 @@ mJy = 1e26 #unit: erg/s/cm^2/Hz
 __all__ = ["AddDict", "MatchDict", "parStatistics", "Luminosity_Integrate",
            "Luminosity_Specific", "L_Total", "randomSampler", "CorrectParameters",
            "Flux_Pht_Component", "dumpModelDict", "cleanTempFile", "dataLoader",
-           "modelLoader"]
+           "modelLoader", "ChiSq"]
 
 def AddDict(targetDict, quantName, quant, nFillPar=None):
     """
@@ -369,6 +369,27 @@ def dataLoader(fitrs, QuietMode=True):
     sedData = sedsc.setSedData(targname, redshift, distance, dataDict, sedPck,
                                QuietMode)
     return sedData
+
+def ChiSq(data, model, unct):
+    """
+    This is a simple chi square.
+
+    Parameters
+    ----------
+    data : array
+        The data values.
+    model : array
+        The model values.
+    unct : array
+        The uncertainty values.
+
+    Returns
+    -------
+    csq : float
+        The chi square.
+    """
+    csq = np.sum( ( (model - data) / unct )**2 )
+    return csq
 
 if __name__ == "__main__":
     import cPickle as pickle
