@@ -335,30 +335,37 @@ def gsf_fitter(configName, targname=None, redshift=None, distance=None,
     xmax = np.max(sedwave) * 1.1
     xlim = [xmin, xmax]
     ymin = np.min(sedflux) * 0.5
-    ymax = np.max(sedflux) * 2.0
+    ymax = np.max(sedflux) * 3.0
     ylim = [ymin, ymax]
-    flag_two_panel = sedData.check_csData() & sedData.check_dsData()
-    if flag_two_panel:
-        fig, axarr = plt.subplots(2, 1)
-        fig.set_size_inches(10, 10)
-        em.plot_fit_spec(truths=parTruth, FigAx=(fig, axarr[0]), nSamples=100,
-                         burnin=burnIn, fraction=fraction)
-        em.plot_fit(truths=parTruth, FigAx=(fig, axarr[1]), xlim=xlim, ylim=ylim,
-                    nSamples=100, burnin=burnIn, fraction=fraction)
-        axarr[0].set_xlabel("")
-        axarr[0].set_ylabel("")
-        axarr[0].text(0.05, 0.8, targname, transform=axarr[0].transAxes, fontsize=24,
-                      verticalalignment='bottom', horizontalalignment='left',
-                      bbox=dict(facecolor='white', alpha=0.5, edgecolor="none"))
-    else:
-        fig = plt.figure(figsize=(10, 5))
-        ax = plt.gca()
-        em.plot_fit(truths=parTruth, FigAx=(fig, ax), xlim=xlim, ylim=ylim,
-                    nSamples=100, burnin=burnIn, fraction=fraction)
-        ax.text(0.05, 0.95, targname, transform=ax.transAxes, fontsize=24,
-                verticalalignment='top', horizontalalignment='left',
-                bbox=dict(facecolor='white', alpha=0.5, edgecolor="none"))
-        ax.legend(loc="lower right", framealpha=0.3, fontsize=15, numpoints=1)
+    fig = plt.figure(figsize=(10, 5))
+    ax = plt.gca()
+    cList = ["green", "orange", "blue", "yellow", "purple"]
+    cKwargs = { #The line properties of the model components.
+        "ls_uc": "--",
+        "alpha_uc": 0.1,
+        "lw_uc": 0.5,
+        "ls_bf": "--",
+        "alpha_bf": 1.0,
+        "lw_bf": 1.0,
+    }
+    tKwargs = { #The line properties of the model total.
+        "ls_uc": "-",
+        "alpha_uc": 0.1,
+        "lw_uc": 0.5,
+        "ls_bf": "-",
+        "alpha_bf": 1.0,
+        "lw_bf": 3.0,
+        "color": "red",
+    }
+    em.plot_fit(truths=parTruth, FigAx=(fig, ax), xlim=xlim, ylim=ylim, nSamples=100,
+                burnin=burnIn, fraction=fraction, cList=cList, cLineKwargs=cKwargs,
+                tLineKwargs=tKwargs)
+    #em.plot_fit(truths=parTruth, FigAx=(fig, ax), xlim=xlim, ylim=ylim,
+    #            nSamples=100, burnin=burnIn, fraction=fraction)
+    ax.text(0.05, 0.95, targname, transform=ax.transAxes, fontsize=24,
+            verticalalignment='top', horizontalalignment='left',
+            bbox=dict(facecolor='white', alpha=0.5, edgecolor="none"))
+    ax.legend(loc="lower right", framealpha=0.3, fontsize=15, numpoints=1)
     plt.savefig("{0}{1}_result.png".format(savePath, targname), bbox_inches="tight")
     plt.close()
     #->Plot the posterior probability distribution
