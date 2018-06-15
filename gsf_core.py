@@ -360,8 +360,6 @@ def gsf_fitter(configName, targname=None, redshift=None, distance=None,
     em.plot_fit(truths=parTruth, FigAx=(fig, ax), xlim=xlim, ylim=ylim, nSamples=100,
                 burnin=burnIn, fraction=fraction, cList=cList, cLineKwargs=cKwargs,
                 tLineKwargs=tKwargs)
-    #em.plot_fit(truths=parTruth, FigAx=(fig, ax), xlim=xlim, ylim=ylim,
-    #            nSamples=100, burnin=burnIn, fraction=fraction)
     ax.text(0.05, 0.95, targname, transform=ax.transAxes, fontsize=24,
             verticalalignment='top', horizontalalignment='left',
             bbox=dict(facecolor='white', alpha=0.5, edgecolor="none"))
