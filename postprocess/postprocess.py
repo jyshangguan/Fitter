@@ -20,13 +20,13 @@ from matplotlib.ticker import FuncFormatter, FormatStrFormatter
 ls_mic = 2.99792458e14 #micron/s
 
 xlabelDict = {
-    "cm": r'$\lambda \, \mathrm{(cm)}$',
-    "mm": r'$\lambda \, \mathrm{(mm)}$',
-    "micron": r'$\lambda \, \mathrm{(\mu m)}$',
-    "angstrom": r'$\lambda \, \mathrm{(\AA)}$',
-    "Hz": r'$\nu \, \mathrm{(Hz)}$',
-    "MHz": r'$\nu \, \mathrm{(MHz)}$',
-    "GHz": r'$\nu \, \mathrm{(GHz)}$',
+    "cm": r'Rest Wavelength (cm)',
+    "mm": r'Rest Wavelength (mm)',
+    "micron": r'Rest Wavelength $\mathrm{(\mu m)}$',
+    "angstrom": r'Rest Wavelength $\mathrm{(\AA)}$',
+    "Hz": r'Rest Frequency (Hz)',
+    "MHz": r'Rest Frequency (MHz)',
+    "GHz": r'Rest Frequency (GHz)',
 }
 ylabelDict = {
     "fnu": r'$f_\nu \, \mathrm{(mJy)}$',
@@ -95,7 +95,7 @@ ax = plt.gca()
 xmin = np.min(sedwave) * 0.9 #0.7 #
 xmax = np.max(sedwave) * 1.1 #600 #
 ymin = np.min(sedflux) * 0.5
-ymax = np.max(sedflux) * 3.0
+ymax = 2e-10 #np.max(sedflux) * 5.0
 xlim = [xmin, xmax]
 ylim = [ymin, ymax]
 cList = ["green", "orange", "blue", "yellow", "purple"]
@@ -119,12 +119,8 @@ tKwargs = { #The line properties of the model total.
 em.plot_fit(truths=parTruth, FigAx=(fig, ax), xlim=xlim, ylim=ylim, nSamples=100,
             burnin=burnIn, fraction=fraction, cList=cList, cLineKwargs=cKwargs,
             tLineKwargs=tKwargs, ps=ps, xUnits=xUnits, yUnits=yUnits)
-#ax.set_xlabel(r"Rest Wavelength ($\mu$m)", fontsize=24)
-#ax.set_ylabel(r"$f_\nu \, \mathrm{(mJy)}$", fontsize=24)
-#plotName = r"{0}".format(targname)
-#plotName = r"PG {0}${1}${2}".format(targname[2:6], targname[6], targname[7:])
-#plotName = r"SDSS {0}${1}${2}".format(targname[4:9], targname[9], targname[10:])
-#plotName = r"{0}${1}${2}".format(targname[0:5], targname[5], targname[6:])
+ax.set_xlabel(xlabelDict[xUnits], fontsize=24)
+ax.set_ylabel(ylabelDict[yUnits], fontsize=24)
 plotName = targname
 nameSeg  = plotName.split("-")
 if (len(nameSeg) > 1):
@@ -134,12 +130,6 @@ ax.text(0.05, 0.95, "{0}".format(plotName),
         verticalalignment='top', horizontalalignment='left',
         transform=ax.transAxes, fontsize=24,
         bbox=dict(facecolor='white', alpha=0.5, edgecolor="none"))
-#"""
-ax.text(0.95, 0.95, "d",
-        verticalalignment='top', horizontalalignment='right',
-        transform=ax.transAxes, fontsize=24,
-        bbox=dict(facecolor='white', alpha=0.5, edgecolor="none"))
-#"""
 ax.tick_params(axis="both", which="major", length=8, labelsize=18, direction="in")
 ax.tick_params(axis="both", which="minor", length=5)
 #-->Set the legend
@@ -148,22 +138,27 @@ spcName = dataDict["spcName"]
 handles, labels = ax.get_legend_handles_labels()
 handleUse = []
 labelUse  = []
-for loop in range(len(labels)):
-    lb = labels[loop]
-    hd = handles[loop]
-    if lb == "Cat3d_H":
-        lb = "CAT3D"
-    #if lb == "Hot_Dust":
-    #    lb = "BB"
-    #if lb == "CLUMPY":
-    #    lb = "CLU"
+nLabels   = len(labels)
+if "Torus" in labels:
+    modelLabelList = ["Total", "BC03", "Torus", "DL07"] #
+else:
+    modelLabelList = ["Total", "BC03", "DL07"] #
+if "Jet" in labels:
+    modelLabelList.append("Jet")
+dataLabelList  = ["Model", "Phot"]
+if "IRS" in labels:
+    dataLabelList.append("IRS")
+labelList = modelLabelList + dataLabelList
+for lb in labelList:
+    idx = labels.index(lb)
+    hd = handles[idx]
     if lb == phtName:
         hd = hd[0]
     labelUse.append(lb)
     handleUse.append(hd)
-plt.legend(handleUse, labelUse, loc="upper left", fontsize=16, numpoints=1,
-           handletextpad=0.3, handlelength=(4./3.), bbox_to_anchor=(0.02,0.90),
-           framealpha=0., edgecolor="white")
+plt.legend(handleUse, labelUse, loc="upper right", fontsize=16, numpoints=1,
+           handletextpad=0.3, handlelength=(4./3.), bbox_to_anchor=(0.99,0.98),
+           ncol=3, framealpha=0., edgecolor="white")
 plt.savefig("{0}_result.pdf".format(targname), bbox_inches="tight")
 plt.close()
 print("Best fit plot finished!")
