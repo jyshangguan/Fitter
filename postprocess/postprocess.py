@@ -125,7 +125,7 @@ plotName = targname
 nameSeg  = plotName.split("-")
 if (len(nameSeg) > 1):
     plotName = "$-$".join(nameSeg)
-#plotName = "SDSS {0}".format(plotName[4:])
+#plotName = "PG {0}".format(plotName[2:])
 ax.text(0.05, 0.95, "{0}".format(plotName),
         verticalalignment='top', horizontalalignment='left',
         transform=ax.transAxes, fontsize=24,
