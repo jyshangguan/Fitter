@@ -247,4 +247,5 @@ ppDict = {
     "nuisance": True, #False, #
     "fraction": 0, #The fraction of walkers to be dropped.
     "burn-in": 500,
+    "savepath": "examples/results/"
 }

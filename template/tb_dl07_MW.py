@@ -10,11 +10,11 @@ from sedfit.fitter.template import Template
 from sklearn.neighbors import KDTree
 from scipy.interpolate import splrep, splev
 
-f_test = 1
+f_test = 0
 f_compile = 1
 
 if f_compile:
-    fp = open("/Users/jinyi/Work/PG_QSO/templates/DL07spec/dl07.tmplt", "r")
+    fp = open("/Users/shangguan/Work/Fitter/template/dl07.tmplt", "r")
     tmpl_dl07 = pickle.load(fp)
     fp.close()
 
@@ -87,7 +87,7 @@ if f_test:
     fp = open("dl07_kdt_mw.tmplt", "r")
     tpDict = pickle.load(fp)
     fp.close()
-    fp = open("/Users/jinyi/Work/PG_QSO/templates/DL07spec/dl07.tmplt", "r")
+    fp = open("/Users/shangguan/Work/Fitter/template/dl07.tmplt", "r")
     tmpl_dl07 = pickle.load(fp)
     fp.close()
 

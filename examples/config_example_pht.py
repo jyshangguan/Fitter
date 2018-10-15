@@ -20,7 +20,6 @@ targname = "IRSA13120-5453"
 redshift = 0.03076
 distance = 143.6 #Luminosity distance
 sedFile  = "examples/{0}_obs.csed".format(targname)
-# sedFile  = "mock/seds_clu/no_uncertainty/{0}_no_unc.msed".format(targname)
 dataDict = {
     "phtName": "Phot",
     "spcName": None, #"IRS",
@@ -162,21 +161,11 @@ unctDict = OrderedDict(
 
 #emcee options#
 #-------------#
-burnin1 = OrderedDict(
+burnin = OrderedDict(
     (
         ("sampler"  , "EnsembleSampler"),
         ("nwalkers" , 128), #The number of walkers.
         ("iteration", [600, 600]), #[5000, 5000, 1000]), #The iteration of burn-in run.
-        ("thin"     , 1), #To thin the recorded sample.
-        ("ball-r"   , 0.1), #The radius of the ball as the fraction of the full range.
-    )
-)
-burnin2 = OrderedDict(
-    (
-        ("sampler"  , "PTSampler"),
-        ("ntemps"   , 16), #The number of temperature ladders only for PTSampler.
-        ("nwalkers" , 128), #The number of walkers.
-        ("iteration", [1000, 1000]), #The iteration of burn-in run.
         ("thin"     , 1), #To thin the recorded sample.
         ("ball-r"   , 0.1), #The radius of the ball as the fraction of the full range.
     )
@@ -202,8 +191,7 @@ setup = OrderedDict(
 )
 emceeDict = OrderedDict(
     (
-        ("BurnIn-1", burnin1),
-        #("BurnIn-2", burnin1),
+        ("BurnIn", burnin),
         ("Final", final),
         ("Setup", setup),
     )
@@ -218,4 +206,5 @@ ppDict = {
     "high"    : 84,
     "nuisance": True, #False, #
     "fraction": 0, #The fraction of walkers to be dropped.
+    "savepath": "examples/results/"
 }
