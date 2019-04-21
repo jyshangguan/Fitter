@@ -12,6 +12,7 @@
 results/*
 chains*/*
 template/grain_models/*
+template/stalevski_torus_2phase_torus*
 
 #Auxillary files
 bak*

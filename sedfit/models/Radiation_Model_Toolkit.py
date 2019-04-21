@@ -24,7 +24,7 @@ def Single_Planck(nu, T=1e4):
     h = 6.62606957e-27 #erg s
     c = 29979245800.0 #cm/s
     k = 1.3806488e-16 #erg/K
-    Bnu = 2.0*h*nu**3.0/c**2.0 / (np.e**(h*nu/k/T) - 1.0)
+    Bnu = 2.0*h*nu**3.0/c**2.0 / (np.exp(h*nu/k/T) - 1.0)
     return Bnu
 #Func_end
 
