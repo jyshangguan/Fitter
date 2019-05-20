@@ -378,6 +378,10 @@ class BandPass(object):
 
 #Default filters
 filterDict = {
+    "UKIDSS_Y": 1.03050,
+    "UKIDSS_J": 1.24830,
+    "UKIDSS_H": 1.63130,
+    "UKIDSS_K": 2.20100,
     "2MASS_J": 1.235,
     "2MASS_H": 1.662,
     "2MASS_Ks": 2.159,
@@ -411,8 +415,8 @@ monoFilters = ["Herschel_PACS_70", "Herschel_PACS_100", "Herschel_PACS_160",
                "Spitzer_IRAC1", "Spitzer_IRAC2", "Spitzer_IRAC3", "Spitzer_IRAC4",
                "Spitzer_MIPS_24", "Spitzer_MIPS_70", "Spitzer_MIPS_160",
                "IRAS_12", "IRAS_25", "IRAS_60", "IRAS_100"]
-meanFilters = ["2MASS_J", "2MASS_H", "2MASS_Ks",
-               "WISE_w1", "WISE_w2", "WISE_w3", "WISE_w4"]
+meanFilters = ["2MASS_J", "2MASS_H", "2MASS_Ks", "UKIDSS_Y", "UKIDSS_J",
+               "UKIDSS_H", "UKIDSS_K", "WISE_w1", "WISE_w2", "WISE_w3", "WISE_w4"]
 
 if __name__ == "__main__":
     from dir_list import filter_path as bandPath
