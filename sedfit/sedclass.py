@@ -84,7 +84,7 @@ class SedClass(bc.DataSet):
         spc_unct = np.array(self.get_csList("e"))
         if bool(spcDict): # If there is spectral data
             self.spc_WaveLength = np.max(spc_wave) - np.min(spc_wave)
-            self.spc_FluxMedian = np.sqrt(np.sum((spc_flux / spc_unct)**2) / np.sum(spc_unct**-2))
+            self.spc_FluxMedian = np.sum(spc_flux / spc_unct**2) / np.sum(spc_unct**-2)
         self.__bandDict = {}
         if Dist is None:
             if redshift > 1e-2:
