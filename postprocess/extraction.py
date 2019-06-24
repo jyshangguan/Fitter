@@ -48,11 +48,13 @@ The structure of the dict is as follows:
  'waveModel': [...], # The wavelength of the models.
  'Best-Fit': {
     'Total': [...],  # The best-fit total model.
-    'Components': {...}  # The best-fit model of each components.
+    'Components': {...},  # The best-fit model of each components.
+    'Photometry': [...]   # The synthetic photometric result of best-fit model.
     },
  'Variation': {0: {
                     'Total': [...],  # The total model of one set of randomly sampled parameters.
-                    'Components': {...}  # The model components of one set of randomly sampled parameters.
+                    'Components': {...},  # The model components of one set of randomly sampled parameters.
+                    'Photometry': [...]   # The synthetic photometric result of one set of randomly sampled parameters.
                     },
                1: {'Total': [...], 'Components': {...}},
                2: {'Total': [...], 'Components': {...}}
@@ -103,14 +105,17 @@ ps = fitrs["posterior_sample"]
 pcnt = em.p_median(ps, burnin=burnIn, fraction=fraction)
 extractDict["Best-Fit"]["Total"] = sedModel.combineResult(x=waveModel)
 extractDict["Best-Fit"]["Components"] = sedModel.componentResult(x=waveModel)
+extractDict["Best-Fit"]["Photometry"] = sedData.model_pht(waveModel, extractDict["Best-Fit"]["Total"])
 #--> Model variation
 extractDict["Variation"] = {}
 counter = 0
 for pars in ps[np.random.randint(len(ps), size=nSamples)]:
     sedModel.updateParList(pars)
+    ytotal = sedModel.combineResult(x=waveModel)
     extractDict["Variation"][counter] = {
-        "Total": sedModel.combineResult(x=waveModel),
-        "Components": sedModel.componentResult(x=waveModel)
+        "Total": ytotal,
+        "Components": sedModel.componentResult(x=waveModel),
+        "Photometry": sedData.model_pht(waveModel, ytotal)
     }
     counter += 1
 
