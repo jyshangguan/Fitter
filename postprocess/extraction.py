@@ -47,6 +47,7 @@ The structure of the dict is as follows:
  'dataPck': {...},  # Information of the target and the data.
  'waveModel': [...], # The wavelength of the models.
  'Best-Fit': {
+    'variables': [...], List of variable name in Latex format.
     'Total': [...],  # The best-fit total model.
     'Components': {...},  # The best-fit model of each components.
     'Components_add': {...},  # The best-fit model of each components without the multiplicative component(s).
@@ -105,6 +106,7 @@ fraction = 0
 burnIn = 0
 ps = fitrs["posterior_sample"]
 pcnt = em.p_median(ps, burnin=burnIn, fraction=fraction)
+extractDict["Best-Fit"]["variables"] = sedModel.get_parVaryNames()
 extractDict["Best-Fit"]["Total"] = sedModel.combineResult(x=waveModel)
 extractDict["Best-Fit"]["Components"] = sedModel.componentResult(x=waveModel)
 extractDict["Best-Fit"]["Components_add"] = sedModel.componentAddResult(x=waveModel)
