@@ -16,33 +16,51 @@ from collections import OrderedDict
 ################################################################################
 #                                    Data                                      #
 ################################################################################
-targname = "IRSA13120-5453"
-redshift = 0.03076
-distance = 143.6 #Luminosity distance
-sedFile  = "examples/{0}_obs.csed".format(targname)
+targname = "IRSA13120-5453" # Target name
+redshift = 0.03076 # Redshift
+distance = 143.6   # Luminosity distance (Mpc). If it is not provided, the
+                   # luminosity distance with be calculated with the redshift
+                   # assuming Planck (2015) cosmology, FlatLambdaCDM(H0=67.8,
+                   # Om0=0.308).
+sedFile  = "examples/{0}_obs.csed".format(targname) # The path to the SED data.
 dataDict = {
-    "phtName": "Phot",
-    "spcName": None, #"IRS",
-    "bandList_use": [],
-    "bandList_ignore":[],
-    "frame": "obs",
+    "phtName": "Phot", # The name of the photometric data. Use "None" if no
+                       # photometric data is used.
+    "spcName": None,   # The name of the spectral data. Use "None" if no
+                       # spectral data is used.
+    "bandList_use": [], # The list of the band name to be used. The name should
+                        # be consistent what are provided in data file (forth
+                        # column). If empty, all of the bands in the data are
+                        # used.
+    "bandList_ignore":[], # The list of the band name to be ignored. The name
+                          # should be consistent what are provided in data file
+                          # (4th column). If empty, none of the bands in the
+                          # data are ignored.
+    "frame": "obs", # Note the frame of the data. The observed frame ("obs") is
+                    # extensively used.
 }
 
 ################################################################################
 #                                   Model                                      #
 ################################################################################
-waveModel = 10**np.linspace(-0.5, 3.0, 1000)
+waveModel = 10**np.linspace(-0.5, 3.0, 1000) # The wavelength array to calculate
+                                             # model SED.
 #parAddDict_all = {}
 modelDict = OrderedDict(
-    (
-        ("BC03", {
-                "function": "BC03",
-                "logMs":{
-                    "value": 11.45,
-                    "range": [6., 14.],
-                    "type": "c",
-                    "vary": True,
-                    "latex": r"$\mathrm{log}\,M_\mathrm{s}$",
+    ( # Each element of the dict is one model component. Remove the element to
+      # remove the component.
+        ("BC03", { # Bruzual & Charlot (2003) SSP model.
+                "function": "BC03", # The name of functions from sedfit.models.
+                "logMs":{ # The log10 of stellar mass.
+                    "value": 11.45, # Model parameter, not used in the fit.
+                    "range": [6., 14.], # Model prior range, used to generate
+                                        # the uniform prior.
+                    "type": "c", # Indicate the parameter to be continuum, not
+                                 # used in the fit.
+                    "vary": True, # Indicate whether this parameter is free
+                                  # (True) or fixed (False).
+                    "latex": r"$\mathrm{log}\,M_\mathrm{s}$", # For the
+                                                              # auxiliary plot
                 },
                 "age":{
                     "value": 5,
@@ -145,13 +163,17 @@ modelDict = OrderedDict(
         ),
     )
 )
-parTruth = None  #Whether to provide the truth of the model
-modelUnct = True #Whether to consider the model uncertainty in the fitting
-unctDict = OrderedDict(
+parTruth = None  # Whether to provide the truth of the model.
+modelUnct = True # Whether to consider the model uncertainty in the fitting
+unctDict = OrderedDict( # Range of the parameters to model the uncertainties.
+                        # These parameters will be marginalized in the end.
     (
-        ("lnf"  , [-10, 2]),
-        ("lna"  , [-10, 5]),
-        ("lntau", [-5, 2.5]),
+        ("lnf"  , [-10, 2]), # The prior range of the ln of the ratio between
+                             # the uncertainty over the flux.
+        ("lna"  , [-10, 5]), # The prior range of the ln of the amplitude of the
+                             # covariance.
+        ("lntau", [-5, 2.5]), # The prior range of the ln of the correlation
+                              # length of the covariance.
     )
 )
 
@@ -161,16 +183,20 @@ unctDict = OrderedDict(
 
 #emcee options#
 #-------------#
-burnin = OrderedDict(
+burnin = OrderedDict( # The setup for the burnin run using emcee.
     (
-        ("sampler"  , "EnsembleSampler"),
-        ("nwalkers" , 128), #The number of walkers.
-        ("iteration", [600, 600]), #[5000, 5000, 1000]), #The iteration of burn-in run.
-        ("thin"     , 1), #To thin the recorded sample.
-        ("ball-r"   , 0.1), #The radius of the ball as the fraction of the full range.
+        ("sampler"  , "EnsembleSampler"), # The name of the sampler. Better to
+                                          # just use "EnsembleSampler".
+        ("nwalkers" , 128), # The number of walkers.
+        ("iteration", [600, 600]), # The iteration of burn-in run. Reinitiallize
+                                   # the walkers around the likelihood peak.
+        ("thin"     , 1), # To thin the recorded sample. Not used unless need to
+                          # run very long chain.
+        ("ball-r"   , 0.1), # The radius of the ball as the fraction of the full
+                            # prior range to reinitiallize the walkers.
     )
 )
-final = OrderedDict(
+final = OrderedDict( # Same as burnin but a different setup.
     (
         ("sampler"  , "EnsembleSampler"),
         ("ntemps"   , 4),
@@ -180,31 +206,38 @@ final = OrderedDict(
         ("ball-r"   , 0.01),
     )
 )
-setup = OrderedDict(
+setup = OrderedDict( # The setup for emcee run.
     (
-        ("threads"  , 4), #Not used if MPI is using.
-        ("printfrac", 0.1),
-        ("pslow"    , 16),
-        ("pscenter" , 50),
-        ("pshigh"   , 84),
+        ("threads"  , 4), # Number of threads used for emcee sampler.
+                          # Not used if MPI is using.
+        ("printfrac", 0.1), # The fraction of the lowest likelihood sample to
+                            # be thrown away when print the status. On-the-fly
+                            # print. Not critial.
+        ("pslow"    , 16), # The lower error bar of the posterior. On-the-fly
+                           # print. Not critial.
+        ("pscenter" , 50), # The median of the posterior. On-the-fly print. Not
+                           # critial.
+        ("pshigh"   , 84), # The high error bar of the posterior. On-the-fly
+                           # print. Not critial.
     )
 )
-emceeDict = OrderedDict(
+emceeDict = OrderedDict( # Emcee run strategy.
     (
-        ("BurnIn", burnin),
-        ("Final", final),
-        ("Setup", setup),
+        ("BurnIn", burnin), # Use the "burnin" first.
+        ("Final", final), # Use the "final" in the end.
+        ("Setup", setup), # Provide more information for emcee.
     )
 )
 
 #Postprocess#
 #-----------#
 ppDict = {
-    "burn-in" : 500, #This should not be larger than half of the final iteration.
-    "low"     : 16,
-    "center"  : 50,
-    "high"    : 84,
-    "nuisance": True, #False, #
-    "fraction": 0, #The fraction of walkers to be dropped.
-    "savepath": "examples/results/"
+    "burn-in" : 500, # The number of sampled points to throw away.
+    "low"     : 16, # The lower error bar of the posterior.
+    "center"  : 50, # The median of the posterior.
+    "high"    : 84, # The high error bar of the posterior.
+    "nuisance": True, # Do not show the nuisance parameters if True.
+    "fraction": 0, # The fraction of walkers with the lowest likelihood to be
+                   # dropped.
+    "savepath": "examples/results/" # The save path.
 }
